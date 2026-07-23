@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Attendance Admin Dashboard</title>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>Attendance Dashboard</h1>
+		<button id="logoutButton">
+    Logout
+</button>
+		<div class="company-hours">
+
+    <h2>Company Working Hours</h2>
+
+    <p>
+        Start Time:
+        <strong>08:00</strong>
+    </p>
+
+    <p>
+        Closing Time:
+        <strong>16:30</strong>
+    </p>
+	<h2>Monthly Report</h2>
+
+<p>
+    Total Attendance Records:
+    <span id="monthlyTotal">0</span>
+</p>
+
+<p>
+    Total Late Arrivals:
+    <span id="monthlyLate">0</span>
+</p>
+
+</div>
+		
+		<div class="dashboard-summary">
+
+    <h3>Total Checked In Today:
+        <span id="totalEmployees">0</span>
+    </h3>
+
+    <h3>On Time:
+        <span id="onTimeCount">0</span>
+    </h3>
+
+    <h3>Late:
+        <span id="lateCount">0</span>
+    </h3>
+
+</div>
+<input
+    type="text"
+    id="searchInput"
+    placeholder="Search by Employee Number or Name..."
+>
+<select id="departmentFilter">
+    <option value="">All Departments</option>
+    <option value="Finance">Finance</option>
+    <option value="HR">HR</option>
+    <option value="IT">IT</option>
+</select>
+
+<button id="exportButton">
+    Export Attendance to CSV
+</button>
+
+        <table id="attendanceTable">
+
+            <thead>
+                <tr>
+                    <th>Employee Number</th>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+
+            <tbody id="attendanceTableBody">
+            </tbody>
+
+        </table>
+
+    </div>
+
+    <script type="module" src="js/admin.js"></script>
+
+</body>
+</html>
