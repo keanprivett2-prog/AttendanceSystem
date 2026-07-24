@@ -448,13 +448,19 @@ async function automaticCheckIn(
 
         message.style.color = "green";
 
-        message.innerHTML =
-    "✅ Welcome " +
-    registration.name +
-    ".<br><br>" +
-    "Attendance recorded successfully.<br>" +
-    "Status: " +
-    attendanceStatus;
+message.innerHTML =
+    "✅ Welcome "
+    + registration.name
+    + ".<br><br>"
+    + "Attendance recorded successfully.<br>"
+    + "Status: "
+    + attendanceStatus
+    + "<br><br>"
+    + "This window will close automatically.";
+
+setTimeout(() => {
+    window.close();
+}, 5000);
 
         setTimeout(() => {
     window.close();
