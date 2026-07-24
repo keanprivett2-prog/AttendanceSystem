@@ -203,7 +203,6 @@ if (!securityResult.allowed) {
         message.innerHTML =
             "❌ Attendance could not be saved. Please try again.";
     }
-}
 
 // =====================================================
 // Save Attendance to Firebase
