@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Automatic Attendance Check-In</title>
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+</head>
+
+<body>
+
+    <div class="login-card">
+
+        <h1>Automatic Check-In</h1>
+
+        <div id="registrationSection">
+
+            <p>
+                This laptop has not been registered yet.
+                Enter the employee details once to connect
+                this browser to the employee.
+            </p>
+
+            <label for="employeeNumber">
+                Employee Number
+            </label>
+
+            <input
+                type="text"
+                id="employeeNumber"
+                placeholder="Employee Number"
+                autocomplete="off"
+            >
+
+            <label for="pin">
+                PIN
+            </label>
+
+            <input
+                type="password"
+                id="pin"
+                placeholder="PIN"
+                autocomplete="off"
+            >
+
+            <button id="registerDeviceButton">
+                Register This Laptop
+            </button>
+
+        </div>
+
+        <div id="registeredSection" hidden>
+
+            <p>
+                Registered employee:
+            </p>
+
+            <h2 id="registeredEmployee"></h2>
+
+            <button id="changeRegistrationButton">
+                Change Registered Employee
+            </button>
+
+        </div>
+
+        <div id="message">
+            Checking laptop registration...
+        </div>
+
+        <div id="clock"></div>
+
+    </div>
+
+    <script src="js/employeeData.js"></script>
+    <script src="js/deviceManager.js"></script>
+
+    <script
+        type="module"
+        src="js/auto-checkin.js"
+    ></script>
+
+</body>
+
+</html>
