@@ -276,7 +276,7 @@ function saveAttendance(
 // Security Check
 // =====================================================
 
-function securityCheck(employee) {
+async function securityCheck(employee) {
 
     const attendance =
         JSON.parse(
@@ -295,17 +295,18 @@ function securityCheck(employee) {
 
     if (alreadyCheckedIn) {
 
-        message.style.color = "orange";
-
-        message.innerHTML =
-            "⚠️ You have already checked in today.";
-
-        return false;
+        return {
+            allowed: false,
+            message:
+                "⚠️ You have already checked in today."
+        };
     }
 
-    return true;
+    return {
+        allowed: true,
+        message: ""
+    };
 }
-
 
 // =====================================================
 // Validate User Input
