@@ -6,6 +6,11 @@ import {
     runTransaction,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+const OFFICE_LOCATION = {
+    latitude: -26.046374,
+    longitude: 28.089098,
+    allowedRadiusMetres: 15
+};
 
 
 // =====================================================
