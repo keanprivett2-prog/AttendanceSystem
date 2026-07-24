@@ -246,6 +246,7 @@ try {
             "❌ Attendance could not be saved. Please try again.";
     }
     }
+}
 // =====================================================
 // Save Attendance to Firebase
 // =====================================================
