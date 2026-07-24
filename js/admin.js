@@ -1,4 +1,4 @@
-import { db } from "./firebase.js";
+import { db } from "../firebase/firebase.js";
 
 import {
     collection,
@@ -6,7 +6,30 @@ import {
     orderBy,
     onSnapshot
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
 let attendanceRecords = [];
+
+
+// =====================================
+// Page Elements
+// =====================================
+
+const tableBody =
+    document.getElementById("attendanceTableBody");
+
+const searchInput =
+    document.getElementById("searchInput");
+
+const departmentFilter =
+    document.getElementById("departmentFilter");
+
+const exportButton =
+    document.getElementById("exportButton");
+
+const logoutButton =
+    document.getElementById("logoutButton");
+
+
 // =====================================
 // Check Admin Authentication
 // =====================================
@@ -14,10 +37,10 @@ let attendanceRecords = [];
 if (
     sessionStorage.getItem("adminLoggedIn") !== "true"
 ) {
-
     window.location.href = "admin-login.html";
-
 }
+
+
 // =====================================
 // Live Attendance from Firebase
 // =====================================
@@ -31,12 +54,14 @@ function loadAttendanceFromFirebase() {
 
     onSnapshot(
         attendanceQuery,
+
         snapshot => {
 
-            attendanceRecords = snapshot.docs.map(document => ({
-                id: document.id,
-                ...document.data()
-            }));
+            attendanceRecords =
+                snapshot.docs.map(document => ({
+                    id: document.id,
+                    ...document.data()
+                }));
 
             applyFilters();
             updateStatistics();
@@ -47,199 +72,211 @@ function loadAttendanceFromFirebase() {
                 attendanceRecords
             );
         },
+
         error => {
 
             console.error(
                 "Could not load live attendance:",
                 error
             );
+
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="6">
+                        Unable to load attendance records.
+                    </td>
+                </tr>
+            `;
         }
     );
 }
+
+
+// =====================================
+// Filter Attendance Records
+// =====================================
+
+function getFilteredAttendance() {
+
+    const search =
+        searchInput.value.trim().toLowerCase();
+
+    const department =
+        departmentFilter.value;
+
+    return attendanceRecords.filter(record => {
+
+        const employeeNumber =
+            String(
+                record.employeeNumber || ""
+            ).toLowerCase();
+
+        const employeeName =
+            String(
+                record.name || ""
+            ).toLowerCase();
+
+        const matchesSearch =
+            employeeNumber.includes(search) ||
+            employeeName.includes(search);
+
+        const matchesDepartment =
+            department === "" ||
+            record.department === department;
+
+        return (
+            matchesSearch &&
+            matchesDepartment
+        );
+    });
+}
+
 
 // =====================================
 // Display Attendance Records
 // =====================================
 
-function displayAttendance(search = "", department = "") {
-
-    const tableBody =
-        document.getElementById("attendanceTableBody");
+function displayAttendance(records) {
 
     tableBody.innerHTML = "";
 
-    attendanceRecords
-        .filter(record => {
+    if (records.length === 0) {
 
-            const employeeNumber =
-                String(record.employeeNumber || "");
-
-            const employeeName =
-                String(record.name || "").toLowerCase();
-
-            const matchesSearch =
-                employeeNumber.includes(search) ||
-                employeeName.includes(search.toLowerCase());
-
-            const matchesDepartment =
-                department === "" ||
-                record.department === department;
-
-            return matchesSearch && matchesDepartment;
-        })
-        .forEach(record => {
-
-            const row = document.createElement("tr");
-
-            const statusColor =
-                record.status === "Late"
-                    ? "red"
-                    : "green";
-
-            row.innerHTML = `
-                <td>${record.employeeNumber || ""}</td>
-                <td>${record.name || ""}</td>
-                <td>${record.department || ""}</td>
-                <td>${record.date || ""}</td>
-                <td>${record.time || ""}</td>
-                <td style="color:${statusColor}; font-weight:bold;">
-                    ${record.status || ""}
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="6">
+                    No attendance records found.
                 </td>
-            `;
+            </tr>
+        `;
 
-            tableBody.appendChild(row);
-        });
+        return;
+    }
+
+    records.forEach(record => {
+
+        const row =
+            document.createElement("tr");
+
+        const statusColor =
+            record.status === "Late"
+                ? "red"
+                : "green";
+
+        row.innerHTML = `
+            <td>${escapeHtml(record.employeeNumber)}</td>
+            <td>${escapeHtml(record.name)}</td>
+            <td>${escapeHtml(record.department)}</td>
+            <td>${escapeHtml(record.date)}</td>
+            <td>${escapeHtml(record.time)}</td>
+            <td
+                style="
+                    color: ${statusColor};
+                    font-weight: bold;
+                "
+            >
+                ${escapeHtml(record.status)}
+            </td>
+        `;
+
+        tableBody.appendChild(row);
+    });
 }
+
+
 // =====================================
-// Dashboard Statistics
+// Apply Search and Department Filters
+// =====================================
+
+function applyFilters() {
+
+    const filteredRecords =
+        getFilteredAttendance();
+
+    displayAttendance(
+        filteredRecords
+    );
+}
+
+
+// =====================================
+// Today's Dashboard Statistics
 // =====================================
 
 function updateStatistics() {
 
-    const attendance = JSON.parse(
-        localStorage.getItem("attendance")
-    ) || [];
+    const todayKey =
+        getLocalDateKey(new Date());
 
-    const today = new Date().toLocaleDateString();
+    const todayRecords =
+        attendanceRecords.filter(record =>
+            getRecordDateKey(record) === todayKey
+        );
 
-    const todayRecords = attendance.filter(record =>
-        record.date === today
-    );
+    const onTimeRecords =
+        todayRecords.filter(record =>
+            record.status === "On Time"
+        );
 
-    const onTimeRecords = todayRecords.filter(record =>
-        record.status === "On Time"
-    );
+    const lateRecords =
+        todayRecords.filter(record =>
+            record.status === "Late"
+        );
 
-    const lateRecords = todayRecords.filter(record =>
-        record.status === "Late"
-    );
-
-    document.getElementById("totalEmployees").innerHTML =
+    document.getElementById(
+        "totalEmployees"
+    ).textContent =
         todayRecords.length;
 
-    document.getElementById("onTimeCount").innerHTML =
+    document.getElementById(
+        "onTimeCount"
+    ).textContent =
         onTimeRecords.length;
 
-    document.getElementById("lateCount").innerHTML =
+    document.getElementById(
+        "lateCount"
+    ).textContent =
         lateRecords.length;
 }
-loadAttendanceFromFirebase();
 
 
-const searchInput =
-    document.getElementById("searchInput");
-
-const departmentFilter =
-    document.getElementById("departmentFilter");
-
-function applyFilters() {
-
-    displayAttendance(
-        searchInput.value,
-        departmentFilter.value
-    );
-}
-
-searchInput.addEventListener("input", applyFilters);
-
-departmentFilter.addEventListener("change", applyFilters);
-	
-	// =====================================
-// Export Attendance
 // =====================================
-
-function exportAttendance() {
-
-    const attendance = JSON.parse(
-        localStorage.getItem("attendance")
-    ) || [];
-
-    let csv =
-        "Employee Number,Name,Department,Date,Time,Status\n";
-
-    attendance.forEach(record => {
-
-        csv +=
-            `${record.employeeNumber},` +
-            `${record.name},` +
-            `${record.department},` +
-            `${record.date},` +
-            `${record.time},` +
-            `${record.status}\n`;
-
-    });
-
-    const blob = new Blob([csv], {
-        type: "text/csv"
-    });
-
-    const url = window.URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-
-    a.href = url;
-    a.download = "attendance.csv";
-
-    a.click();
-
-    window.URL.revokeObjectURL(url);
-}
-document
-    .getElementById("exportButton")
-    .addEventListener("click", exportAttendance);
-	// =====================================
-// Admin Logout
-// =====================================
-
-document
-    .getElementById("logoutButton")
-    .addEventListener("click", function () {
-
-        sessionStorage.removeItem("adminLoggedIn");
-
-        window.location.href = "admin-login.html";
-
-    });
-	// =====================================
 // Monthly Statistics
 // =====================================
 
 function updateMonthlyStatistics() {
 
-    const attendance = attendanceRecords;
+    const now =
+        new Date();
+
+    const currentYear =
+        now.getFullYear();
 
     const currentMonth =
-        new Date().getMonth();
+        now.getMonth() + 1;
 
     const monthlyRecords =
-        attendance.filter(record => {
+        attendanceRecords.filter(record => {
 
-            const recordDate =
-                new Date(record.date);
+            const dateKey =
+                getRecordDateKey(record);
+
+            if (!dateKey) {
+                return false;
+            }
+
+            const parts =
+                dateKey.split("-");
+
+            const year =
+                Number(parts[0]);
+
+            const month =
+                Number(parts[1]);
 
             return (
-                recordDate.getMonth() ===
-                currentMonth
+                year === currentYear &&
+                month === currentMonth
             );
         });
 
@@ -250,12 +287,248 @@ function updateMonthlyStatistics() {
 
     document.getElementById(
         "monthlyTotal"
-    ).innerHTML =
+    ).textContent =
         monthlyRecords.length;
 
     document.getElementById(
         "monthlyLate"
-    ).innerHTML =
+    ).textContent =
         monthlyLate.length;
 }
-updateMonthlyStatistics();
+
+
+// =====================================
+// Export Visible Attendance to CSV
+// =====================================
+
+function exportAttendance() {
+
+    const records =
+        getFilteredAttendance();
+
+    if (records.length === 0) {
+
+        alert(
+            "There are no attendance records to export."
+        );
+
+        return;
+    }
+
+    const rows = [
+        [
+            "Employee Number",
+            "Name",
+            "Department",
+            "Date",
+            "Time",
+            "Status"
+        ]
+    ];
+
+    records.forEach(record => {
+
+        rows.push([
+            record.employeeNumber || "",
+            record.name || "",
+            record.department || "",
+            record.date || "",
+            record.time || "",
+            record.status || ""
+        ]);
+    });
+
+    const csv =
+        rows
+            .map(row =>
+                row
+                    .map(value =>
+                        escapeCsvValue(value)
+                    )
+                    .join(",")
+            )
+            .join("\n");
+
+    const blob =
+        new Blob(
+            ["\uFEFF" + csv],
+            {
+                type:
+                    "text/csv;charset=utf-8;"
+            }
+        );
+
+    const url =
+        window.URL.createObjectURL(blob);
+
+    const link =
+        document.createElement("a");
+
+    link.href = url;
+
+    link.download =
+        "attendance-"
+        + getLocalDateKey(new Date())
+        + ".csv";
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
+
+    window.URL.revokeObjectURL(url);
+}
+
+
+// =====================================
+// Get Record Date Key
+// =====================================
+
+function getRecordDateKey(record) {
+
+    if (record.dateKey) {
+        return record.dateKey;
+    }
+
+    if (!record.date) {
+        return "";
+    }
+
+    const parts =
+        String(record.date)
+            .split("/");
+
+    if (parts.length !== 3) {
+        return "";
+    }
+
+    const day =
+        parts[0].padStart(2, "0");
+
+    const month =
+        parts[1].padStart(2, "0");
+
+    const year =
+        parts[2];
+
+    return (
+        year
+        + "-"
+        + month
+        + "-"
+        + day
+    );
+}
+
+
+// =====================================
+// Create Local Date Key
+// =====================================
+
+function getLocalDateKey(date) {
+
+    const year =
+        date.getFullYear();
+
+    const month =
+        String(
+            date.getMonth() + 1
+        ).padStart(2, "0");
+
+    const day =
+        String(
+            date.getDate()
+        ).padStart(2, "0");
+
+    return (
+        year
+        + "-"
+        + month
+        + "-"
+        + day
+    );
+}
+
+
+// =====================================
+// Protect Table Against HTML Injection
+// =====================================
+
+function escapeHtml(value) {
+
+    const div =
+        document.createElement("div");
+
+    div.textContent =
+        value || "";
+
+    return div.innerHTML;
+}
+
+
+// =====================================
+// Format CSV Values Safely
+// =====================================
+
+function escapeCsvValue(value) {
+
+    const text =
+        String(value || "");
+
+    return (
+        '"'
+        + text.replace(/"/g, '""')
+        + '"'
+    );
+}
+
+
+// =====================================
+// Search and Department Events
+// =====================================
+
+searchInput.addEventListener(
+    "input",
+    applyFilters
+);
+
+departmentFilter.addEventListener(
+    "change",
+    applyFilters
+);
+
+
+// =====================================
+// Export Event
+// =====================================
+
+exportButton.addEventListener(
+    "click",
+    exportAttendance
+);
+
+
+// =====================================
+// Admin Logout
+// =====================================
+
+logoutButton.addEventListener(
+    "click",
+    function () {
+
+        sessionStorage.removeItem(
+            "adminLoggedIn"
+        );
+
+        window.location.href =
+            "admin-login.html";
+    }
+);
+
+
+// =====================================
+// Start Dashboard
+// =====================================
+
+loadAttendanceFromFirebase();
