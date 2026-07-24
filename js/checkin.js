@@ -6,18 +6,26 @@ import {
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-// Existing code starts here...
+
 // =====================================================
-// ATTENDANCE SYSTEM ENGINE
-// Version 1.0
+// Page Elements
 // =====================================================
 
-// Page Elements
-const employeeNumberInput = document.getElementById("employeeNumber");
-const pinInput = document.getElementById("pin");
-const checkInButton = document.getElementById("checkInButton");
-const message = document.getElementById("message");
-const clock = document.getElementById("clock");
+const employeeNumberInput =
+    document.getElementById("employeeNumber");
+
+const pinInput =
+    document.getElementById("pin");
+
+const checkInButton =
+    document.getElementById("checkInButton");
+
+const message =
+    document.getElementById("message");
+
+const clock =
+    document.getElementById("clock");
+
 
 // =====================================================
 // Start System
@@ -25,43 +33,45 @@ const clock = document.getElementById("clock");
 
 initializeSystem();
 
+
 // =====================================================
 // Initialize
 // =====================================================
 
-function initializeSystem(){
+function initializeSystem() {
 
     updateClock();
 
-    setInterval(updateClock,1000);
+    setInterval(updateClock, 1000);
 
-    checkInButton.addEventListener("click",checkIn);
+    checkInButton.addEventListener("click", checkIn);
 
+    message.style.color = "#0b5ed7";
+    message.innerHTML = "Ready for employee check-in.";
 }
+
 
 // =====================================================
 // Live Clock
 // =====================================================
 
-function updateClock(){
+function updateClock() {
 
     const now = new Date();
 
     const options = {
-
-        weekday:"long",
-        year:"numeric",
-        month:"long",
-        day:"numeric"
-
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric"
     };
 
     clock.innerHTML =
-        now.toLocaleDateString("en-ZA",options)
-        + "<br>" +
-        now.toLocaleTimeString("en-ZA");
-
+        now.toLocaleDateString("en-ZA", options)
+        + "<br>"
+        + now.toLocaleTimeString("en-ZA");
 }
+
 
 // =====================================================
 // Main Check In
@@ -70,7 +80,8 @@ function updateClock(){
 async function checkIn() {
 
     message.style.color = "#0b5ed7";
-    message.innerHTML = "Starting attendance verification...";
+    message.innerHTML =
+        "Starting attendance verification...";
 
     const employee = authenticateEmployee();
 
@@ -79,22 +90,57 @@ async function checkIn() {
     }
 
     if (!securityCheck(employee)) {
-    return;
-
+        return;
     }
 
-   
+    const attendanceStatus =
+        getAttendanceStatus();
 
-const attendanceStatus = getAttendanceStatus();
+    try {
 
-// Keep saving locally for now
-saveAttendance(employee, attendanceStatus);
+        await saveAttendanceToFirebase(
+            employee,
+            attendanceStatus
+        );
 
-// Also save to Firebase
-await saveAttendanceToFirebase(
-    employee,
-    attendanceStatus
-);
+        saveAttendance(
+            employee,
+            attendanceStatus
+        );
+
+        console.log(
+            "Device ID:",
+            getDeviceId()
+        );
+
+        console.log(
+            "Fingerprint:",
+            getFingerprint()
+        );
+
+        message.style.color = "green";
+
+        message.innerHTML =
+            "✅ Welcome, "
+            + employee.name
+            + "! Attendance recorded. Status: "
+            + attendanceStatus;
+
+        employeeNumberInput.value = "";
+        pinInput.value = "";
+
+    } catch (error) {
+
+        console.error(error);
+
+        message.style.color = "red";
+
+        message.innerHTML =
+            "❌ Attendance could not be saved. Please try again.";
+    }
+}
+
+
 // =====================================================
 // Save Attendance to Firebase
 // =====================================================
@@ -104,128 +150,142 @@ async function saveAttendanceToFirebase(
     attendanceStatus
 ) {
 
-    try {
+    const now = new Date();
 
-        const now = new Date();
+    await addDoc(
+        collection(db, "attendance"),
+        {
+            employeeNumber:
+                employee.employeeNumber,
 
-        await addDoc(
-            collection(db, "attendance"),
-            {
-                employeeNumber: employee.employeeNumber,
-                name: employee.name,
-                department: employee.department,
+            name:
+                employee.name,
 
-                date: now.toLocaleDateString("en-ZA"),
-                dateKey: now.toISOString().split("T")[0],
+            department:
+                employee.department,
 
-                time: now.toLocaleTimeString("en-ZA"),
-                status: attendanceStatus,
+            date:
+                now.toLocaleDateString("en-ZA"),
 
-                deviceId: getDeviceId(),
-                fingerprint: getFingerprint(),
+            dateKey:
+                now.toISOString().split("T")[0],
 
-                createdAt: serverTimestamp()
-            }
-        );
+            time:
+                now.toLocaleTimeString("en-ZA"),
 
-        console.log(
-            "Attendance saved successfully to Firebase."
-        );
+            status:
+                attendanceStatus,
 
-    } catch (error) {
+            deviceId:
+                getDeviceId(),
 
-        console.error(
-            "Firebase attendance error:",
-            error
-        );
+            fingerprint:
+                getFingerprint(),
 
-        throw error;
-    }
+            createdAt:
+                serverTimestamp()
+        }
+    );
 }
 
-console.log("Device ID:", getDeviceId());
-console.log("Fingerprint:", getFingerprint());
 
-message.style.color = "green";
-message.innerHTML =
-    "✅ Welcome, " +
-    employee.name +
-    "! Attendance recorded. Status: " +
-    attendanceStatus;
-	}
-// =====================================
+// =====================================================
 // Attendance Status
-// =====================================
+// =====================================================
 
 function getAttendanceStatus() {
 
     const now = new Date();
 
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
+    const currentHour =
+        now.getHours();
+
+    const currentMinute =
+        now.getMinutes();
 
     const startHour = 8;
     const startMinute = 0;
 
     if (
         currentHour < startHour ||
-        (currentHour === startHour && currentMinute <= startMinute)
+        (
+            currentHour === startHour &&
+            currentMinute <= startMinute
+        )
     ) {
         return "On Time";
     }
 
     return "Late";
 }
-// =====================================
-// Save Attendance
-// =====================================
 
-// =====================================
-// Save Attendance
-// =====================================
 
-function saveAttendance(employee, attendanceStatus) {
+// =====================================================
+// Save Attendance Locally
+// =====================================================
 
-    const attendance = JSON.parse(
-        localStorage.getItem("attendance")
-    ) || [];
+function saveAttendance(
+    employee,
+    attendanceStatus
+) {
+
+    const attendance =
+        JSON.parse(
+            localStorage.getItem("attendance")
+        ) || [];
 
     attendance.push({
-        employeeNumber: employee.employeeNumber,
-        name: employee.name,
-        department: employee.department,
-        date: new Date().toLocaleDateString(),
-        time: new Date().toLocaleTimeString(),
-        status: attendanceStatus
+        employeeNumber:
+            employee.employeeNumber,
+
+        name:
+            employee.name,
+
+        department:
+            employee.department,
+
+        date:
+            new Date().toLocaleDateString(),
+
+        time:
+            new Date().toLocaleTimeString(),
+
+        status:
+            attendanceStatus
     });
 
     localStorage.setItem(
         "attendance",
         JSON.stringify(attendance)
     );
-
-    console.log(attendance);
 }
-// =====================================
+
+
+// =====================================================
 // Security Check
-// =====================================
+// =====================================================
 
 function securityCheck(employee) {
 
-    const attendance = JSON.parse(
-        localStorage.getItem("attendance")
-    ) || [];
+    const attendance =
+        JSON.parse(
+            localStorage.getItem("attendance")
+        ) || [];
 
-    const today = new Date().toLocaleDateString();
+    const today =
+        new Date().toLocaleDateString();
 
-    const alreadyCheckedIn = attendance.some(record =>
-        record.employeeNumber === employee.employeeNumber &&
-        record.date === today
-    );
+    const alreadyCheckedIn =
+        attendance.some(record =>
+            record.employeeNumber ===
+                employee.employeeNumber &&
+            record.date === today
+        );
 
     if (alreadyCheckedIn) {
 
         message.style.color = "orange";
+
         message.innerHTML =
             "⚠️ You have already checked in today.";
 
@@ -234,86 +294,101 @@ function securityCheck(employee) {
 
     return true;
 }
+
+
 // =====================================================
 // Validate User Input
 // =====================================================
 
-function validateInputs(){
+function validateInputs() {
 
-    const employeeNumber = employeeNumberInput.value.trim();
-    const pin = pinInput.value.trim();
+    const employeeNumber =
+        employeeNumberInput.value.trim();
 
-    if(employeeNumber === ""){
+    const pin =
+        pinInput.value.trim();
 
-        message.style.color="red";
-        message.innerHTML="❌ Please enter your Employee Number.";
+    if (employeeNumber === "") {
+
+        message.style.color = "red";
+
+        message.innerHTML =
+            "❌ Please enter your Employee Number.";
 
         employeeNumberInput.focus();
 
         return false;
-
     }
 
-    if(pin === ""){
+    if (pin === "") {
 
-        message.style.color="red";
-        message.innerHTML="❌ Please enter your PIN.";
+        message.style.color = "red";
+
+        message.innerHTML =
+            "❌ Please enter your PIN.";
 
         pinInput.focus();
 
         return false;
-
     }
 
     return true;
-
 }
+
+
 // =====================================================
 // Validate Employee
 // =====================================================
 
-function validateEmployee(){
+function validateEmployee() {
 
-    const employeeNumber = employeeNumberInput.value.trim();
+    const employeeNumber =
+        employeeNumberInput.value.trim();
 
-    const employee = findEmployee(employeeNumber);
+    const employee =
+        findEmployee(employeeNumber);
 
-    if(!employee){
+    if (!employee) {
 
         message.style.color = "red";
-        message.innerHTML = "❌ Employee Number not found.";
+
+        message.innerHTML =
+            "❌ Employee Number not found.";
 
         employeeNumberInput.focus();
 
         return null;
-
     }
 
     return employee;
-
 }
+
+
 // =====================================================
 // Validate PIN
 // =====================================================
 
 function validatePin(employee) {
 
-    const enteredPin = pinInput.value.trim();
+    const enteredPin =
+        pinInput.value.trim();
 
     if (employee.pin !== enteredPin) {
 
         message.style.color = "red";
-        message.innerHTML = "❌ Incorrect PIN.";
+
+        message.innerHTML =
+            "❌ Incorrect PIN.";
 
         pinInput.focus();
 
         return false;
-
     }
 
     return true;
-
 }
+
+
 // =====================================================
 // Authenticate Employee
 // =====================================================
@@ -324,7 +399,8 @@ function authenticateEmployee() {
         return null;
     }
 
-    const employee = validateEmployee();
+    const employee =
+        validateEmployee();
 
     if (!employee) {
         return null;
@@ -335,5 +411,4 @@ function authenticateEmployee() {
     }
 
     return employee;
-
 }
