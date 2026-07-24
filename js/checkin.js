@@ -124,7 +124,7 @@ if (!securityResult.allowed) {
 
     return;
 }
-    }
+    
 
     const attendanceStatus =
         getAttendanceStatus();
