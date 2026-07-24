@@ -90,8 +90,18 @@ async function checkIn() {
         return;
     }
 
-    if (!securityCheck(employee)) {
-        return;
+    const securityResult =
+    await securityCheck(employee);
+
+if (!securityResult.allowed) {
+
+    message.style.color = "orange";
+
+    message.innerHTML =
+        securityResult.message;
+
+    return;
+}
     }
 
     const attendanceStatus =
