@@ -9,7 +9,7 @@ import {
 const OFFICE_LOCATION = {
     latitude: -26.046374,
     longitude: 28.089098,
-    allowedRadiusMetres: 15
+    allowedRadiusMetres: 150
 };
 
 
