@@ -493,13 +493,14 @@ setTimeout(() => {
             "EMPLOYEE_ALREADY_CHECKED_IN"
         ) {
 
-            message.style.color = "green";
+            message.style.color = "orange";
 
 message.innerHTML =
-    "✅ Welcome "
+    "⚠️ "
     + registration.name
-    + ".<br><br>"
-    + "Attendance has already been recorded today."
+    + " has already checked in today."
+    + "<br><br>"
+    + "No new attendance record was created."
     + "<br><br>"
     + "This window will close automatically.";
 
