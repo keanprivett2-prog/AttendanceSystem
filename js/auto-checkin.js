@@ -91,6 +91,7 @@ function initializeAutoCheckIn() {
         return;
     }
 
+
     showRegisteredEmployee(registration);
 
 if (autoMode) {
