@@ -448,11 +448,17 @@ async function automaticCheckIn(
 
         message.style.color = "green";
 
-        message.textContent =
-            "Attendance recorded automatically for "
-            + registration.name
-            + ". Status: "
-            + attendanceStatus;
+        message.innerHTML =
+    "✅ Welcome " +
+    registration.name +
+    ".<br><br>" +
+    "Attendance recorded successfully.<br>" +
+    "Status: " +
+    attendanceStatus;
+
+        setTimeout(() => {
+    window.close();
+}, 5000);
 
     } catch (error) {
 
@@ -468,9 +474,15 @@ async function automaticCheckIn(
 
             message.style.color = "orange";
 
-            message.textContent =
-                "Attendance has already been recorded today.";
-
+            message.innerHTML =
+    "✅ Welcome " +
+    registration.name +
+    ".<br><br>" +
+    "Attendance has already been recorded today.";
+            
+setTimeout(() => {
+    window.close();
+}, 5000);
         } else if (
             error.message ===
             "DEVICE_ALREADY_USED"
