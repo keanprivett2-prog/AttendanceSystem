@@ -91,21 +91,21 @@ function initializeAutoCheckIn() {
         return;
     }
 
-
     showRegisteredEmployee(registration);
 
-if (autoMode) {
+    if (autoMode) {
 
-    automaticCheckIn(registration);
+        automaticCheckIn(registration);
 
-} else {
+    } else {
 
-    message.style.color = "#0b5ed7";
+        message.style.color = "#0b5ed7";
 
-    message.textContent =
-        "This browser is registered for "
-        + registration.name
-        + ". Automatic check-in only runs at Windows login.";
+        message.textContent =
+            "This browser is registered for "
+            + registration.name
+            + ". Automatic check-in only runs at Windows login.";
+    }
 }
 
 
