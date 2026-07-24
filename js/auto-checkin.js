@@ -40,6 +40,13 @@ const clock =
 
 const REGISTRATION_KEY =
     "attendanceDeviceRegistration";
+const urlParams =
+    new URLSearchParams(
+        window.location.search
+    );
+
+const autoMode =
+    urlParams.get("auto") === "true";
 
 
 // =====================================================
