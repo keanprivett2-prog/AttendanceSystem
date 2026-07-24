@@ -372,6 +372,54 @@ async function saveAttendanceToFirebase(
         }
     );
 }
+    // =====================================================
+// Get Current Location
+// =====================================================
+
+async function getCurrentLocation() {
+
+    return new Promise((resolve, reject) => {
+
+        if (!navigator.geolocation) {
+
+            reject(
+                "Geolocation is not supported by this browser."
+            );
+
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+
+            position => {
+
+                resolve({
+                    latitude:
+                        position.coords.latitude,
+
+                    longitude:
+                        position.coords.longitude,
+
+                    accuracy:
+                        position.coords.accuracy
+                });
+            },
+
+            error => {
+
+                reject(
+                    "Could not retrieve location."
+                );
+            },
+
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
+    });
+}
 
 
 // =====================================================
