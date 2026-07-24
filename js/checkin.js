@@ -239,7 +239,10 @@ try {
 
 async function saveAttendanceToFirebase(
     employee,
-    attendanceStatus
+    attendanceStatus,
+    location,
+    distanceMetres,
+    locationStatus
 ) {
 
     const now = new Date();
@@ -334,6 +337,26 @@ async function saveAttendanceToFirebase(
 
                     status:
                         attendanceStatus,
+                    latitude:
+    location.latitude,
+
+longitude:
+    location.longitude,
+
+locationAccuracyMetres:
+    Math.round(location.accuracy),
+
+distanceFromOfficeMetres:
+    Math.round(distanceMetres),
+
+locationStatus:
+    locationStatus,
+
+mapsLink:
+    "https://www.google.com/maps?q="
+    + location.latitude
+    + ","
+    + location.longitude,
 
                     deviceId:
                         deviceId,
