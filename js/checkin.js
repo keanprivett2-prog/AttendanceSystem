@@ -184,39 +184,156 @@ async function saveAttendanceToFirebase(
 ) {
 
     const now = new Date();
+    const dateKey = getLocalDateKey();
 
-    await addDoc(
-        collection(db, "attendance"),
-        {
-            employeeNumber:
-                employee.employeeNumber,
+    const deviceId = getDeviceId();
+    const fingerprint = getFingerprint();
 
-            name:
-                employee.name,
+    const safeDeviceId =
+        encodeURIComponent(deviceId);
 
-            department:
-                employee.department,
+    const safeFingerprint =
+        encodeURIComponent(fingerprint);
 
-            date:
-                now.toLocaleDateString("en-ZA"),
+    const employeeLockRef = doc(
+        db,
+        "employeeDailyLocks",
+        employee.employeeNumber + "_" + dateKey
+    );
 
-            dateKey:
-                now.toISOString().split("T")[0],
+    const deviceLockRef = doc(
+        db,
+        "deviceDailyLocks",
+        safeDeviceId + "_" + dateKey
+    );
 
-            time:
-                now.toLocaleTimeString("en-ZA"),
+    const fingerprintLockRef = doc(
+        db,
+        "fingerprintDailyLocks",
+        safeFingerprint + "_" + dateKey
+    );
 
-            status:
-                attendanceStatus,
+    const attendanceRef = doc(
+        db,
+        "attendance",
+        employee.employeeNumber + "_" + dateKey
+    );
 
-            deviceId:
-                getDeviceId(),
+    await runTransaction(
+        db,
+        async transaction => {
 
-            fingerprint:
-                getFingerprint(),
+            const employeeLock =
+                await transaction.get(employeeLockRef);
 
-            createdAt:
-                serverTimestamp()
+            const deviceLock =
+                await transaction.get(deviceLockRef);
+
+            const fingerprintLock =
+                await transaction.get(
+                    fingerprintLockRef
+                );
+
+            if (employeeLock.exists()) {
+                throw new Error(
+                    "EMPLOYEE_ALREADY_CHECKED_IN"
+                );
+            }
+
+            if (deviceLock.exists()) {
+                throw new Error(
+                    "DEVICE_ALREADY_USED"
+                );
+            }
+
+            if (fingerprintLock.exists()) {
+                throw new Error(
+                    "FINGERPRINT_ALREADY_USED"
+                );
+            }
+
+            transaction.set(
+                attendanceRef,
+                {
+                    employeeNumber:
+                        employee.employeeNumber,
+
+                    name:
+                        employee.name,
+
+                    department:
+                        employee.department,
+
+                    date:
+                        now.toLocaleDateString("en-ZA"),
+
+                    dateKey:
+                        dateKey,
+
+                    time:
+                        now.toLocaleTimeString("en-ZA"),
+
+                    status:
+                        attendanceStatus,
+
+                    deviceId:
+                        deviceId,
+
+                    fingerprint:
+                        fingerprint,
+
+                    createdAt:
+                        serverTimestamp()
+                }
+            );
+
+            transaction.set(
+                employeeLockRef,
+                {
+                    employeeNumber:
+                        employee.employeeNumber,
+
+                    dateKey:
+                        dateKey,
+
+                    createdAt:
+                        serverTimestamp()
+                }
+            );
+
+            transaction.set(
+                deviceLockRef,
+                {
+                    employeeNumber:
+                        employee.employeeNumber,
+
+                    deviceId:
+                        deviceId,
+
+                    dateKey:
+                        dateKey,
+
+                    createdAt:
+                        serverTimestamp()
+                }
+            );
+
+            transaction.set(
+                fingerprintLockRef,
+                {
+                    employeeNumber:
+                        employee.employeeNumber,
+
+                    fingerprint:
+                        fingerprint,
+
+                    dateKey:
+                        dateKey,
+
+                    createdAt:
+                        serverTimestamp()
+                }
+            );
         }
     );
 }
