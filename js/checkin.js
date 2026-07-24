@@ -162,9 +162,41 @@ if (!securityResult.allowed) {
         employeeNumberInput.value = "";
         pinInput.value = "";
 
-    } catch (error) {
+   } catch (error) {
 
-        console.error(error);
+    console.error(error);
+
+    if (
+        error.message ===
+        "EMPLOYEE_ALREADY_CHECKED_IN"
+    ) {
+
+        message.style.color = "orange";
+
+        message.innerHTML =
+            "⚠️ You have already checked in today.";
+
+    } else if (
+        error.message ===
+        "DEVICE_ALREADY_USED"
+    ) {
+
+        message.style.color = "orange";
+
+        message.innerHTML =
+            "⚠️ This device has already been used for a check-in today.";
+
+    } else if (
+        error.message ===
+        "FINGERPRINT_ALREADY_USED"
+    ) {
+
+        message.style.color = "orange";
+
+        message.innerHTML =
+            "⚠️ This browser has already been used for a check-in today.";
+
+    } else {
 
         message.style.color = "red";
 
@@ -172,7 +204,6 @@ if (!securityResult.allowed) {
             "❌ Attendance could not be saved. Please try again.";
     }
 }
-
 
 // =====================================================
 // Save Attendance to Firebase
