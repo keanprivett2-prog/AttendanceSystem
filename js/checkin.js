@@ -6,11 +6,28 @@ import {
     runTransaction,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-const OFFICE_LOCATION = {
-    latitude: -26.046374,
-    longitude: 28.089098,
-    allowedRadiusMetres: 150
-};
+const OFFICE_BOUNDARY = [
+
+    {
+        latitude: -26.0462511426058,
+        longitude: 28.088917697496093
+    },
+
+    {
+        latitude: -26.046506468114757,
+        longitude: 28.088908675656032
+    },
+
+    {
+        latitude: -26.046518626458468,
+        longitude: 28.08932819121874
+    },
+
+    {
+        latitude: -26.0462511426058,
+        longitude: 28.089323680298712
+    }
+];
 
 
 // =====================================================
@@ -145,17 +162,18 @@ try {
         await getCurrentLocation();
 
     const distanceMetres =
-        calculateDistanceMetres(
-            location.latitude,
-            location.longitude,
-            OFFICE_LOCATION.latitude,
-            OFFICE_LOCATION.longitude
-        );
+    calculateDistanceMetres(
+        location.latitude,
+        location.longitude,
+        OFFICE_BOUNDARY[0].latitude,
+        OFFICE_BOUNDARY[0].longitude
+    );
 
     const locationStatus =
-        getLocationStatus(
-            distanceMetres
-        );
+    getLocationStatus(
+        location.latitude,
+        location.longitude
+    );
     
 console.log("Saving attendance to Firebase...", {
     employeeNumber: employee.employeeNumber,
@@ -532,11 +550,71 @@ function calculateDistanceMetres(
     return earthRadiusMetres * c;
 }
     
-    function getLocationStatus(distanceMetres) {
+    function isInsideOfficeBoundary(
+    latitude,
+    longitude
+) {
+
+    let inside = false;
+
+    for (
+        let i = 0,
+        j = OFFICE_BOUNDARY.length - 1;
+        i < OFFICE_BOUNDARY.length;
+        j = i++
+    ) {
+
+        const pointI =
+            OFFICE_BOUNDARY[i];
+
+        const pointJ =
+            OFFICE_BOUNDARY[j];
+
+        const intersects =
+            (
+                pointI.latitude > latitude
+            ) !== (
+                pointJ.latitude > latitude
+            )
+            &&
+            longitude <
+            (
+                (
+                    pointJ.longitude
+                    - pointI.longitude
+                )
+                *
+                (
+                    latitude
+                    - pointI.latitude
+                )
+                /
+                (
+                    pointJ.latitude
+                    - pointI.latitude
+                )
+                +
+                pointI.longitude
+            );
+
+        if (intersects) {
+            inside = !inside;
+        }
+    }
+
+    return inside;
+}
+
+function getLocationStatus(
+    latitude,
+    longitude
+) {
 
     if (
-        distanceMetres <=
-        OFFICE_LOCATION.allowedRadiusMetres
+        isInsideOfficeBoundary(
+            latitude,
+            longitude
+        )
     ) {
         return "At Office";
     }
