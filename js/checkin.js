@@ -183,10 +183,23 @@ try {
         message.style.color = "green";
 
         message.innerHTML =
-            "✅ Welcome, "
-            + employee.name
-            + "! Attendance recorded. Status: "
-            + attendanceStatus;
+    " Welcome, "
+    + employee.name
+    + "!<br><br>"
+    + "Attendance recorded successfully.<br>"
+    + "Attendance Status: "
+    + attendanceStatus
+    + "<br>"
+    + "Location Status: "
+    + locationStatus
+    + "<br>"
+    + "Distance from Office: "
+    + Math.round(distanceMetres)
+    + " metres"
+    + "<br>"
+    + "GPS Accuracy: ±"
+    + Math.round(location.accuracy)
+    + " metres";
 
         employeeNumberInput.value = "";
         pinInput.value = "";
@@ -203,7 +216,7 @@ try {
         message.style.color = "orange";
 
         message.innerHTML =
-            "⚠️ You have already checked in today.";
+            " You have already checked in today.";
 
     } else if (
         error.message ===
@@ -213,7 +226,7 @@ try {
         message.style.color = "orange";
 
         message.innerHTML =
-            "⚠️ This device has already been used for a check-in today.";
+            " This device has already been used for a check-in today.";
 
     } else if (
         error.message ===
@@ -223,7 +236,7 @@ try {
         message.style.color = "orange";
 
         message.innerHTML =
-            "⚠️ This browser has already been used for a check-in today.";
+            " This browser has already been used for a check-in today.";
 
     } else {
 
