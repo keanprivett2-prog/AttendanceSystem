@@ -1,13 +1,15 @@
 import { db } from "../firebase/firebase.js";
 
 import {
-    collection,
-    addDoc,
-    query,
-    where,
-    getDocs,
+    doc,
+    runTransaction,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+
+// =====================================================
+// Page Elements
+// =====================================================
 
 const registrationSection =
     document.getElementById("registrationSection");
@@ -39,7 +41,17 @@ const clock =
 const REGISTRATION_KEY =
     "attendanceDeviceRegistration";
 
+
+// =====================================================
+// Start System
+// =====================================================
+
 initializeAutoCheckIn();
+
+
+// =====================================================
+// Initialize System
+// =====================================================
 
 function initializeAutoCheckIn() {
 
@@ -65,6 +77,7 @@ function initializeAutoCheckIn() {
         showRegistrationForm();
 
         message.style.color = "#0b5ed7";
+
         message.textContent =
             "This browser must be registered once.";
 
@@ -76,18 +89,27 @@ function initializeAutoCheckIn() {
     automaticCheckIn(registration);
 }
 
+
+// =====================================================
+// Read Browser Registration
+// =====================================================
+
 function getRegistration() {
 
     try {
 
         const storedRegistration =
-            localStorage.getItem(REGISTRATION_KEY);
+            localStorage.getItem(
+                REGISTRATION_KEY
+            );
 
         if (!storedRegistration) {
             return null;
         }
 
-        return JSON.parse(storedRegistration);
+        return JSON.parse(
+            storedRegistration
+        );
 
     } catch (error) {
 
@@ -100,14 +122,29 @@ function getRegistration() {
     }
 }
 
+
+// =====================================================
+// Save Browser Registration
+// =====================================================
+
 function saveRegistration(employee) {
 
     const registration = {
-        employeeNumber: employee.employeeNumber,
-        name: employee.name,
-        department: employee.department,
-        deviceId: getDeviceId(),
-        fingerprint: getFingerprint()
+
+        employeeNumber:
+            employee.employeeNumber,
+
+        name:
+            employee.name,
+
+        department:
+            employee.department,
+
+        deviceId:
+            getDeviceId(),
+
+        fingerprint:
+            getFingerprint()
     };
 
     localStorage.setItem(
@@ -118,9 +155,15 @@ function saveRegistration(employee) {
     return registration;
 }
 
+
+// =====================================================
+// Register Device
+// =====================================================
+
 function registerDevice() {
 
     message.style.color = "#0b5ed7";
+
     message.textContent =
         "Registering this browser...";
 
@@ -133,6 +176,7 @@ function registerDevice() {
     if (!employeeNumber) {
 
         message.style.color = "red";
+
         message.textContent =
             "Please enter the employee number.";
 
@@ -144,6 +188,7 @@ function registerDevice() {
     if (!enteredPin) {
 
         message.style.color = "red";
+
         message.textContent =
             "Please enter the PIN.";
 
@@ -158,6 +203,7 @@ function registerDevice() {
     if (!employee) {
 
         message.style.color = "red";
+
         message.textContent =
             "Employee number not found.";
 
@@ -169,6 +215,7 @@ function registerDevice() {
     if (employee.pin !== enteredPin) {
 
         message.style.color = "red";
+
         message.textContent =
             "Incorrect PIN.";
 
@@ -180,78 +227,222 @@ function registerDevice() {
     const registration =
         saveRegistration(employee);
 
-    showRegisteredEmployee(registration);
+    showRegisteredEmployee(
+        registration
+    );
 
     message.style.color = "green";
+
     message.textContent =
         "Browser registered successfully.";
 
-    automaticCheckIn(registration);
+    automaticCheckIn(
+        registration
+    );
 }
 
-async function automaticCheckIn(registration) {
+
+// =====================================================
+// Automatic Attendance Check-In
+// =====================================================
+
+async function automaticCheckIn(
+    registration
+) {
 
     try {
 
         message.style.color = "#0b5ed7";
+
         message.textContent =
             "Checking attendance status...";
-
-        const alreadyCheckedIn =
-            await hasCheckedInToday(
-                registration.employeeNumber
-            );
-
-        if (alreadyCheckedIn) {
-
-            message.style.color = "orange";
-            message.textContent =
-                "Attendance has already been recorded today.";
-
-            return;
-        }
-
-        const attendanceStatus =
-            getAttendanceStatus();
 
         const now =
             new Date();
 
-        await addDoc(
-            collection(db, "attendance"),
-            {
-                employeeNumber:
-                    registration.employeeNumber,
+        const dateKey =
+            getLocalDateKey(now);
 
-                name:
-                    registration.name,
+        const attendanceStatus =
+            getAttendanceStatus();
 
-                department:
-                    registration.department,
+        const deviceId =
+            registration.deviceId;
 
-                date:
-                    now.toLocaleDateString("en-ZA"),
+        const fingerprint =
+            registration.fingerprint;
 
-                dateKey:
-                    getLocalDateKey(now),
+        const safeDeviceId =
+            encodeURIComponent(deviceId);
 
-                time:
-                    now.toLocaleTimeString("en-ZA"),
+        const safeFingerprint =
+            encodeURIComponent(fingerprint);
 
-                status:
-                    attendanceStatus,
+        const employeeLockRef =
+            doc(
+                db,
+                "employeeDailyLocks",
+                registration.employeeNumber
+                    + "_"
+                    + dateKey
+            );
 
-                checkInMethod:
-                    "Automatic Browser Check-In",
+        const deviceLockRef =
+            doc(
+                db,
+                "deviceDailyLocks",
+                safeDeviceId
+                    + "_"
+                    + dateKey
+            );
 
-                deviceId:
-                    registration.deviceId,
+        const fingerprintLockRef =
+            doc(
+                db,
+                "fingerprintDailyLocks",
+                safeFingerprint
+                    + "_"
+                    + dateKey
+            );
 
-                fingerprint:
-                    registration.fingerprint,
+        const attendanceRef =
+            doc(
+                db,
+                "attendance",
+                registration.employeeNumber
+                    + "_"
+                    + dateKey
+            );
 
-                createdAt:
-                    serverTimestamp()
+        await runTransaction(
+            db,
+            async transaction => {
+
+                const employeeLock =
+                    await transaction.get(
+                        employeeLockRef
+                    );
+
+                const deviceLock =
+                    await transaction.get(
+                        deviceLockRef
+                    );
+
+                const fingerprintLock =
+                    await transaction.get(
+                        fingerprintLockRef
+                    );
+
+                if (employeeLock.exists()) {
+
+                    throw new Error(
+                        "EMPLOYEE_ALREADY_CHECKED_IN"
+                    );
+                }
+
+                if (deviceLock.exists()) {
+
+                    throw new Error(
+                        "DEVICE_ALREADY_USED"
+                    );
+                }
+
+                if (fingerprintLock.exists()) {
+
+                    throw new Error(
+                        "FINGERPRINT_ALREADY_USED"
+                    );
+                }
+
+                transaction.set(
+                    attendanceRef,
+                    {
+                        employeeNumber:
+                            registration.employeeNumber,
+
+                        name:
+                            registration.name,
+
+                        department:
+                            registration.department,
+
+                        date:
+                            now.toLocaleDateString(
+                                "en-ZA"
+                            ),
+
+                        dateKey:
+                            dateKey,
+
+                        time:
+                            now.toLocaleTimeString(
+                                "en-ZA"
+                            ),
+
+                        status:
+                            attendanceStatus,
+
+                        checkInMethod:
+                            "Automatic Browser Check-In",
+
+                        deviceId:
+                            deviceId,
+
+                        fingerprint:
+                            fingerprint,
+
+                        createdAt:
+                            serverTimestamp()
+                    }
+                );
+
+                transaction.set(
+                    employeeLockRef,
+                    {
+                        employeeNumber:
+                            registration.employeeNumber,
+
+                        dateKey:
+                            dateKey,
+
+                        createdAt:
+                            serverTimestamp()
+                    }
+                );
+
+                transaction.set(
+                    deviceLockRef,
+                    {
+                        employeeNumber:
+                            registration.employeeNumber,
+
+                        deviceId:
+                            deviceId,
+
+                        dateKey:
+                            dateKey,
+
+                        createdAt:
+                            serverTimestamp()
+                    }
+                );
+
+                transaction.set(
+                    fingerprintLockRef,
+                    {
+                        employeeNumber:
+                            registration.employeeNumber,
+
+                        fingerprint:
+                            fingerprint,
+
+                        dateKey:
+                            dateKey,
+
+                        createdAt:
+                            serverTimestamp()
+                    }
+                );
             }
         );
 
@@ -266,45 +457,54 @@ async function automaticCheckIn(registration) {
     } catch (error) {
 
         console.error(
-            "Automatic check-in failed:",
+            "Automatic check-in:",
             error
         );
 
-        message.style.color = "red";
-        message.textContent =
-            "Automatic attendance could not be recorded.";
+        if (
+            error.message ===
+            "EMPLOYEE_ALREADY_CHECKED_IN"
+        ) {
+
+            message.style.color = "orange";
+
+            message.textContent =
+                "Attendance has already been recorded today.";
+
+        } else if (
+            error.message ===
+            "DEVICE_ALREADY_USED"
+        ) {
+
+            message.style.color = "orange";
+
+            message.textContent =
+                "This device has already been used for attendance today.";
+
+        } else if (
+            error.message ===
+            "FINGERPRINT_ALREADY_USED"
+        ) {
+
+            message.style.color = "orange";
+
+            message.textContent =
+                "This browser has already been used for attendance today.";
+
+        } else {
+
+            message.style.color = "red";
+
+            message.textContent =
+                "Automatic attendance could not be recorded.";
+        }
     }
 }
 
-async function hasCheckedInToday(
-    employeeNumber
-) {
 
-    const todayKey =
-        getLocalDateKey(new Date());
-
-    const attendanceQuery =
-        query(
-            collection(db, "attendance"),
-
-            where(
-                "employeeNumber",
-                "==",
-                employeeNumber
-            ),
-
-            where(
-                "dateKey",
-                "==",
-                todayKey
-            )
-        );
-
-    const snapshot =
-        await getDocs(attendanceQuery);
-
-    return !snapshot.empty;
-}
+// =====================================================
+// Attendance Status
+// =====================================================
 
 function getAttendanceStatus() {
 
@@ -330,6 +530,11 @@ function getAttendanceStatus() {
     return "Late";
 }
 
+
+// =====================================================
+// Local Date Key
+// =====================================================
+
 function getLocalDateKey(date) {
 
     const year =
@@ -345,20 +550,36 @@ function getLocalDateKey(date) {
             date.getDate()
         ).padStart(2, "0");
 
-    return `${year}-${month}-${day}`;
+    return year
+        + "-"
+        + month
+        + "-"
+        + day;
 }
+
+
+// =====================================================
+// Show Registration Form
+// =====================================================
 
 function showRegistrationForm() {
 
     registrationSection.hidden = false;
+
     registeredSection.hidden = true;
 }
+
+
+// =====================================================
+// Show Registered Employee
+// =====================================================
 
 function showRegisteredEmployee(
     registration
 ) {
 
     registrationSection.hidden = true;
+
     registeredSection.hidden = false;
 
     registeredEmployee.textContent =
@@ -367,6 +588,11 @@ function showRegisteredEmployee(
         + registration.employeeNumber
         + ")";
 }
+
+
+// =====================================================
+// Remove Registration
+// =====================================================
 
 function clearRegistration() {
 
@@ -384,14 +610,21 @@ function clearRegistration() {
     );
 
     employeeNumberInput.value = "";
+
     pinInput.value = "";
 
     showRegistrationForm();
 
     message.style.color = "#0b5ed7";
+
     message.textContent =
         "Browser registration removed.";
 }
+
+
+// =====================================================
+// Live Clock
+// =====================================================
 
 function updateClock() {
 
