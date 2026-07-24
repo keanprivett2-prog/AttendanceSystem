@@ -132,14 +132,38 @@ if (!securityResult.allowed) {
     
 
     const attendanceStatus =
-        getAttendanceStatus();
+    getAttendanceStatus();
 
-    try {
+try {
 
-        await saveAttendanceToFirebase(
-            employee,
-            attendanceStatus
+    message.style.color = "#0b5ed7";
+
+    message.innerHTML =
+        " Getting your current location...";
+
+    const location =
+        await getCurrentLocation();
+
+    const distanceMetres =
+        calculateDistanceMetres(
+            location.latitude,
+            location.longitude,
+            OFFICE_LOCATION.latitude,
+            OFFICE_LOCATION.longitude
         );
+
+    const locationStatus =
+        getLocationStatus(
+            distanceMetres
+        );
+
+    await saveAttendanceToFirebase(
+        employee,
+        attendanceStatus,
+        location,
+        distanceMetres,
+        locationStatus
+    );
 
         saveAttendance(
             employee,
