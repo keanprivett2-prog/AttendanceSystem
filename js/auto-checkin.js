@@ -462,10 +462,6 @@ setTimeout(() => {
     window.close();
 }, 5000);
 
-        setTimeout(() => {
-    window.close();
-}, 5000);
-
     } catch (error) {
 
         console.error(
@@ -478,14 +474,16 @@ setTimeout(() => {
             "EMPLOYEE_ALREADY_CHECKED_IN"
         ) {
 
-            message.style.color = "orange";
+            message.style.color = "green";
 
-            message.innerHTML =
-    "✅ Welcome " +
-    registration.name +
-    ".<br><br>" +
-    "Attendance has already been recorded today.";
-            
+message.innerHTML =
+    "✅ Welcome "
+    + registration.name
+    + ".<br><br>"
+    + "Attendance has already been recorded today."
+    + "<br><br>"
+    + "This window will close automatically.";
+
 setTimeout(() => {
     window.close();
 }, 5000);
