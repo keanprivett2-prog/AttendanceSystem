@@ -156,7 +156,14 @@ try {
         getLocationStatus(
             distanceMetres
         );
-
+    
+console.log("Saving attendance to Firebase...", {
+    employeeNumber: employee.employeeNumber,
+    location,
+    distanceMetres,
+    locationStatus
+    
+});
     await saveAttendanceToFirebase(
         employee,
         attendanceStatus,
@@ -164,7 +171,8 @@ try {
         distanceMetres,
         locationStatus
     );
-
+console.log("Firebase save completed.");
+    
         saveAttendance(
             employee,
             attendanceStatus
