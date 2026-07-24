@@ -169,11 +169,15 @@ try {
         OFFICE_BOUNDARY[0].longitude
     );
 
-    const locationStatus =
+    let locationStatus =
     getLocationStatus(
         location.latitude,
         location.longitude
     );
+
+if (location.accuracy > 15) {
+    locationStatus = "Location Uncertain";
+}
     
 console.log("Saving attendance to Firebase...", {
     employeeNumber: employee.employeeNumber,
@@ -219,7 +223,7 @@ console.log("Firebase save completed.");
     + "Location Status: "
     + locationStatus
     + "<br>"
-    + "Distance from Office: "
+    + "Distance from Boundary Corner: "
     + Math.round(distanceMetres)
     + " metres"
     + "<br>"
