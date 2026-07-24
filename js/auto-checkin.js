@@ -93,7 +93,18 @@ function initializeAutoCheckIn() {
 
     showRegisteredEmployee(registration);
 
+if (autoMode) {
+
     automaticCheckIn(registration);
+
+} else {
+
+    message.style.color = "#0b5ed7";
+
+    message.textContent =
+        "This browser is registered for "
+        + registration.name
+        + ". Automatic check-in only runs at Windows login.";
 }
 
 
