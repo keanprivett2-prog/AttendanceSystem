@@ -551,6 +551,12 @@ async function loadAdminProfile() {
             adminProfile
         );
 
+        const adminWelcome =
+    document.getElementById("adminWelcome");
+
+adminWelcome.textContent =
+    "Welcome, " + adminProfile.name + "!";
+
     } catch (error) {
 
         console.error(
