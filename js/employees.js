@@ -181,8 +181,8 @@ async function loadEmployees() {
     </button>
 
     <button class="employee-action-btn disable-btn" data-id="${doc.id}">
-        Disable
-    </button>
+    ${employee.active ? "Disable" : "Enable"}
+</button>
     
     <button class="employee-action-btn delete-btn" data-id="${doc.id}">
     Delete
@@ -274,7 +274,44 @@ async function loadEmployees() {
         });
 
     });
+// =====================================
+// Disable / Enable Employee
+// =====================================
 
+const disableButtons = document.querySelectorAll(".disable-btn");
+
+disableButtons.forEach((button) => {
+
+    button.addEventListener("click", async () => {
+
+        const employeeId = button.dataset.id;
+
+        const employeeReference = doc(db, "employees", employeeId);
+
+        const employeeSnapshot = await getDoc(employeeReference);
+
+        if (!employeeSnapshot.exists()) {
+            alert("Employee could not be found.");
+            return;
+        }
+
+        const employee = employeeSnapshot.data();
+
+        await updateDoc(employeeReference, {
+            active: !employee.active
+        });
+
+        await loadEmployees();
+
+        alert(
+            employee.active
+                ? "Employee disabled successfully."
+                : "Employee enabled successfully."
+        );
+
+    });
+
+});
 }
 
 loadEmployees();
