@@ -77,7 +77,11 @@ employeeForm.addEventListener("submit", async (event) => {
 
 const existingEmployees = await getDocs(employeeQuery);
 
-if (!editingEmployeeId && !existingEmployees.empty) {
+const duplicateEmployee = existingEmployees.docs.find((employeeDoc) => {
+    return employeeDoc.id !== editingEmployeeId;
+});
+
+if (duplicateEmployee) {
 
     alert("An employee with this Employee Number already exists.");
 
