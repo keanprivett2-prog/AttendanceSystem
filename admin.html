@@ -108,21 +108,26 @@
     </div>
 
 </div>
-<input
-    type="text"
-    id="searchInput"
-    placeholder="Search by Employee Number or Name..."
->
-<select id="departmentFilter">
-    <option value="">All Departments</option>
-    <option value="Finance">Finance</option>
-    <option value="HR">HR</option>
-    <option value="IT">IT</option>
-</select>
+<div class="attendance-toolbar">
 
-<button id="exportButton">
-    Export Attendance to CSV
-</button>
+    <input
+        type="text"
+        id="searchInput"
+        placeholder="Search by Employee Number or Name..."
+    >
+
+    <select id="departmentFilter">
+        <option value="">All Departments</option>
+        <option value="Finance">Finance</option>
+        <option value="HR">HR</option>
+        <option value="IT">IT</option>
+    </select>
+
+    <button id="exportButton">
+        Export CSV
+    </button>
+
+</div>
 
         <table id="attendanceTable">
 
