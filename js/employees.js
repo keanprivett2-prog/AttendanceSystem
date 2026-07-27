@@ -11,6 +11,7 @@ import {
     doc,
     getDoc,
     updateDoc,
+    deleteDoc,
     query,
     where
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
@@ -193,12 +194,12 @@ async function loadEmployees() {
     });
     const editButtons = document.querySelectorAll(".edit-btn");
 
-    editButtons.forEach((button) => {
+        editButtons.forEach((button) => {
 
         button.addEventListener("click", async () => {
 
             const employeeId = button.dataset.id;
-            
+
             editingEmployeeId = employeeId;
 
             const employeeReference = doc(db, "employees", employeeId);
@@ -229,6 +230,51 @@ async function loadEmployees() {
         });
 
     });
+
+    // =====================================
+    // Delete Employee
+    // =====================================
+
+    const deleteButtons = document.querySelectorAll(".delete-btn");
+
+    deleteButtons.forEach((button) => {
+
+        button.addEventListener("click", async () => {
+
+            const employeeId = button.dataset.id;
+
+            const employeeReference = doc(db, "employees", employeeId);
+
+            const employeeSnapshot = await getDoc(employeeReference);
+
+            if (!employeeSnapshot.exists()) {
+                alert("Employee could not be found.");
+                return;
+            }
+
+            const employee = employeeSnapshot.data();
+
+            const confirmed = confirm(
+                `Delete Employee?\n\n` +
+                `Employee: ${employee.name}\n` +
+                `Employee Number: ${employee.employeeNumber}\n\n` +
+                `This action cannot be undone.`
+            );
+
+            if (!confirmed) {
+                return;
+            }
+
+            await deleteDoc(employeeReference);
+
+            await loadEmployees();
+
+            alert("Employee deleted successfully.");
+
+        });
+
+    });
+
 }
 
 loadEmployees();
