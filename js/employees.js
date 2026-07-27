@@ -7,7 +7,10 @@ import { db } from "../firebase/firebase.js";
 import {
     collection,
     addDoc,
-    getDocs
+    getDocs,
+    doc,
+    getDoc,
+    updateDoc
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 // =====================================
