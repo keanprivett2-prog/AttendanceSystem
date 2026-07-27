@@ -640,6 +640,13 @@ body {
     color: #c62828;
 }
 
+.delete-btn {
+    background: #b71c1c;
+    color: white;
+}
+
 .employee-action-btn:hover {
-    opacity: 0.8;
+    opacity: 0.85;
+    transform: translateY(-1px);
+    transition: all 0.2s ease;
 }
