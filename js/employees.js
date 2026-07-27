@@ -182,6 +182,10 @@ async function loadEmployees() {
     <button class="employee-action-btn disable-btn" data-id="${doc.id}">
         Disable
     </button>
+    
+    <button class="employee-action-btn delete-btn" data-id="${doc.id}">
+    Delete
+</button>
 </td>
             </tr>
         `;
