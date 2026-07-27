@@ -2,7 +2,15 @@
 // Firebase Admin Authentication
 // =====================================
 
-import { auth } from "./firebase.js";
+import {
+    auth,
+    db
+} from "./firebase.js";
+
+import {
+    doc,
+    getDoc
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 import {
     signInWithEmailAndPassword,
@@ -43,9 +51,38 @@ function protectAdminPage() {
     });
 }
 
+// Get the signed-in administrator's profile
+async function getAdminProfile() {
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        return null;
+    }
+
+    const adminDocument = doc(
+        db,
+        "admins",
+        user.uid
+    );
+
+    const adminSnapshot =
+        await getDoc(adminDocument);
+
+    if (!adminSnapshot.exists()) {
+        return null;
+    }
+
+    return {
+        uid: user.uid,
+        ...adminSnapshot.data()
+    };
+}
+
 // Export authentication functions
 export {
     loginAdmin,
     logoutAdmin,
-    protectAdminPage
+    protectAdminPage,
+    getAdminProfile
 };
