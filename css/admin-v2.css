@@ -361,3 +361,91 @@ body {
     color: #94a3b8 !important;
     text-align: center;
 }
+/* =====================================
+   Employee Directory
+===================================== */
+
+.employee-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin-top: 24px;
+    padding: 22px 24px;
+
+    background: white;
+    border-radius: 14px;
+
+    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.08);
+}
+
+.employee-actions h2 {
+    margin: 0;
+
+    color: #0b2a4a;
+    font-size: 20px;
+}
+
+.employee-actions p {
+    margin: 6px 0 0;
+
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.add-employee-btn {
+    padding: 10px 18px;
+
+    border: none;
+    border-radius: 8px;
+
+    background: #16a34a;
+    color: white;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition: background 0.2s ease,
+                transform 0.2s ease;
+}
+
+.add-employee-btn:hover {
+    background: #15803d;
+    transform: translateY(-1px);
+}
+
+.employee-table-section {
+    margin-top: 24px;
+    padding: 24px;
+
+    background: white;
+    border-radius: 14px;
+
+    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.08);
+
+    overflow-x: auto;
+}
+
+.employee-toolbar {
+    margin-bottom: 20px;
+}
+
+.employee-search {
+    width: 100%;
+    max-width: 360px;
+
+    padding: 11px 14px;
+
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+
+    font-size: 14px;
+    outline: none;
+}
+
+.employee-search:focus {
+    border-color: #1d72d8;
+    box-shadow: 0 0 0 3px rgba(29, 114, 216, 0.12);
+}
