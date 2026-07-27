@@ -197,3 +197,33 @@ button:hover {
     margin: 10px 0;
     text-align: left;
 }
+/* =====================================
+   Attendance Toolbar
+===================================== */
+
+.attendance-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin: 25px 0;
+}
+
+.attendance-toolbar input {
+    flex: 1;
+    margin: 0;
+}
+
+.attendance-toolbar select {
+    width: 220px;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 15px;
+}
+
+.attendance-toolbar button {
+    width: auto;
+    margin: 0;
+    padding: 12px 20px;
+    white-space: nowrap;
+}
