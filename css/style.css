@@ -227,3 +227,43 @@ button:hover {
     padding: 12px 20px;
     white-space: nowrap;
 }
+/* =====================================
+   Attendance Table
+===================================== */
+
+.table-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    overflow: hidden;
+    margin-top: 20px;
+}
+
+#attendanceTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#attendanceTable thead {
+    background: #0b5ed7;
+}
+
+#attendanceTable thead th {
+    color: white;
+    text-align: left;
+    padding: 16px;
+    font-size: 15px;
+}
+
+#attendanceTable tbody td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #ececec;
+}
+
+#attendanceTable tbody tr:nth-child(even) {
+    background: #f8f9fc;
+}
+
+#attendanceTable tbody tr:hover {
+    background: #eef5ff;
+}
