@@ -267,3 +267,22 @@ button:hover {
 #attendanceTable tbody tr:hover {
     background: #eef5ff;
 }
+/* =====================================
+   Dashboard Card Colours
+===================================== */
+
+.total-card {
+    border-top: 5px solid #0b5ed7;
+}
+
+.success-card {
+    border-top: 5px solid #198754;
+}
+
+.warning-card {
+    border-top: 5px solid #fd7e14;
+}
+
+.danger-card {
+    border-top: 5px solid #dc3545;
+}
