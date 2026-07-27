@@ -615,3 +615,31 @@ body {
     cursor:pointer;
 
 }
+.employee-action-btn {
+    border: none;
+    padding: 7px 11px;
+    margin: 2px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.edit-btn {
+    background: #e8f1ff;
+    color: #0b5ed7;
+}
+
+.reset-pin-btn {
+    background: #fff4d6;
+    color: #9a6700;
+}
+
+.disable-btn {
+    background: #ffe5e5;
+    color: #c62828;
+}
+
+.employee-action-btn:hover {
+    opacity: 0.8;
+}
