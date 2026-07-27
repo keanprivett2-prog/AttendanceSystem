@@ -1,6 +1,8 @@
 // =====================================
-// Admin Login
+// R-E-D Attendance Admin Login
 // =====================================
+
+import { loginAdmin } from "../firebase/auth.js";
 
 const adminUsernameInput =
     document.getElementById("adminUsername");
@@ -16,27 +18,55 @@ const adminLoginMessage =
 
 adminLoginButton.addEventListener("click", adminLogin);
 
-function adminLogin() {
+adminPasswordInput.addEventListener("keydown", function (event) {
 
-    const username =
+    if (event.key === "Enter") {
+        adminLogin();
+    }
+
+});
+
+async function adminLogin() {
+
+    const email =
         adminUsernameInput.value.trim();
 
     const password =
         adminPasswordInput.value.trim();
 
-    if (username === "admin" && password === "admin123") {
+    adminLoginMessage.style.color = "#0b5ed7";
+    adminLoginMessage.innerHTML = "Signing in...";
+
+    adminLoginButton.disabled = true;
+
+    try {
+
+        const user =
+            await loginAdmin(email, password);
 
         sessionStorage.setItem(
             "adminLoggedIn",
             "true"
         );
 
+        sessionStorage.setItem(
+            "adminEmail",
+            user.email
+        );
+
         window.location.href = "admin.html";
 
-        return;
-    }
+    } catch (error) {
 
-    adminLoginMessage.style.color = "red";
-    adminLoginMessage.innerHTML =
-        "❌ Incorrect username or password.";
+        console.error(
+            "Admin login error:",
+            error
+        );
+
+        adminLoginMessage.style.color = "red";
+        adminLoginMessage.innerHTML =
+            "❌ Incorrect email address or password.";
+
+        adminLoginButton.disabled = false;
+    }
 }
