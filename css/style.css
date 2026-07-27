@@ -68,3 +68,37 @@ button:hover {
     text-align: center;
     color: #777;
 }
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 240px;
+    height: 100vh;
+    padding: 25px 20px;
+    background: #0b5ed7;
+    box-sizing: border-box;
+}
+
+.sidebar h2 {
+    margin-top: 0;
+    margin-bottom: 30px;
+    color: white;
+}
+
+.sidebar a {
+    display: block;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+}
+
+.sidebar a:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.container {
+    margin-left: 260px;
+}
