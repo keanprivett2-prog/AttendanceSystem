@@ -87,15 +87,36 @@ if (!editingEmployeeId && !existingEmployees.empty) {
 
     try {
 
-        await addDoc(collection(db, "employees"), {
-            employeeNumber: employeeNumber,
-            name: employeeName,
-            department: employeeDepartment,
-            pin: employeePin,
-            active: true
-        });
+        if (editingEmployeeId) {
 
+    const employeeReference = doc(
+        db,
+        "employees",
+        editingEmployeeId
+    );
+
+    await updateDoc(employeeReference, {
+        employeeNumber: employeeNumber,
+        name: employeeName,
+        department: employeeDepartment,
+        pin: employeePin
+    });
+
+} else {
+
+    await addDoc(collection(db, "employees"), {
+        employeeNumber: employeeNumber,
+        name: employeeName,
+        department: employeeDepartment,
+        pin: employeePin,
+        active: true
+    });
+
+}
+
+        
         employeeForm.reset();
+        editingEmployeeId = null;
         modal.classList.remove("active");
 
         await loadEmployees();
