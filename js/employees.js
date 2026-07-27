@@ -24,6 +24,8 @@ const cancelEmployeeButton = document.getElementById("cancelEmployeeButton");
 const employeeForm = document.getElementById("employeeForm");
 const employeeTableBody = document.getElementById("employeeTableBody");
 
+let editingEmployeeId = null;
+
 // =====================================
 // Modal Controls
 // =====================================
@@ -150,6 +152,8 @@ async function loadEmployees() {
         button.addEventListener("click", async () => {
 
             const employeeId = button.dataset.id;
+            
+            editingEmployeeId = employeeId;
 
             const employeeReference = doc(db, "employees", employeeId);
 
