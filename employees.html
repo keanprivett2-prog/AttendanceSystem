@@ -119,6 +119,8 @@
 
     </div>
 
+    
+    
     <table class="attendance-table">
 
         <thead>
@@ -152,6 +154,91 @@
     </table>
 
 </section>
+
+           <div class="modal-overlay" id="employeeModal">
+
+    <div class="employee-modal">
+
+        <div class="modal-header">
+
+            <div>
+                <h2>Add Employee</h2>
+                <p>Create a new employee profile.</p>
+            </div>
+
+            <button type="button" class="modal-close" id="closeEmployeeModal">
+                ×
+            </button>
+
+        </div>
+
+        <form id="employeeForm">
+
+            <div class="form-grid">
+
+                <div class="form-group">
+                    <label for="employeeNumber">Employee Number</label>
+                    <input
+                        type="text"
+                        id="employeeNumber"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="employeeName">Full Name</label>
+                    <input
+                        type="text"
+                        id="employeeName"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="employeeDepartment">Department</label>
+                    <input
+                        type="text"
+                        id="employeeDepartment"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="employeePin">PIN</label>
+                    <input
+                        type="password"
+                        id="employeePin"
+                        maxlength="6"
+                        required
+                    >
+                </div>
+
+            </div>
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    class="cancel-btn"
+                    id="cancelEmployeeButton"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="save-employee-btn"
+                >
+                    Save Employee
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div> 
             
         </main>
 
