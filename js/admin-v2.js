@@ -1,5 +1,5 @@
 // =====================================
-// Firebase Imports
+// Firebase
 // =====================================
 
 import { db } from "../firebase/firebase.js";
@@ -9,4 +9,22 @@ import {
     getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-console.log("✅ Admin V2 Loaded");
+// =====================================
+// Load Attendance
+// =====================================
+
+async function loadAttendance() {
+
+    const snapshot = await getDocs(collection(db, "attendance"));
+
+    console.log("Attendance Records:", snapshot.size);
+
+    snapshot.forEach((doc) => {
+
+        console.log(doc.id, doc.data());
+
+    });
+
+}
+
+loadAttendance();
