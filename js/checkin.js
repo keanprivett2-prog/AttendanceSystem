@@ -120,6 +120,142 @@ function getLocalDateKey() {
 }
 
 // =====================================================
+// Distance to Office Boundary
+// =====================================================
+
+function distanceToLineSegmentMetres(
+    latitude,
+    longitude,
+    startLatitude,
+    startLongitude,
+    endLatitude,
+    endLongitude
+) {
+    const metresPerDegreeLatitude = 111320;
+
+    const averageLatitudeRadians =
+        latitude * Math.PI / 180;
+
+    const metresPerDegreeLongitude =
+        111320 * Math.cos(
+            averageLatitudeRadians
+        );
+
+    const pointX =
+        longitude *
+        metresPerDegreeLongitude;
+
+    const pointY =
+        latitude *
+        metresPerDegreeLatitude;
+
+    const startX =
+        startLongitude *
+        metresPerDegreeLongitude;
+
+    const startY =
+        startLatitude *
+        metresPerDegreeLatitude;
+
+    const endX =
+        endLongitude *
+        metresPerDegreeLongitude;
+
+    const endY =
+        endLatitude *
+        metresPerDegreeLatitude;
+
+    const lineX =
+        endX - startX;
+
+    const lineY =
+        endY - startY;
+
+    const lineLengthSquared =
+        lineX * lineX +
+        lineY * lineY;
+
+    let position = 0;
+
+    if (lineLengthSquared !== 0) {
+        position =
+            (
+                (pointX - startX) * lineX +
+                (pointY - startY) * lineY
+            ) /
+            lineLengthSquared;
+    }
+
+    position =
+        Math.max(
+            0,
+            Math.min(1, position)
+        );
+
+    const nearestX =
+        startX +
+        position * lineX;
+
+    const nearestY =
+        startY +
+        position * lineY;
+
+    const differenceX =
+        pointX - nearestX;
+
+    const differenceY =
+        pointY - nearestY;
+
+    return Math.sqrt(
+        differenceX * differenceX +
+        differenceY * differenceY
+    );
+}
+
+function calculateDistanceFromOfficeBoundary(
+    latitude,
+    longitude
+) {
+    let shortestDistance =
+        Infinity;
+
+    for (
+        let i = 0;
+        i < OFFICE_BOUNDARY.length;
+        i++
+    ) {
+        const currentCorner =
+            OFFICE_BOUNDARY[i];
+
+        const nextCorner =
+            OFFICE_BOUNDARY[
+                (i + 1) %
+                OFFICE_BOUNDARY.length
+            ];
+
+        const edgeDistance =
+            distanceToLineSegmentMetres(
+                latitude,
+                longitude,
+                currentCorner.latitude,
+                currentCorner.longitude,
+                nextCorner.latitude,
+                nextCorner.longitude
+            );
+
+        if (
+            edgeDistance <
+            shortestDistance
+        ) {
+            shortestDistance =
+                edgeDistance;
+        }
+    }
+
+    return shortestDistance;
+}
+
+// =====================================================
 // Main Check In
 // =====================================================
 
@@ -163,11 +299,9 @@ try {
         await getCurrentLocation();
 
     const distanceMetres =
-    calculateDistanceMetres(
+    calculateDistanceFromOfficeBoundary(
         location.latitude,
-        location.longitude,
-        OFFICE_BOUNDARY[0].latitude,
-        OFFICE_BOUNDARY[0].longitude
+        location.longitude
     );
 
     let locationStatus =
@@ -176,9 +310,35 @@ try {
         location.longitude
     );
 
-if (location.accuracy > 15) {
+    if (location.accuracy > 15) {
     locationStatus = "Location Uncertain";
 }
+
+    if (locationStatus !== "At Office") {
+
+    message.style.color = "red";
+
+    if (locationStatus === "Location Uncertain") {
+
+        message.innerHTML =
+            "❌ Check-in denied because your GPS location is not accurate enough."
+            + "<br>Please move near a window or outside and try again."
+            + "<br>Current GPS Accuracy: ±"
+            + Math.round(location.accuracy)
+            + " metres";
+
+    } else {
+
+        message.innerHTML =
+            "❌ Check-in denied."
+            + "<br>You are outside the office boundary.";
+
+    }
+
+    return;
+}
+
+
     
 console.log("Saving attendance to Firebase...", {
     employeeNumber: employee.employeeNumber,
@@ -224,7 +384,7 @@ console.log("Firebase save completed.");
     + "Location Status: "
     + locationStatus
     + "<br>"
-    + "Distance from Boundary Corner: "
+    + "Distance from Office Boundary: "
     + Math.round(distanceMetres)
     + " metres"
     + "<br>"
@@ -341,23 +501,27 @@ async function saveAttendanceToFirebase(
                     fingerprintLockRef
                 );
 
-            if (employeeLock.exists()) {
-                throw new Error(
-                    "EMPLOYEE_ALREADY_CHECKED_IN"
-                );
-            }
+            if (!TEST_MODE) {
 
-            if (deviceLock.exists()) {
-                throw new Error(
-                    "DEVICE_ALREADY_USED"
-                );
-            }
+    if (employeeLock.exists()) {
+        throw new Error(
+            "EMPLOYEE_ALREADY_CHECKED_IN"
+        );
+    }
 
-            if (fingerprintLock.exists()) {
-                throw new Error(
-                    "FINGERPRINT_ALREADY_USED"
-                );
-            }
+    if (deviceLock.exists()) {
+        throw new Error(
+            "DEVICE_ALREADY_USED"
+        );
+    }
+
+    if (fingerprintLock.exists()) {
+        throw new Error(
+            "FINGERPRINT_ALREADY_USED"
+        );
+    }
+
+}
 
             transaction.set(
                 attendanceRef,
