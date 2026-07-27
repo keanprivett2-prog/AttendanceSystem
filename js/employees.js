@@ -123,7 +123,19 @@ async function loadEmployees() {
                 <td>${employee.name ?? "-"}</td>
                 <td>${employee.department ?? "-"}</td>
                 <td>${employee.active ? "Active" : "Inactive"}</td>
-                <td>-</td>
+                <td>
+    <button class="employee-action-btn edit-btn" data-id="${doc.id}">
+        Edit
+    </button>
+
+    <button class="employee-action-btn reset-pin-btn" data-id="${doc.id}">
+        Reset PIN
+    </button>
+
+    <button class="employee-action-btn disable-btn" data-id="${doc.id}">
+        Disable
+    </button>
+</td>
             </tr>
         `;
 
