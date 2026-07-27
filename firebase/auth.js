@@ -52,9 +52,20 @@ function protectAdminPage() {
 }
 
 // Get the signed-in administrator's profile
+// Get the signed-in administrator's profile
 async function getAdminProfile() {
 
-    const user = auth.currentUser;
+    const user = await new Promise(resolve => {
+
+        const unsubscribe =
+            onAuthStateChanged(auth, currentUser => {
+
+                unsubscribe();
+                resolve(currentUser);
+
+            });
+
+    });
 
     if (!user) {
         return null;
