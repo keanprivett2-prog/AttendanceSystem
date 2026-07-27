@@ -524,9 +524,43 @@ logoutButton.addEventListener(
     }
 );
 
+// =====================================
+// Load Administrator Profile
+// =====================================
+
+async function loadAdminProfile() {
+
+    try {
+
+        const adminProfile =
+            await getAdminProfile();
+
+        if (!adminProfile) {
+
+            console.error(
+                "Administrator profile not found."
+            );
+
+            return;
+        }
+
+        console.log(
+            "Logged-in administrator:",
+            adminProfile
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Could not load administrator profile:",
+            error
+        );
+    }
+}
 
 // =====================================
 // Start Dashboard
 // =====================================
 
+loadAdminProfile();
 loadAttendanceFromFirebase();
