@@ -143,7 +143,42 @@ async function loadEmployees() {
         `;
 
     });
+    const editButtons = document.querySelectorAll(".edit-btn");
 
+    editButtons.forEach((button) => {
+
+        button.addEventListener("click", async () => {
+
+            const employeeId = button.dataset.id;
+
+            const employeeReference = doc(db, "employees", employeeId);
+
+            const employeeSnapshot = await getDoc(employeeReference);
+
+            if (!employeeSnapshot.exists()) {
+                alert("Employee could not be found.");
+                return;
+            }
+
+            const employee = employeeSnapshot.data();
+
+            document.getElementById("employeeNumber").value =
+                employee.employeeNumber ?? "";
+
+            document.getElementById("employeeName").value =
+                employee.name ?? "";
+
+            document.getElementById("employeeDepartment").value =
+                employee.department ?? "";
+
+            document.getElementById("employeePin").value =
+                employee.pin ?? "";
+
+            modal.classList.add("active");
+
+        });
+
+    });
 }
 
 loadEmployees();
