@@ -268,3 +268,96 @@ body {
         grid-template-columns: 1fr;
     }
 }
+/* =====================================
+   Attendance Table
+===================================== */
+
+.table-section {
+    margin-top: 24px;
+    padding: 24px;
+
+    background: white;
+    border-radius: 14px;
+
+    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.08);
+
+    overflow-x: auto;
+}
+
+.table-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin-bottom: 20px;
+}
+
+.table-header h2 {
+    margin: 0;
+
+    color: #0b2a4a;
+    font-size: 20px;
+}
+
+.refresh-btn {
+    padding: 9px 16px;
+
+    border: none;
+    border-radius: 8px;
+
+    background: #1d72d8;
+    color: white;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition: background 0.2s ease,
+                transform 0.2s ease;
+}
+
+.refresh-btn:hover {
+    background: #155bb0;
+    transform: translateY(-1px);
+}
+
+.attendance-table {
+    width: 100%;
+
+    border-collapse: collapse;
+
+    font-size: 14px;
+}
+
+.attendance-table th {
+    padding: 14px 16px;
+
+    background: #f3f6fa;
+    color: #475569;
+
+    text-align: left;
+    font-size: 13px;
+    font-weight: 700;
+
+    border-bottom: 1px solid #dbe3ec;
+}
+
+.attendance-table td {
+    padding: 15px 16px;
+
+    color: #334155;
+
+    border-bottom: 1px solid #edf1f5;
+}
+
+.attendance-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+.empty-row {
+    padding: 32px !important;
+
+    color: #94a3b8 !important;
+    text-align: center;
+}
