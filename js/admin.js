@@ -1,5 +1,8 @@
 import { db } from "../firebase/firebase.js";
-
+import {
+    protectAdminPage,
+    logoutAdmin
+} from "../firebase/auth.js";
 import {
     collection,
     query,
@@ -34,11 +37,7 @@ const logoutButton =
 // Check Admin Authentication
 // =====================================
 
-if (
-    sessionStorage.getItem("adminLoggedIn") !== "true"
-) {
-    window.location.href = "admin-login.html";
-}
+protectAdminPage();
 
 
 // =====================================
@@ -515,11 +514,9 @@ exportButton.addEventListener(
 
 logoutButton.addEventListener(
     "click",
-    function () {
+    async function () {
 
-        sessionStorage.removeItem(
-            "adminLoggedIn"
-        );
+        await logoutAdmin();
 
         window.location.href =
             "admin-login.html";
