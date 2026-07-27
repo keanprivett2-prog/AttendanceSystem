@@ -21,9 +21,19 @@ async function loadAttendance() {
 
     tableBody.innerHTML = "";
 
+    // Statistics
+    let checkedIn = 0;
+    let lateToday = 0;
+
     snapshot.forEach((doc) => {
 
         const data = doc.data();
+
+        checkedIn++;
+
+        if (data.locationStatus === "Late") {
+            lateToday++;
+        }
 
         tableBody.innerHTML += `
             <tr>
@@ -37,6 +47,7 @@ async function loadAttendance() {
 
     });
 
-}
+    document.getElementById("checkedIn").textContent = checkedIn;
+    document.getElementById("lateToday").textContent = lateToday;
 
-loadAttendance();
+}
