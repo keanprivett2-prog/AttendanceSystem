@@ -530,6 +530,8 @@ logoutButton.addEventListener(
 
 async function loadAdminProfile() {
 
+    console.log("Loading administrator profile...");
+
     try {
 
         const adminProfile =
