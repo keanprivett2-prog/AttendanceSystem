@@ -47,7 +47,9 @@ async function loadAttendance() {
 
     });
 
-    document.getElementById("checkedIn").textContent = checkedIn;
+        document.getElementById("checkedIn").textContent = checkedIn;
     document.getElementById("lateToday").textContent = lateToday;
 
 }
+
+loadAttendance();
