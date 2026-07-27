@@ -281,7 +281,7 @@ async function loadEmployees() {
 // Disable / Enable Employee
 // =====================================
 
-const disableButtons = document.querySelectorAll(".disable-btn");
+const disableButtons = document.querySelectorAll(".disable-btn, .enable-btn");
 
 disableButtons.forEach((button) => {
 
