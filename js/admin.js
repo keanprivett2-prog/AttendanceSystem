@@ -1,7 +1,8 @@
 import { db } from "../firebase/firebase.js";
 import {
     protectAdminPage,
-    logoutAdmin
+    logoutAdmin,
+    getAdminProfile
 } from "../firebase/auth.js";
 import {
     collection,
