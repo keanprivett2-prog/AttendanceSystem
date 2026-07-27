@@ -102,3 +102,8 @@ button:hover {
 .container {
     margin-left: 260px;
 }
+.sidebar a.active {
+    background: white;
+    color: #0b5ed7;
+    font-weight: bold;
+}
