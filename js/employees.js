@@ -180,7 +180,10 @@ async function loadEmployees() {
         Reset PIN
     </button>
 
-    <button class="employee-action-btn disable-btn" data-id="${doc.id}">
+    <button
+    class="employee-action-btn ${employee.active ? "disable-btn" : "enable-btn"}"
+    data-id="${doc.id}"
+>
     ${employee.active ? "Disable" : "Enable"}
 </button>
     
