@@ -70,6 +70,21 @@ employeeForm.addEventListener("submit", async (event) => {
     const employeePin =
         document.getElementById("employeePin").value.trim();
 
+    const employeeQuery = query(
+    collection(db, "employees"),
+    where("employeeNumber", "==", employeeNumber)
+);
+
+const existingEmployees = await getDocs(employeeQuery);
+
+if (!editingEmployeeId && !existingEmployees.empty) {
+
+    alert("An employee with this Employee Number already exists.");
+
+    return;
+
+}
+
     try {
 
         await addDoc(collection(db, "employees"), {
