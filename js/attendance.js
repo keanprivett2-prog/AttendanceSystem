@@ -132,16 +132,6 @@ async function loadAttendance() {
 
             const checkInTime =
     attendance?.time ?? "-";
-                    ? attendance.timestamp
-                        .toDate()
-                        .toLocaleTimeString(
-                            "en-ZA",
-                            {
-                                hour: "2-digit",
-                                minute: "2-digit"
-                            }
-                        )
-                    : "-";
 
             attendanceTableBody.innerHTML += `
                 <tr>
