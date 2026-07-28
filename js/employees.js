@@ -647,15 +647,27 @@ saveResetPinButton.addEventListener("click", async () => {
             employeeToResetPin
         );
 
-        await updateDoc(employeeReference, {
-            pin: newPin
-        });
+        const employeeSnapshot =
+    await getDoc(employeeReference);
 
-        closeResetPinConfirmation();
+const employee =
+    employeeSnapshot.data();
 
-        showNotification(
-            "✅ Employee PIN reset successfully."
-        );
+await updateDoc(employeeReference, {
+    pin: newPin
+});
+
+await writeAuditLog(
+    "Reset PIN",
+    employee.name,
+    "Employee PIN was reset."
+);
+
+closeResetPinConfirmation();
+
+showNotification(
+    "✅ Employee PIN reset successfully."
+);
 
     } catch (error) {
 
