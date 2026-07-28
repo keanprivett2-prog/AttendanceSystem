@@ -95,14 +95,16 @@ async function writeAuditLog(action, employee, details = "") {
 
     try {
 
-        let administratorName = "Unknown";
+        let administratorName = "Unknown Administrator";
 
-        if (auth.currentUser) {
+        const currentUser = auth.currentUser;
+
+        if (currentUser) {
 
             const administratorReference = doc(
                 db,
                 "admins",
-                auth.currentUser.uid
+                currentUser.uid
             );
 
             const administratorSnapshot =
@@ -110,18 +112,34 @@ async function writeAuditLog(action, employee, details = "") {
 
             if (administratorSnapshot.exists()) {
 
+                const administratorData =
+                    administratorSnapshot.data();
+
                 administratorName =
-                    administratorSnapshot.data().name;
+                    administratorData.name ||
+                    currentUser.email ||
+                    "Unknown Administrator";
+
+            } else {
+
+                administratorName =
+                    currentUser.email ||
+                    "Unknown Administrator";
 
             }
 
         }
 
+        console.log(
+            "Administrator recorded:",
+            administratorName
+        );
+
         await addDoc(collection(db, "auditLog"), {
 
-            action: action,
-            employee: employee,
-            details: details,
+            action,
+            employee,
+            details,
             administrator: administratorName,
             timestamp: serverTimestamp()
 
@@ -136,7 +154,6 @@ async function writeAuditLog(action, employee, details = "") {
     }
 
 }
-
 // =====================================
 // Modal Controls
 // =====================================
