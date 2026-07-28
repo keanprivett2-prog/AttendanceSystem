@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>R-E-D Attendance | Attendance</title>
+
+    <link
+        rel="stylesheet"
+        href="css/admin-v2.css"
+    >
+</head>
+
+<body>
+
+    <div class="admin-layout">
+
+        <nav class="sidebar">
+
+            <h2>R-E-D Attendance</h2>
+
+            <a href="admin-v2.html">
+                Dashboard
+            </a>
+
+            <a href="employees.html">
+                Employees
+            </a>
+
+            <a href="attendance.html" class="active">
+                Attendance
+            </a>
+
+            <a href="#">
+                Reports
+            </a>
+
+            <a href="#">
+                Settings
+            </a>
+
+            <a href="#">
+                Administrators
+            </a>
+
+            <a href="audit-log.html">
+                Audit Log
+            </a>
+
+        </nav>
+
+        <main class="main-content">
+
+            <header class="topbar">
+
+                <div>
+                    <h1>Attendance</h1>
+                    <p>View and manage employee attendance records.</p>
+                </div>
+
+                <button
+                    type="button"
+                    id="logoutButton"
+                    class="logout-btn"
+                >
+                    Logout
+                </button>
+
+            </header>
+
+            <section class="page-content">
+
+                <div class="page-toolbar">
+
+                    <div>
+                        <h2>Daily Attendance</h2>
+                        <p id="attendanceDateText">
+                            Loading attendance date...
+                        </p>
+                    </div>
+
+                </div>
+
+                <div class="table-container">
+
+                    <table class="admin-table">
+
+                        <thead>
+                            <tr>
+                                <th>Employee Number</th>
+                                <th>Employee Name</th>
+                                <th>Department</th>
+                                <th>Status</th>
+                                <th>Check-in Time</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="attendanceTableBody">
+
+                            <tr>
+                                <td colspan="5" class="empty-row">
+                                    Loading attendance records...
+                                </td>
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+    <script
+        type="module"
+        src="js/attendance.js"
+    ></script>
+
+</body>
+
+</html>
