@@ -24,6 +24,9 @@ const startDateInput =
 const endDateInput =
     document.getElementById("reportEndDate");
 
+const employeeFilter =
+    document.getElementById("employeeFilter");
+
 const generateReportButton =
     document.getElementById("generateReportButton");
 
@@ -51,11 +54,14 @@ const attendanceRate =
 const logoutButton =
     document.getElementById("logoutButton");
 
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
 
     if (!user) {
         window.location.href = "index.html";
+        return;
     }
+
+    await loadEmployeeFilter();
 
 });
 
