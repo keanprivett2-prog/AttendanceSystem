@@ -91,28 +91,25 @@ function showNotification(messageText, type = "success") {
 
 async function writeAuditLog(action, employee, details = "") {
 
+    console.log("Audit log called:", action, employee);
+
     try {
 
         await addDoc(collection(db, "auditLog"), {
 
             action: action,
-
             employee: employee,
-
             details: details,
-
             administrator: "Administrator",
-
             timestamp: serverTimestamp()
 
         });
 
+        console.log("✅ Audit log written successfully.");
+
     } catch (error) {
 
-        console.error(
-            "Unable to write audit log:",
-            error
-        );
+        console.error("❌ Audit log failed:", error);
 
     }
 
