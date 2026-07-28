@@ -2,7 +2,7 @@
 // Firebase
 // =====================================
 
-import { db } from "../firebase/firebase.js";
+import { db, auth } from "../firebase/firebase.js";
 
 import {
     collection,
@@ -95,12 +95,34 @@ async function writeAuditLog(action, employee, details = "") {
 
     try {
 
+        let administratorName = "Unknown";
+
+        if (auth.currentUser) {
+
+            const administratorReference = doc(
+                db,
+                "admins",
+                auth.currentUser.uid
+            );
+
+            const administratorSnapshot =
+                await getDoc(administratorReference);
+
+            if (administratorSnapshot.exists()) {
+
+                administratorName =
+                    administratorSnapshot.data().name;
+
+            }
+
+        }
+
         await addDoc(collection(db, "auditLog"), {
 
             action: action,
             employee: employee,
             details: details,
-            administrator: "Administrator",
+            administrator: administratorName,
             timestamp: serverTimestamp()
 
         });
