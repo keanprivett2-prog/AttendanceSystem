@@ -268,7 +268,7 @@ async function checkIn() {
     message.innerHTML =
         "Starting attendance verification...";
 
-    const employee = authenticateEmployee();
+    const employee = await authenticateEmployee();
 
     if (!employee) {
         return;
@@ -1018,16 +1018,27 @@ function validatePin(employee) {
 // Authenticate Employee
 // =====================================================
 
-function authenticateEmployee() {
+async function authenticateEmployee() {
 
     if (!validateInputs()) {
         return null;
     }
 
     const employee =
-        validateEmployee();
+        await validateEmployee();
 
     if (!employee) {
+        return null;
+    }
+
+    if (employee.active === false) {
+
+        message.style.color = "red";
+
+        message.innerHTML =
+            "❌ This employee has been disabled.<br>" +
+            "Please contact your administrator.";
+
         return null;
     }
 
