@@ -105,71 +105,93 @@ employeeForm.addEventListener("submit", async (event) => {
         document.getElementById("employeePin").value.trim();
 
     const employeeQuery = query(
-    collection(db, "employees"),
-    where("employeeNumber", "==", employeeNumber)
+        collection(db, "employees"),
+        where("employeeNumber", "==", employeeNumber)
+    );
+
+    const existingEmployees =
+        await getDocs(employeeQuery);
+
+    const duplicateEmployee =
+        existingEmployees.docs.find((employeeDoc) => {
+            return employeeDoc.id !== editingEmployeeId;
+        });
+
+    if (duplicateEmployee) {
+
+        showNotification(
+    "⚠️ Employee Number already exists.",
+    "warning"
 );
 
-const existingEmployees = await getDocs(employeeQuery);
-
-const duplicateEmployee = existingEmployees.docs.find((employeeDoc) => {
-    return employeeDoc.id !== editingEmployeeId;
-});
-
-if (duplicateEmployee) {
-
-    alert("An employee with this Employee Number already exists.");
-
-    return;
-
-}
+return;
+    }
 
     try {
 
+        const wasEditing =
+            editingEmployeeId !== null;
+
         if (editingEmployeeId) {
 
-    const employeeReference = doc(
-        db,
-        "employees",
-        editingEmployeeId
-    );
+            const employeeReference = doc(
+                db,
+                "employees",
+                editingEmployeeId
+            );
 
-    await updateDoc(employeeReference, {
-        employeeNumber: employeeNumber,
-        name: employeeName,
-        department: employeeDepartment,
-        pin: employeePin
-    });
+            await updateDoc(employeeReference, {
+                employeeNumber: employeeNumber,
+                name: employeeName,
+                department: employeeDepartment,
+                pin: employeePin
+            });
 
-} else {
+        } else {
 
-    await addDoc(collection(db, "employees"), {
-        employeeNumber: employeeNumber,
-        name: employeeName,
-        department: employeeDepartment,
-        pin: employeePin,
-        active: true
-    });
+            await addDoc(
+                collection(db, "employees"),
+                {
+                    employeeNumber: employeeNumber,
+                    name: employeeName,
+                    department: employeeDepartment,
+                    pin: employeePin,
+                    active: true
+                }
+            );
+        }
 
-}
-
-        
         employeeForm.reset();
         editingEmployeeId = null;
         modal.classList.remove("active");
 
         await loadEmployees();
 
-        showNotification("✅ Employee saved successfully.");
-        
+        if (wasEditing) {
+
+            showNotification(
+                "✅ Employee updated successfully."
+            );
+
+        } else {
+
+            showNotification(
+                "✅ Employee added successfully."
+            );
+        }
 
     } catch (error) {
 
-        console.error("Error saving employee:", error);
+        console.error(
+            "Error saving employee:",
+            error
+        );
 
-        alert("Employee could not be saved.");
-
+        showNotification(
+    "❌ Employee could not be saved.",
+    "error"
+);
     }
-
 });
 
 // =====================================
