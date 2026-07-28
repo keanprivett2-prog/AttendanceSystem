@@ -402,7 +402,8 @@ deleteModal.classList.add("active");
 // Disable / Enable Employee
 // =====================================
 
-const disableButtons = document.querySelectorAll(".disable-btn, .enable-btn");
+const disableButtons =
+    document.querySelectorAll(".disable-btn, .enable-btn");
 
 disableButtons.forEach((button) => {
 
@@ -410,28 +411,52 @@ disableButtons.forEach((button) => {
 
         const employeeId = button.dataset.id;
 
-        const employeeReference = doc(db, "employees", employeeId);
+        const employeeReference =
+            doc(db, "employees", employeeId);
 
-        const employeeSnapshot = await getDoc(employeeReference);
+        const employeeSnapshot =
+            await getDoc(employeeReference);
 
         if (!employeeSnapshot.exists()) {
-            alert("Employee could not be found.");
+
+            showNotification(
+                "❌ Employee could not be found.",
+                "error"
+            );
+
             return;
         }
 
         const employee = employeeSnapshot.data();
 
-        await updateDoc(employeeReference, {
-            active: !employee.active
-        });
+        employeeToChangeStatus = employeeId;
+        newEmployeeStatus = !employee.active;
 
-        await loadEmployees();
+        if (employee.active) {
 
-        alert(
-            employee.active
-                ? "Employee disabled successfully."
-                : "Employee enabled successfully."
-        );
+            statusModalTitle.textContent =
+                "Disable Employee";
+
+            statusModalMessage.textContent =
+                `Are you sure you want to disable ${employee.name}?`;
+
+            confirmStatusButton.textContent =
+                "Disable Employee";
+
+        } else {
+
+            statusModalTitle.textContent =
+                "Enable Employee";
+
+            statusModalMessage.textContent =
+                `Are you sure you want to enable ${employee.name}?`;
+
+            confirmStatusButton.textContent =
+                "Enable Employee";
+
+        }
+
+        statusModal.classList.add("active");
 
     });
 
