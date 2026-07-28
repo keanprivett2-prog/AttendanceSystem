@@ -192,9 +192,12 @@
             </div>
 
             <form
-                id="employeeForm"
-                autocomplete="off"
-            >
+    id="employeeForm"
+    name="employeeManagement"
+    autocomplete="off"
+    data-lpignore="true"
+    data-form-type="other"
+>
 
                 <div class="form-grid">
 
@@ -205,11 +208,14 @@
                         </label>
 
                         <input
-                            type="text"
-                            id="employeeNumber"
-                            autocomplete="off"
-                            required
-                        >
+    type="text"
+    id="employeeNumber"
+    autocomplete="off"
+    autocorrect="off"
+    autocapitalize="off"
+    spellcheck="false"
+    required
+>
 
                     </div>
 
@@ -250,14 +256,17 @@
                         </label>
 
                         <input
-                            type="text"
-                            id="employeePin"
-                            maxlength="6"
-                            inputmode="numeric"
-                            autocomplete="off"
-                            pattern="[0-9]{4,6}"
-                            required
-                        >
+    type="text"
+    id="employeePin"
+    maxlength="6"
+    inputmode="numeric"
+    autocomplete="off"
+    autocorrect="off"
+    autocapitalize="off"
+    spellcheck="false"
+    data-lpignore="true"
+    required
+>
 
                     </div>
 
@@ -382,14 +391,18 @@
                 </label>
 
                 <input
-                    type="text"
-                    id="newEmployeePin"
-                    maxlength="6"
-                    inputmode="numeric"
-                    autocomplete="off"
-                    pattern="[0-9]{4,6}"
-                >
-
+    type="text"
+    id="newEmployeePin"
+    maxlength="6"
+    inputmode="numeric"
+    autocomplete="off"
+    autocorrect="off"
+    autocapitalize="off"
+    spellcheck="false"
+    data-lpignore="true"
+    pattern="[0-9]{4,6}"
+    required
+>
             </div>
 
             <div class="form-group">
@@ -399,13 +412,18 @@
                 </label>
 
                 <input
-                    type="text"
-                    id="confirmEmployeePin"
-                    maxlength="6"
-                    inputmode="numeric"
-                    autocomplete="off"
-                    pattern="[0-9]{4,6}"
-                >
+    type="text"
+    id="confirmEmployeePin"
+    maxlength="6"
+    inputmode="numeric"
+    autocomplete="off"
+    autocorrect="off"
+    autocapitalize="off"
+    spellcheck="false"
+    data-lpignore="true"
+    pattern="[0-9]{4,6}"
+    required
+>
 
             </div>
 
