@@ -657,10 +657,12 @@ await updateDoc(employeeReference, {
     pin: newPin
 });
 
-await writeAuditLog(
-    "Reset PIN",
-    employee.name,
-    "Employee PIN was reset."
+console.log("About to write PIN audit...");
+
+        await writeAuditLog(
+            "Reset PIN",
+            employee.name,
+            "Employee PIN was reset."
 );
 
 closeResetPinConfirmation();
