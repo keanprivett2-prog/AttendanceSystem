@@ -8,12 +8,13 @@ import {
     collection,
     addDoc,
     getDocs,
-    doc,
     getDoc,
     updateDoc,
     deleteDoc,
+    doc,
     query,
-    where
+    where,
+    serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 // =====================================
@@ -82,6 +83,39 @@ function showNotification(messageText, type = "success") {
         notification.classList.remove("show");
 
     }, 3000);
+}
+
+// =====================================
+// Audit Log
+// =====================================
+
+async function writeAuditLog(action, employee, details = "") {
+
+    try {
+
+        await addDoc(collection(db, "auditLog"), {
+
+            action: action,
+
+            employee: employee,
+
+            details: details,
+
+            administrator: "Administrator",
+
+            timestamp: serverTimestamp()
+
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Unable to write audit log:",
+            error
+        );
+
+    }
+
 }
 
 // =====================================
@@ -174,6 +208,12 @@ return;
                 department: employeeDepartment,
                 pin: employeePin
             });
+
+            await writeAuditLog(
+    "Added Employee",
+    name,
+    `Employee Number: ${employeeNumber}`
+);
 
         } else {
 
