@@ -753,3 +753,22 @@ body {
     }
 
 }
+.delete-confirm-btn {
+
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 12px 22px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    transition: background 0.2s ease;
+
+}
+
+.delete-confirm-btn:hover {
+
+    background: #bb2d3b;
+
+}
