@@ -2,7 +2,6 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
 
     <meta
@@ -16,73 +15,120 @@
         rel="stylesheet"
         href="css/admin-v2.css"
     >
-
 </head>
 
 <body>
 
-    <div class="container">
+    <div class="app">
 
-        <nav class="sidebar">
+        <aside class="sidebar">
 
-            <h2>R-E-D Attendance</h2>
+            <div class="sidebar-brand">
 
-            <a href="admin-v2.html">
-                Dashboard
-            </a>
+                <div class="brand-logo">
+                    R
+                </div>
 
-            <a href="employees.html">
-                Employees
-            </a>
-
-            <a
-                href="attendance.html"
-                class="active"
-            >
-                Attendance
-            </a>
-
-            <a href="#">
-                Reports
-            </a>
-
-            <a href="#">
-                Settings
-            </a>
-
-            <a href="#">
-                Administrators
-            </a>
-
-            <a href="audit-log.html">
-                Audit Log
-            </a>
-
-        </nav>
-
-        <header class="topbar">
-
-            <div>
-
-                <h1>Attendance</h1>
-
-                <p>
-                    View and manage employee attendance records.
-                </p>
+                <div>
+                    <h2>R-E-D</h2>
+                    <span>Attendance</span>
+                </div>
 
             </div>
 
-            <button id="logoutButton">
-                Logout
-            </button>
+            <nav class="sidebar-menu">
 
-        </header>
+                <a
+                    href="admin-v2.html"
+                    class="menu-link"
+                >
+                    <span class="menu-icon">▦</span>
+                    <span>Dashboard</span>
+                </a>
+
+                <a
+                    href="employees.html"
+                    class="menu-link"
+                >
+                    <span class="menu-icon">👥</span>
+                    <span>Employees</span>
+                </a>
+
+                <a
+                    href="attendance.html"
+                    class="menu-link active"
+                >
+                    <span class="menu-icon">✓</span>
+                    <span>Attendance</span>
+                </a>
+
+                <a
+                    href="#"
+                    class="menu-link"
+                >
+                    <span class="menu-icon">▥</span>
+                    <span>Reports</span>
+                </a>
+
+                <a
+                    href="#"
+                    class="menu-link"
+                >
+                    <span class="menu-icon">⚙</span>
+                    <span>Settings</span>
+                </a>
+
+                <a
+                    href="#"
+                    class="menu-link"
+                >
+                    <span class="menu-icon">♙</span>
+                    <span>Administrators</span>
+                </a>
+
+                <a
+                    href="audit-log.html"
+                    class="menu-link"
+                >
+                    <span class="menu-icon">☷</span>
+                    <span>Audit Log</span>
+                </a>
+
+            </nav>
+
+            <div class="sidebar-footer">
+                <span>R-E-D Attendance</span>
+                <small>Enterprise Edition</small>
+            </div>
+
+        </aside>
 
         <main class="content">
 
-            <section class="employee-section">
+            <header class="topbar">
 
-                <div class="employee-section-header">
+                <div>
+                    <h1>Attendance</h1>
+                    <p>View and manage employee attendance records.</p>
+                </div>
+
+                <div class="topbar-right">
+
+                    <button
+                        type="button"
+                        class="logout-btn"
+                        id="logoutButton"
+                    >
+                        Logout
+                    </button>
+
+                </div>
+
+            </header>
+
+            <section class="table-section">
+
+                <div class="table-header">
 
                     <div>
 
@@ -96,40 +142,36 @@
 
                 </div>
 
-                <div class="employee-table-container">
+                <table class="attendance-table">
 
-                    <table class="employee-table">
+                    <thead>
 
-                        <thead>
+                        <tr>
+                            <th>Employee Number</th>
+                            <th>Employee Name</th>
+                            <th>Department</th>
+                            <th>Status</th>
+                            <th>Check-in Time</th>
+                        </tr>
 
-                            <tr>
-                                <th>Employee Number</th>
-                                <th>Employee Name</th>
-                                <th>Department</th>
-                                <th>Status</th>
-                                <th>Check-in Time</th>
-                            </tr>
+                    </thead>
 
-                        </thead>
+                    <tbody id="attendanceTableBody">
 
-                        <tbody id="attendanceTableBody">
+                        <tr>
 
-                            <tr>
+                            <td
+                                colspan="5"
+                                class="empty-row"
+                            >
+                                Loading attendance records...
+                            </td>
 
-                                <td
-                                    colspan="5"
-                                    class="empty-row"
-                                >
-                                    Loading attendance records...
-                                </td>
+                        </tr>
 
-                            </tr>
+                    </tbody>
 
-                        </tbody>
-
-                    </table>
-
-                </div>
+                </table>
 
             </section>
 
