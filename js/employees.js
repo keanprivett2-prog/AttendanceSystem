@@ -612,3 +612,64 @@ saveResetPinButton.addEventListener("click", async () => {
     }
 
 });
+// =====================================
+// Status Confirmation Modal
+// =====================================
+
+function closeStatusConfirmation() {
+
+    statusModal.classList.remove("active");
+
+    employeeToChangeStatus = null;
+    newEmployeeStatus = null;
+
+}
+
+cancelStatusButton.addEventListener(
+    "click",
+    closeStatusConfirmation
+);
+
+closeStatusModal.addEventListener(
+    "click",
+    closeStatusConfirmation
+);
+
+confirmStatusButton.addEventListener("click", async () => {
+
+    if (!employeeToChangeStatus) {
+        return;
+    }
+
+    try {
+
+        const employeeReference = doc(
+            db,
+            "employees",
+            employeeToChangeStatus
+        );
+
+        await updateDoc(employeeReference, {
+            active: newEmployeeStatus
+        });
+
+        closeStatusConfirmation();
+
+        showNotification(
+            `✅ Employee ${newEmployeeStatus ? "enabled" : "disabled"} successfully.`
+        );
+
+        loadEmployees();
+
+    } catch (error) {
+
+        console.error(error);
+
+        showNotification(
+            "❌ Unable to update employee status.",
+            "error"
+        );
+
+    }
+
+});
