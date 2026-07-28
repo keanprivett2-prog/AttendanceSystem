@@ -318,22 +318,12 @@ async function loadEmployees() {
 
             const employee = employeeSnapshot.data();
 
-            const confirmed = confirm(
-                `Delete Employee?\n\n` +
-                `Employee: ${employee.name}\n` +
-                `Employee Number: ${employee.employeeNumber}\n\n` +
-                `This action cannot be undone.`
-            );
+            employeeToDelete = employeeId;
 
-            if (!confirmed) {
-                return;
-            }
+deleteMessage.textContent =
+    `Are you sure you want to delete ${employee.name}?`;
 
-            await deleteDoc(employeeReference);
-
-            await loadEmployees();
-
-            alert("Employee deleted successfully.");
+deleteModal.classList.add("active");
 
         });
 
