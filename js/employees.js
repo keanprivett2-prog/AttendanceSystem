@@ -369,3 +369,55 @@ disableButtons.forEach((button) => {
 }
 
 loadEmployees();
+// ===============================
+// Delete Confirmation Modal
+// ===============================
+function closeDeleteConfirmation() {
+
+    deleteModal.classList.remove("active");
+    employeeToDelete = null;
+
+}
+
+cancelDeleteButton.addEventListener("click", closeDeleteConfirmation);
+
+closeDeleteModal.addEventListener("click", closeDeleteConfirmation);
+
+confirmDeleteButton.addEventListener("click", async () => {
+
+    if (!employeeToDelete) {
+        return;
+    }
+
+    try {
+
+        const employeeReference = doc(
+            db,
+            "employees",
+            employeeToDelete
+        );
+
+        await deleteDoc(employeeReference);
+
+        closeDeleteConfirmation();
+
+        await loadEmployees();
+
+        showNotification(
+            "✅ Employee deleted successfully."
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Error deleting employee:",
+            error
+        );
+
+        showNotification(
+            "❌ Employee could not be deleted.",
+            "error"
+        );
+    }
+
+});
