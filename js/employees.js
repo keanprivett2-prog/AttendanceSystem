@@ -38,10 +38,18 @@ const confirmEmployeePin = document.getElementById("confirmEmployeePin");
 const closeResetPinModal = document.getElementById("closeResetPinModal");
 const cancelResetPinButton = document.getElementById("cancelResetPinButton");
 const saveResetPinButton = document.getElementById("saveResetPinButton");
+const statusModal = document.getElementById("statusModal");
+const statusModalTitle = document.getElementById("statusModalTitle");
+const statusModalMessage = document.getElementById("statusModalMessage");
+const closeStatusModal = document.getElementById("closeStatusModal");
+const cancelStatusButton = document.getElementById("cancelStatusButton");
+const confirmStatusButton = document.getElementById("confirmStatusButton");
 
 let editingEmployeeId = null;
 let employeeToDelete = null;
 let employeeToResetPin = null;
+let employeeToChangeStatus = null;
+let newEmployeeStatus = null;
 
 function showNotification(messageText, type = "success") {
 
