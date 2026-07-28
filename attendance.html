@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
 
     <meta
@@ -15,11 +16,12 @@
         rel="stylesheet"
         href="css/admin-v2.css"
     >
+
 </head>
 
 <body>
 
-    <div class="admin-layout">
+    <div class="container">
 
         <nav class="sidebar">
 
@@ -33,7 +35,10 @@
                 Employees
             </a>
 
-            <a href="attendance.html" class="active">
+            <a
+                href="attendance.html"
+                class="active"
+            >
                 Attendance
             </a>
 
@@ -55,43 +60,48 @@
 
         </nav>
 
-        <main class="main-content">
+        <header class="topbar">
 
-            <header class="topbar">
+            <div>
 
-                <div>
-                    <h1>Attendance</h1>
-                    <p>View and manage employee attendance records.</p>
-                </div>
+                <h1>Attendance</h1>
 
-                <button
-                    type="button"
-                    id="logoutButton"
-                    class="logout-btn"
-                >
-                    Logout
-                </button>
+                <p>
+                    View and manage employee attendance records.
+                </p>
 
-            </header>
+            </div>
 
-            <section class="page-content">
+            <button id="logoutButton">
+                Logout
+            </button>
 
-                <div class="page-toolbar">
+        </header>
+
+        <main class="content">
+
+            <section class="employee-section">
+
+                <div class="employee-section-header">
 
                     <div>
+
                         <h2>Daily Attendance</h2>
+
                         <p id="attendanceDateText">
                             Loading attendance date...
                         </p>
+
                     </div>
 
                 </div>
 
-                <div class="table-container">
+                <div class="employee-table-container">
 
-                    <table class="admin-table">
+                    <table class="employee-table">
 
                         <thead>
+
                             <tr>
                                 <th>Employee Number</th>
                                 <th>Employee Name</th>
@@ -99,14 +109,20 @@
                                 <th>Status</th>
                                 <th>Check-in Time</th>
                             </tr>
+
                         </thead>
 
                         <tbody id="attendanceTableBody">
 
                             <tr>
-                                <td colspan="5" class="empty-row">
+
+                                <td
+                                    colspan="5"
+                                    class="empty-row"
+                                >
                                     Loading attendance records...
                                 </td>
+
                             </tr>
 
                         </tbody>
