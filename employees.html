@@ -293,7 +293,82 @@
     </div>
 
 </div>
-            
+
+<div class="modal-overlay" id="resetPinModal">
+
+    <div class="employee-modal">
+
+        <div class="modal-header">
+
+            <div>
+                <h2>Reset Employee PIN</h2>
+                <p id="resetPinEmployeeName">
+                    Reset the employee's PIN.
+                </p>
+            </div>
+
+            <button
+                type="button"
+                class="modal-close"
+                id="closeResetPinModal"
+            >
+                ×
+            </button>
+
+        </div>
+
+        <div class="form-group">
+
+            <label for="newEmployeePin">
+                New PIN
+            </label>
+
+            <input
+                type="password"
+                id="newEmployeePin"
+                maxlength="6"
+            >
+
+        </div>
+
+        <div class="form-group">
+
+            <label for="confirmEmployeePin">
+                Confirm PIN
+            </label>
+
+            <input
+                type="password"
+                id="confirmEmployeePin"
+                maxlength="6"
+            >
+
+        </div>
+
+        <div class="modal-actions">
+
+            <button
+                type="button"
+                class="cancel-btn"
+                id="cancelResetPinButton"
+            >
+                Cancel
+            </button>
+
+            <button
+                type="button"
+                class="save-employee-btn"
+                id="saveResetPinButton"
+            >
+                Reset PIN
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+    
 </main>
         
     </div>
