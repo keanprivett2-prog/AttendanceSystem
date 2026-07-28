@@ -163,6 +163,51 @@ async function generateReport() {
 
 }
 
+function updateSummaryCards(records) {
+
+    const total =
+        records.length;
+
+    const onTime =
+        records.filter((record) =>
+            String(record.status).toLowerCase() === "on time"
+        ).length;
+
+    const late =
+        records.filter((record) =>
+            String(record.status).toLowerCase() === "late"
+        ).length;
+
+    const absent =
+        records.filter((record) =>
+            String(record.status).toLowerCase() === "absent"
+        ).length;
+
+    const attended =
+        onTime + late;
+
+    const rate =
+        total === 0
+            ? 0
+            : Math.round((attended / total) * 100);
+
+    totalRecords.textContent =
+        total;
+
+    onTimeCount.textContent =
+        onTime;
+
+    lateCount.textContent =
+        late;
+
+    absentCount.textContent =
+        absent;
+
+    attendanceRate.textContent =
+        `${rate}%`;
+
+}
+
 function displayReport(records) {
 
     reportTableBody.innerHTML = "";
