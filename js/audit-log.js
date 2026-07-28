@@ -105,18 +105,28 @@ function formatAuditDetails(details) {
             parts[1].trim();
 
         return `
-            <div class="audit-change-box previous-value">
-                <strong>Previous</strong>
-                <span>${previousDetails}</span>
-            </div>
+            <div class="audit-comparison">
 
-            <div class="audit-change-arrow">
-                ↓
-            </div>
+                <div class="audit-value old-value">
+                    <span class="audit-label">
+                        Previous
+                    </span>
 
-            <div class="audit-change-box updated-value">
-                <strong>Updated</strong>
-                <span>${updatedDetails}</span>
+                    <span>
+                        ${previousDetails}
+                    </span>
+                </div>
+
+                <div class="audit-value new-value">
+                    <span class="audit-label">
+                        Updated
+                    </span>
+
+                    <span>
+                        ${updatedDetails}
+                    </span>
+                </div>
+
             </div>
         `;
     }
