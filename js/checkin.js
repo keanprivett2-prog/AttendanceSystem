@@ -954,15 +954,20 @@ function validateInputs() {
 // Validate Employee
 // =====================================================
 
-function validateEmployee() {
+async function validateEmployee() {
 
     const employeeNumber =
         employeeNumberInput.value.trim();
 
-    const employee =
-        findEmployee(employeeNumber);
+    const employeeQuery = query(
+        collection(db, "employees"),
+        where("employeeNumber", "==", employeeNumber)
+    );
 
-    if (!employee) {
+    const employeeSnapshot =
+        await getDocs(employeeQuery);
+
+    if (employeeSnapshot.empty) {
 
         message.style.color = "red";
 
@@ -974,7 +979,13 @@ function validateEmployee() {
         return null;
     }
 
-    return employee;
+    const employeeDocument =
+        employeeSnapshot.docs[0];
+
+    return {
+        id: employeeDocument.id,
+        ...employeeDocument.data()
+    };
 }
 
 
