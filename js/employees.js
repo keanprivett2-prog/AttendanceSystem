@@ -193,24 +193,40 @@ employeeForm.addEventListener("submit", async (event) => {
 
         if (editingEmployeeId) {
 
-            const employeeReference = doc(
-                db,
-                "employees",
-                editingEmployeeId
-            );
+    const employeeReference = doc(
+        db,
+        "employees",
+        editingEmployeeId
+    );
 
-            await updateDoc(employeeReference, {
-                employeeNumber: employeeNumber,
-                name: employeeName,
-                department: employeeDepartment,
-                pin: employeePin
-            });
+    const previousEmployeeSnapshot =
+        await getDoc(employeeReference);
 
-            await writeAuditLog(
-                "Updated Employee",
-                employeeName,
-                `Employee Number: ${employeeNumber}`
-            );
+    if (!previousEmployeeSnapshot.exists()) {
+
+        showNotification(
+            "❌ Employee could not be found.",
+            "error"
+        );
+
+        return;
+    }
+
+    const previousEmployee =
+        previousEmployeeSnapshot.data();
+
+    await updateDoc(employeeReference, {
+        employeeNumber: employeeNumber,
+        name: employeeName,
+        department: employeeDepartment,
+        pin: employeePin
+    });
+
+    await writeAuditLog(
+        "Updated Employee",
+        employeeName,
+        `Previous: Employee Number: ${previousEmployee.employeeNumber}, Name: ${previousEmployee.name}, Department: ${previousEmployee.department} | Updated: Employee Number: ${employeeNumber}, Name: ${employeeName}, Department: ${employeeDepartment}`
+    );
 
         } else {
 
