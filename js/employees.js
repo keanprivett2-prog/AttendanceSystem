@@ -483,3 +483,99 @@ confirmDeleteButton.addEventListener("click", async () => {
     }
 
 });
+// ===============================
+// Reset PIN Modal
+// ===============================
+
+function closeResetPinConfirmation() {
+
+    resetPinModal.classList.remove("active");
+
+    employeeToResetPin = null;
+
+    newEmployeePin.value = "";
+    confirmEmployeePin.value = "";
+
+}
+
+cancelResetPinButton.addEventListener(
+    "click",
+    closeResetPinConfirmation
+);
+
+closeResetPinModal.addEventListener(
+    "click",
+    closeResetPinConfirmation
+);
+
+saveResetPinButton.addEventListener("click", async () => {
+
+    const newPin = newEmployeePin.value.trim();
+    const confirmPin = confirmEmployeePin.value.trim();
+
+    if (!employeeToResetPin) {
+        return;
+    }
+
+    if (!newPin || !confirmPin) {
+
+        showNotification(
+            "⚠️ Please enter and confirm the new PIN.",
+            "warning"
+        );
+
+        return;
+    }
+
+    if (!/^\d{4,6}$/.test(newPin)) {
+
+        showNotification(
+            "⚠️ PIN must contain 4 to 6 numbers.",
+            "warning"
+        );
+
+        return;
+    }
+
+    if (newPin !== confirmPin) {
+
+        showNotification(
+            "⚠️ The PINs do not match.",
+            "warning"
+        );
+
+        return;
+    }
+
+    try {
+
+        const employeeReference = doc(
+            db,
+            "employees",
+            employeeToResetPin
+        );
+
+        await updateDoc(employeeReference, {
+            pin: newPin
+        });
+
+        closeResetPinConfirmation();
+
+        showNotification(
+            "✅ Employee PIN reset successfully."
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Error resetting employee PIN:",
+            error
+        );
+
+        showNotification(
+            "❌ Employee PIN could not be reset.",
+            "error"
+        );
+    }
+
+});
