@@ -170,51 +170,67 @@
             
             <section class="employee-table-section">
 
-                <div class="report-filters">
+               <div class="report-filters">
 
-                    <div class="form-group">
+    <div class="form-group">
 
-                        <label for="reportStartDate">
-                            Start Date
-                        </label>
+        <label for="reportStartDate">
+            Start Date
+        </label>
 
-                        <input
-                            type="date"
-                            id="reportStartDate"
-                        >
+        <input
+            type="date"
+            id="reportStartDate"
+        >
 
-                    </div>
+    </div>
 
-                    <div class="form-group">
+    <div class="form-group">
 
-                        <label for="reportEndDate">
-                            End Date
-                        </label>
+        <label for="reportEndDate">
+            End Date
+        </label>
 
-                        <input
-                            type="date"
-                            id="reportEndDate"
-                        >
+        <input
+            type="date"
+            id="reportEndDate"
+        >
 
-                    </div>
+    </div>
 
-                    <button
-                        type="button"
-                        class="refresh-btn"
-                        id="generateReportButton"
-                    >
-                        Generate Report
-                    </button>
+    <div class="form-group">
 
-                    <button
-    type="button"
-    class="refresh-btn"
-    id="exportCsvButton"
->
-    Export CSV
-</button>
-                    
-                </div>
+        <label for="employeeFilter">
+            Employee
+        </label>
+
+        <select id="employeeFilter">
+
+            <option value="">
+                All Employees
+            </option>
+
+        </select>
+
+    </div>
+
+    <button
+        type="button"
+        class="refresh-btn"
+        id="generateReportButton"
+    >
+        Generate Report
+    </button>
+
+    <button
+        type="button"
+        class="refresh-btn"
+        id="exportCsvButton"
+    >
+        Export CSV
+    </button>
+
+</div>
 
                 <table class="attendance-table">
 
