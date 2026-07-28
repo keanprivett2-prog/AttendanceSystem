@@ -26,6 +26,10 @@ const closeEmployeeModal = document.getElementById("closeEmployeeModal");
 const cancelEmployeeButton = document.getElementById("cancelEmployeeButton");
 const employeeForm = document.getElementById("employeeForm");
 const employeeTableBody = document.getElementById("employeeTableBody");
+const deleteModal = document.getElementById("deleteModal");
+const cancelDeleteButton = document.getElementById("cancelDeleteButton");
+const closeDeleteModal = document.getElementById("closeDeleteModal");
+const confirmDeleteButton = document.getElementById("confirmDeleteButton");
 
 let editingEmployeeId = null;
 
