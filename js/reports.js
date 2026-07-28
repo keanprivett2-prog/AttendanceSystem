@@ -27,6 +27,9 @@ const endDateInput =
 const generateReportButton =
     document.getElementById("generateReportButton");
 
+const exportCsvButton =
+    document.getElementById("exportCsvButton");
+
 const reportTableBody =
     document.getElementById("reportTableBody");
 
@@ -44,6 +47,11 @@ onAuthStateChanged(auth, (user) => {
 generateReportButton.addEventListener(
     "click",
     generateReport
+);
+
+exportCsvButton.addEventListener(
+    "click",
+    exportReportToCsv
 );
 
 logoutButton.addEventListener(
