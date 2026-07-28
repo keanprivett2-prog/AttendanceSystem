@@ -31,9 +31,17 @@ const deleteModal = document.getElementById("deleteModal");
 const cancelDeleteButton = document.getElementById("cancelDeleteButton");
 const closeDeleteModal = document.getElementById("closeDeleteModal");
 const confirmDeleteButton = document.getElementById("confirmDeleteButton");
+const resetPinModal = document.getElementById("resetPinModal");
+const resetPinEmployeeName = document.getElementById("resetPinEmployeeName");
+const newEmployeePin = document.getElementById("newEmployeePin");
+const confirmEmployeePin = document.getElementById("confirmEmployeePin");
+const closeResetPinModal = document.getElementById("closeResetPinModal");
+const cancelResetPinButton = document.getElementById("cancelResetPinButton");
+const saveResetPinButton = document.getElementById("saveResetPinButton");
 
 let editingEmployeeId = null;
 let employeeToDelete = null;
+let employeeToResetPin = null;
 
 function showNotification(messageText, type = "success") {
 
@@ -303,6 +311,51 @@ async function loadEmployees() {
         });
 
     });
+
+    // =====================================
+// Reset PIN
+// =====================================
+
+const resetPinButtons =
+    document.querySelectorAll(".reset-pin-btn");
+
+resetPinButtons.forEach((button) => {
+
+    button.addEventListener("click", async () => {
+
+        const employeeId = button.dataset.id;
+
+        const employeeReference =
+            doc(db, "employees", employeeId);
+
+        const employeeSnapshot =
+            await getDoc(employeeReference);
+
+        if (!employeeSnapshot.exists()) {
+
+            showNotification(
+                "❌ Employee could not be found.",
+                "error"
+            );
+
+            return;
+        }
+
+        const employee = employeeSnapshot.data();
+
+        employeeToResetPin = employeeId;
+
+        resetPinEmployeeName.textContent =
+            `Reset PIN for ${employee.name}`;
+
+        newEmployeePin.value = "";
+        confirmEmployeePin.value = "";
+
+        resetPinModal.classList.add("active");
+
+    });
+
+});
 
     // =====================================
     // Delete Employee
