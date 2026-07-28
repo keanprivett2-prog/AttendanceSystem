@@ -546,12 +546,24 @@ confirmDeleteButton.addEventListener("click", async () => {
     try {
 
         const employeeReference = doc(
-            db,
-            "employees",
-            employeeToDelete
-        );
+    db,
+    "employees",
+    employeeToDelete
+);
 
-        await deleteDoc(employeeReference);
+const employeeSnapshot =
+    await getDoc(employeeReference);
+
+const employee =
+    employeeSnapshot.data();
+
+await writeAuditLog(
+    "Deleted Employee",
+    employee.name,
+    `Employee Number: ${employee.employeeNumber}`
+);
+
+await deleteDoc(employeeReference);
 
         closeDeleteConfirmation();
 
