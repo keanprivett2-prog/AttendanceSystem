@@ -675,6 +675,8 @@ body {
 
     border-radius: 10px;
 
+   overflow: hidden;
+
     font-weight: 600;
 
     text-align: center;
@@ -710,5 +712,44 @@ body {
 .notification.warning {
 
     background: #fd7e14;
+
+}
+.notification-progress {
+
+    position: absolute;
+
+    left: 0;
+
+    bottom: 0;
+
+    height: 4px;
+
+    width: 100%;
+
+    background: rgba(255,255,255,.45);
+
+    transform-origin: left;
+
+}
+
+.notification.show .notification-progress {
+
+    animation: notificationProgress 3s linear forwards;
+
+}
+
+@keyframes notificationProgress {
+
+    from {
+
+        transform: scaleX(1);
+
+    }
+
+    to {
+
+        transform: scaleX(0);
+
+    }
 
 }
