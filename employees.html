@@ -204,12 +204,14 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="employeePin">PIN</label>
-                    <input
-                        type="password"
-                        id="employeePin"
-                        maxlength="6"
-                        required
+    <label for="employeePin">PIN</label>
+    <input
+        type="password"
+        id="employeePin"
+        maxlength="6"
+        inputmode="numeric"
+        autocomplete="new-password"
+        required>
                     >
                 </div>
 
@@ -317,17 +319,19 @@
 
         </div>
 
-        <div class="form-group">
+       <div class="form-group">
 
-            <label for="newEmployeePin">
-                New PIN
-            </label>
+    <label for="newEmployeePin">
+        New PIN
+    </label>
 
-            <input
-                type="password"
-                id="newEmployeePin"
-                maxlength="6"
-            >
+    <input
+        type="password"
+        id="newEmployeePin"
+        maxlength="6"
+        inputmode="numeric"
+        autocomplete="new-password"
+    >
 
         </div>
 
@@ -341,6 +345,8 @@
                 type="password"
                 id="confirmEmployeePin"
                 maxlength="6"
+                inputmode="numeric"
+autocomplete="new-password"
             >
 
         </div>
