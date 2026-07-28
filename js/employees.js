@@ -159,7 +159,8 @@ if (duplicateEmployee) {
 
         await loadEmployees();
 
-        alert("Employee saved successfully.");
+        showNotification("✅ Employee saved successfully.");
+        
 
     } catch (error) {
 
