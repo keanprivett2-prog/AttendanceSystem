@@ -207,3 +207,83 @@ function escapeHtml(value) {
         .replaceAll("'", "&#039;");
 
 }
+function exportReportToCsv() {
+
+    const rows =
+        reportTableBody.querySelectorAll("tr");
+
+    if (
+        rows.length === 0 ||
+        rows[0].querySelector(".empty-row")
+    ) {
+
+        alert("Please generate a report before exporting.");
+
+        return;
+
+    }
+
+    const csvRows = [];
+
+    csvRows.push([
+        "Date",
+        "Employee Number",
+        "Employee Name",
+        "Department",
+        "Check-in Time",
+        "Status"
+    ]);
+
+    rows.forEach((row) => {
+
+        const cells =
+            row.querySelectorAll("td");
+
+        const rowData =
+            Array.from(cells).map((cell) => {
+
+                const value =
+                    cell.textContent.trim();
+
+                return `"${value.replaceAll('"', '""')}"`;
+
+            });
+
+        csvRows.push(rowData);
+
+    });
+
+    const csvContent =
+        csvRows
+            .map((row) => row.join(","))
+            .join("\n");
+
+    const blob =
+        new Blob(
+            [csvContent],
+            {
+                type: "text/csv;charset=utf-8;"
+            }
+        );
+
+    const downloadUrl =
+        URL.createObjectURL(blob);
+
+    const downloadLink =
+        document.createElement("a");
+
+    downloadLink.href =
+        downloadUrl;
+
+    downloadLink.download =
+        `attendance-report-${startDateInput.value}-to-${endDateInput.value}.csv`;
+
+    document.body.appendChild(downloadLink);
+
+    downloadLink.click();
+
+    document.body.removeChild(downloadLink);
+
+    URL.revokeObjectURL(downloadUrl);
+
+}
