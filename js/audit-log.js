@@ -53,14 +53,16 @@ async function loadAuditLog() {
             }
 
             auditTableBody.innerHTML += `
-                <tr>
-                    <td>${formattedDate}</td>
-                    <td>${record.administrator ?? "-"}</td>
-                    <td>${record.action ?? "-"}</td>
-                    <td>${record.employee ?? "-"}</td>
-                    <td>${record.details ?? "-"}</td>
-                </tr>
-            `;
+    <tr>
+        <td>${formattedDate}</td>
+        <td>${record.administrator ?? "-"}</td>
+        <td>${record.action ?? "-"}</td>
+        <td>${record.employee ?? "-"}</td>
+        <td class="audit-details">
+            ${formatAuditDetails(record.details)}
+        </td>
+    </tr>
+`;
 
         });
 
@@ -81,5 +83,48 @@ async function loadAuditLog() {
 
     }
 
+}
+function formatAuditDetails(details) {
+
+    if (!details) {
+        return "-";
+    }
+
+    if (
+        details.includes("Previous:") &&
+        details.includes("| Updated:")
+    ) {
+
+        const parts =
+            details.split("| Updated:");
+
+        const previousDetails =
+            parts[0].replace("Previous:", "").trim();
+
+        const updatedDetails =
+            parts[1].trim();
+
+        return `
+            <div class="audit-change-box previous-value">
+                <strong>Previous</strong>
+                <span>${previousDetails}</span>
+            </div>
+
+            <div class="audit-change-arrow">
+                ↓
+            </div>
+
+            <div class="audit-change-box updated-value">
+                <strong>Updated</strong>
+                <span>${updatedDetails}</span>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="audit-single-detail">
+            ${details}
+        </div>
+    `;
 }
 loadAuditLog();
