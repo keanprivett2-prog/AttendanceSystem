@@ -33,6 +33,21 @@ const exportCsvButton =
 const reportTableBody =
     document.getElementById("reportTableBody");
 
+const totalRecords =
+    document.getElementById("totalRecords");
+
+const onTimeCount =
+    document.getElementById("onTimeCount");
+
+const lateCount =
+    document.getElementById("lateCount");
+
+const absentCount =
+    document.getElementById("absentCount");
+
+const attendanceRate =
+    document.getElementById("attendanceRate");
+
 const logoutButton =
     document.getElementById("logoutButton");
 
