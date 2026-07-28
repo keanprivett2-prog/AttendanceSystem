@@ -22,6 +22,7 @@ import {
 
 const modal = document.getElementById("employeeModal");
 const addEmployeeButton = document.getElementById("addEmployeeButton");
+const saveEmployeeButton = document.getElementById("saveEmployeeButton");
 const closeEmployeeModal = document.getElementById("closeEmployeeModal");
 const cancelEmployeeButton = document.getElementById("cancelEmployeeButton");
 const employeeForm = document.getElementById("employeeForm");
@@ -72,7 +73,13 @@ function showNotification(messageText, type = "success") {
 // =====================================
 
 addEmployeeButton.addEventListener("click", () => {
+
+    editingEmployeeId = null;
+
+    saveEmployeeButton.textContent = "Save Employee";
+
     modal.classList.add("active");
+
 });
 
 closeEmployeeModal.addEventListener("click", () => {
@@ -288,6 +295,8 @@ async function loadEmployees() {
 
             document.getElementById("employeePin").value =
                 employee.pin ?? "";
+
+            saveEmployeeButton.textContent = "Update Employee";
 
             modal.classList.add("active");
 
