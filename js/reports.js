@@ -97,6 +97,63 @@ logoutButton.addEventListener(
     }
 );
 
+async function loadEmployeeFilter() {
+
+    try {
+
+        const employeesSnapshot =
+            await getDocs(
+                collection(db, "employees")
+            );
+
+        const employees = [];
+
+        employeesSnapshot.forEach((documentSnapshot) => {
+
+            employees.push({
+                id: documentSnapshot.id,
+                ...documentSnapshot.data()
+            });
+
+        });
+
+        employees.sort((a, b) =>
+            String(a.name ?? "")
+                .localeCompare(String(b.name ?? ""))
+        );
+
+        employeeFilter.innerHTML = `
+            <option value="">
+                All Employees
+            </option>
+        `;
+
+        employees.forEach((employee) => {
+
+            const option =
+                document.createElement("option");
+
+            option.value =
+                employee.employeeNumber ?? "";
+
+            option.textContent =
+                `${employee.employeeNumber ?? "-"} - ${employee.name ?? "Unnamed Employee"}`;
+
+            employeeFilter.appendChild(option);
+
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Employee filter error:",
+            error
+        );
+
+    }
+
+}
+
 async function generateReport() {
 
     const startDate =
