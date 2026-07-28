@@ -182,11 +182,11 @@ employeeForm.addEventListener("submit", async (event) => {
     if (duplicateEmployee) {
 
         showNotification(
-    "⚠️ Employee Number already exists.",
-    "warning"
-);
+            "⚠️ Employee Number already exists.",
+            "warning"
+        );
 
-return;
+        return;
     }
 
     try {
@@ -210,10 +210,10 @@ return;
             });
 
             await writeAuditLog(
-    "Added Employee",
-    name,
-    `Employee Number: ${employeeNumber}`
-);
+                "Updated Employee",
+                employeeName,
+                `Employee Number: ${employeeNumber}`
+            );
 
         } else {
 
@@ -226,6 +226,12 @@ return;
                     pin: employeePin,
                     active: true
                 }
+            );
+
+            await writeAuditLog(
+                "Added Employee",
+                employeeName,
+                `Employee Number: ${employeeNumber}`
             );
         }
 
@@ -256,12 +262,12 @@ return;
         );
 
         showNotification(
-    "❌ Employee could not be saved.",
-    "error"
-);
+            "❌ Employee could not be saved.",
+            "error"
+        );
     }
-});
 
+});
 // =====================================
 // Load Employees
 // =====================================
