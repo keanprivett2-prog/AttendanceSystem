@@ -162,6 +162,9 @@ async function generateReport() {
     const endDate =
         endDateInput.value;
 
+    const selectedEmployee =
+    employeeFilter.value;
+
     if (!startDate || !endDate) {
 
         showTableMessage(
@@ -188,12 +191,28 @@ async function generateReport() {
 
     try {
 
-        const attendanceQuery = query(
-            collection(db, "attendance"),
-            where("dateKey", ">=", startDate),
-            where("dateKey", "<=", endDate),
-            orderBy("dateKey", "desc")
-        );
+        let attendanceQuery;
+
+if (selectedEmployee === "") {
+
+    attendanceQuery = query(
+        collection(db, "attendance"),
+        where("dateKey", ">=", startDate),
+        where("dateKey", "<=", endDate),
+        orderBy("dateKey", "desc")
+    );
+
+} else {
+
+    attendanceQuery = query(
+        collection(db, "attendance"),
+        where("employeeNumber", "==", selectedEmployee),
+        where("dateKey", ">=", startDate),
+        where("dateKey", "<=", endDate),
+        orderBy("dateKey", "desc")
+    );
+
+}
 
         const snapshot =
             await getDocs(attendanceQuery);
