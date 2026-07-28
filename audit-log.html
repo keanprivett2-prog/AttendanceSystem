@@ -2,7 +2,6 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
 
     <meta
@@ -16,92 +15,131 @@
         rel="stylesheet"
         href="css/admin-v2.css"
     >
-
 </head>
 
 <body>
 
-    <div class="container">
+    <div class="app">
 
-        <nav class="sidebar">
+        <aside class="sidebar">
 
-            <h2>R-E-D Attendance</h2>
+            <div class="sidebar-brand">
 
-            <a href="admin-v2.html">
-                Dashboard
-            </a>
+                <div class="brand-logo">
+                    R
+                </div>
 
-            <a href="employees.html">
-                Employees
-            </a>
+                <div>
+                    <h2>R-E-D</h2>
+                    <span>Attendance</span>
+                </div>
 
-            <a href="#">
-                Attendance
-            </a>
+            </div>
 
-            <a href="#">
-                Reports
-            </a>
+            <nav class="sidebar-menu">
 
-            <a href="#">
-                Settings
-            </a>
+                <a
+                    href="admin-v2.html"
+                    class="menu-link"
+                >
+                    <span class="menu-icon">▦</span>
+                    <span>Dashboard</span>
+                </a>
 
-            <a href="#">
-                Administrators
-            </a>
+                <a
+                    href="employees.html"
+                    class="menu-link"
+                >
+                    <span class="menu-icon">👥</span>
+                    <span>Employees</span>
+                </a>
 
-            <a
-                href="audit-log.html"
-                class="active"
-            >
-                Audit Log
-            </a>
+                <a
+                    href="attendance.html"
+                    class="menu-link"
+                >
+                    <span class="menu-icon">✓</span>
+                    <span>Attendance</span>
+                </a>
 
-        </nav>
+                <a
+                    href="#"
+                    class="menu-link"
+                >
+                    <span class="menu-icon">▥</span>
+                    <span>Reports</span>
+                </a>
 
-        
+                <a
+                    href="#"
+                    class="menu-link"
+                >
+                    <span class="menu-icon">⚙</span>
+                    <span>Settings</span>
+                </a>
+
+                <a
+                    href="#"
+                    class="menu-link"
+                >
+                    <span class="menu-icon">♙</span>
+                    <span>Administrators</span>
+                </a>
+
+                <a
+                    href="audit-log.html"
+                    class="menu-link active"
+                >
+                    <span class="menu-icon">☷</span>
+                    <span>Audit Log</span>
+                </a>
+
+            </nav>
+
+            <div class="sidebar-footer">
+                <span>R-E-D Attendance</span>
+                <small>Enterprise Edition</small>
+            </div>
+
+        </aside>
+
+        <main class="content">
 
             <header class="topbar">
 
-                
-
                 <div>
-
                     <h1>Audit Log</h1>
+                    <p>View administrator activity and employee changes.</p>
+                </div>
 
-                    <p>
-                        View administrator activity and employee changes.
-                    </p>
+                <div class="topbar-right">
+
+                    <button
+                        type="button"
+                        class="logout-btn"
+                        id="logoutButton"
+                    >
+                        Logout
+                    </button>
 
                 </div>
 
-                <button id="logoutButton">
-                    Logout
-                </button>
-
             </header>
 
-       <main class="content">
-
-            <section class="employee-section">
+            <section class="employee-table-section">
 
                 <div class="employee-section-header">
 
                     <div>
-
                         <h2>System Activity</h2>
-
-                        <p>
-                            Actions performed by administrators will appear here.
-                        </p>
-
+                        <p>Actions performed by administrators will appear here.</p>
                     </div>
 
                     <input
                         type="search"
                         id="auditSearch"
                         placeholder="Search audit records..."
+                        autocomplete="off"
                     >
 
                 </div>
