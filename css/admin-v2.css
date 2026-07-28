@@ -663,31 +663,33 @@ body {
 
     position: fixed;
 
-    top: 25px;
+    top: 20px;
 
-    right: 25px;
+    left: 50%;
 
     background: #198754;
 
     color: white;
 
-    padding: 16px 24px;
+    padding: 16px 28px;
 
     border-radius: 10px;
 
     font-weight: 600;
 
+    text-align: center;
+
     box-shadow: 0 10px 25px rgba(0,0,0,.25);
 
     opacity: 0;
 
-    transform: translateX(120%);
+    transform: translate(-50%, -150%);
 
     transition: all .35s ease;
 
     z-index: 9999;
 
-    min-width: 280px;
+    min-width: 320px;
 
 }
 
@@ -695,7 +697,7 @@ body {
 
     opacity: 1;
 
-    transform: translateX(0);
+    transform: translate(-50%, 0);
 
 }
 
