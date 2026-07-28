@@ -79,7 +79,7 @@ async function loadAttendance() {
         const attendanceQuery =
             query(
                 collection(db, "attendance"),
-                where("date", "==", todayDate)
+                where("dateKey", "==", todayDate)
             );
 
         const attendanceSnapshot =
@@ -126,12 +126,12 @@ async function loadAttendance() {
                 );
 
             const status =
-                attendance
-                    ? "Checked In"
-                    : "Not Checked In";
+    attendance
+        ? attendance.status ?? "Checked In"
+        : "Not Checked In";
 
             const checkInTime =
-                attendance?.timestamp?.toDate
+    attendance?.time ?? "-";
                     ? attendance.timestamp
                         .toDate()
                         .toLocaleTimeString(
