@@ -17,12 +17,16 @@
         <aside class="sidebar">
 
             <div class="sidebar-brand">
-                <div class="brand-logo">R</div>
+
+                <div class="brand-logo">
+                    R
+                </div>
 
                 <div>
                     <h2>R-E-D</h2>
                     <span>Attendance</span>
                 </div>
+
             </div>
 
             <nav class="sidebar-menu">
@@ -57,7 +61,7 @@
                     <span>Administrators</span>
                 </a>
 
-                <a href="#" class="menu-link">
+                <a href="audit-log.html" class="menu-link">
                     <span class="menu-icon">☷</span>
                     <span>Audit Log</span>
                 </a>
@@ -81,139 +85,238 @@
                 </div>
 
                 <div class="topbar-right">
-                    <button class="logout-btn">
+
+                    <button
+                        type="button"
+                        class="logout-btn"
+                    >
                         Logout
                     </button>
+
                 </div>
 
             </header>
 
             <section class="employee-actions">
 
-    <div>
+                <div>
+                    <h2>Employee Directory</h2>
+                    <p>Add, search and manage employees.</p>
+                </div>
 
-        <h2>Employee Directory</h2>
+                <button
+                    type="button"
+                    class="add-employee-btn"
+                    id="addEmployeeButton"
+                >
+                    + Add Employee
+                </button>
 
-        <p>Add, search and manage employees.</p>
+            </section>
+
+            <section class="employee-table-section">
+
+                <div class="employee-toolbar">
+
+                    <input
+                        type="text"
+                        id="employeeSearch"
+                        class="employee-search"
+                        placeholder="Search employees..."
+                        autocomplete="off"
+                    >
+
+                </div>
+
+                <table class="attendance-table">
+
+                    <thead>
+
+                        <tr>
+                            <th>Employee No.</th>
+                            <th>Name</th>
+                            <th>Department</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="employeeTableBody">
+
+                        <tr>
+
+                            <td
+                                colspan="5"
+                                class="empty-row"
+                            >
+                                No employees have been added yet.
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </section>
+
+        </main>
 
     </div>
 
-    <button class="add-employee-btn" id="addEmployeeButton">
+    <!-- Add / Edit Employee Modal -->
 
-        + Add Employee
+    <div
+        class="modal-overlay"
+        id="employeeModal"
+    >
 
-    </button>
+        <div class="employee-modal">
 
-</section>
+            <div class="modal-header">
 
-<section class="employee-table-section">
+                <div>
+                    <h2>Add Employee</h2>
+                    <p>Create a new employee profile.</p>
+                </div>
 
-    <div class="employee-toolbar">
+                <button
+                    type="button"
+                    class="modal-close"
+                    id="closeEmployeeModal"
+                >
+                    ×
+                </button>
 
-        <input
-            type="text"
-            id="employeeSearch"
-            class="employee-search"
-            placeholder="Search employees..."
-        >
-
-    </div>
-
-    
-    
-    <table class="attendance-table">
-
-        <thead>
-
-            <tr>
-
-                <th>Employee No.</th>
-                <th>Name</th>
-                <th>Department</th>
-                <th>Status</th>
-                <th>Actions</th>
-
-            </tr>
-
-        </thead>
-
-        <tbody id="employeeTableBody">
-
-            <tr>
-
-                <td colspan="5" class="empty-row">
-
-                    No employees have been added yet.
-
-                </td>
-
-            </tr>
-
-        </tbody>
-
-    </table>
-
-</section>
-
-           <div class="modal-overlay" id="employeeModal">
-
-    <div class="employee-modal">
-
-        <div class="modal-header">
-
-            <div>
-                <h2>Add Employee</h2>
-                <p>Create a new employee profile.</p>
             </div>
 
-            <button type="button" class="modal-close" id="closeEmployeeModal">
-                ×
-            </button>
+            <form
+                id="employeeForm"
+                autocomplete="off"
+            >
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+
+                        <label for="employeeNumber">
+                            Employee Number
+                        </label>
+
+                        <input
+                            type="text"
+                            id="employeeNumber"
+                            autocomplete="off"
+                            required
+                        >
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label for="employeeName">
+                            Full Name
+                        </label>
+
+                        <input
+                            type="text"
+                            id="employeeName"
+                            autocomplete="off"
+                            required
+                        >
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label for="employeeDepartment">
+                            Department
+                        </label>
+
+                        <input
+                            type="text"
+                            id="employeeDepartment"
+                            autocomplete="off"
+                            required
+                        >
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label for="employeePin">
+                            PIN
+                        </label>
+
+                        <input
+                            type="text"
+                            id="employeePin"
+                            maxlength="6"
+                            inputmode="numeric"
+                            autocomplete="off"
+                            pattern="[0-9]{4,6}"
+                            required
+                        >
+
+                    </div>
+
+                </div>
+
+                <div class="modal-actions">
+
+                    <button
+                        type="button"
+                        class="cancel-btn"
+                        id="cancelEmployeeButton"
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="save-employee-btn"
+                        id="saveEmployeeButton"
+                    >
+                        Save Employee
+                    </button>
+
+                </div>
+
+            </form>
 
         </div>
 
-        <form id="employeeForm">
+    </div>
 
-            <div class="form-grid">
+    <!-- Delete Employee Modal -->
 
-                <div class="form-group">
-                    <label for="employeeNumber">Employee Number</label>
-                    <input
-                        type="text"
-                        id="employeeNumber"
-                        required
-                    >
+    <div
+        class="modal-overlay"
+        id="deleteModal"
+    >
+
+        <div class="employee-modal">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <h2>Delete Employee</h2>
+
+                    <p id="deleteMessage">
+                        Are you sure you want to delete this employee?
+                    </p>
+
                 </div>
 
-                <div class="form-group">
-                    <label for="employeeName">Full Name</label>
-                    <input
-                        type="text"
-                        id="employeeName"
-                        required
-                    >
-                </div>
-
-                <div class="form-group">
-                    <label for="employeeDepartment">Department</label>
-                    <input
-                        type="text"
-                        id="employeeDepartment"
-                        required
-                    >
-                </div>
-
-                <div class="form-group">
-    <label for="employeePin">PIN</label>
-    <input
-        type="password"
-        id="employeePin"
-        maxlength="6"
-        inputmode="numeric"
-        autocomplete="new-password"
-        required
-                    >
-                </div>
+                <button
+                    type="button"
+                    class="modal-close"
+                    id="closeDeleteModal"
+                >
+                    ×
+                </button>
 
             </div>
 
@@ -222,219 +325,186 @@
                 <button
                     type="button"
                     class="cancel-btn"
-                    id="cancelEmployeeButton"
+                    id="cancelDeleteButton"
                 >
                     Cancel
                 </button>
 
                 <button
-    type="submit"
-    class="save-employee-btn"
-    id="saveEmployeeButton"
->
-    Save Employee
-</button>
+                    type="button"
+                    class="delete-confirm-btn"
+                    id="confirmDeleteButton"
+                >
+                    Delete Employee
+                </button>
 
             </div>
-
-        </form>
-
-    </div>
-
-</div> 
-            
-        </main>
-
-            </div>
-
-</div>
-
-<div class="modal-overlay" id="deleteModal">
-
-    <div class="employee-modal">
-
-        <div class="modal-header">
-
-            <div>
-                <h2>Delete Employee</h2>
-                <p id="deleteMessage">
-                    Are you sure you want to delete this employee?
-                </p>
-            </div>
-
-            <button
-                type="button"
-                class="modal-close"
-                id="closeDeleteModal"
-            >
-                ×
-            </button>
-
-        </div>
-
-        <div class="modal-actions">
-
-            <button
-                type="button"
-                class="cancel-btn"
-                id="cancelDeleteButton"
-            >
-                Cancel
-            </button>
-
-            <button
-                type="button"
-                class="delete-confirm-btn"
-                id="confirmDeleteButton"
-            >
-                Delete Employee
-            </button>
 
         </div>
 
     </div>
 
-</div>
+    <!-- Reset PIN Modal -->
 
-<div class="modal-overlay" id="resetPinModal">
-
-    <div class="employee-modal">
-
-        <div class="modal-header">
-
-            <div>
-                <h2>Reset Employee PIN</h2>
-                <p id="resetPinEmployeeName">
-                    Reset the employee's PIN.
-                </p>
-            </div>
-
-            <button
-                type="button"
-                class="modal-close"
-                id="closeResetPinModal"
-            >
-                ×
-            </button>
-
-        </div>
-
-       <div class="form-group">
-
-    <label for="newEmployeePin">
-        New PIN
-    </label>
-
-    <input
-        type="password"
-        id="newEmployeePin"
-        maxlength="6"
-        inputmode="numeric"
-        autocomplete="new-password"
+    <div
+        class="modal-overlay"
+        id="resetPinModal"
     >
 
-        </div>
+        <div class="employee-modal">
 
-        <div class="form-group">
+            <div class="modal-header">
 
-            <label for="confirmEmployeePin">
-                Confirm PIN
-            </label>
+                <div>
 
-            <input
-                type="password"
-                id="confirmEmployeePin"
-                maxlength="6"
-                inputmode="numeric"
-autocomplete="new-password"
-            >
+                    <h2>Reset Employee PIN</h2>
 
-        </div>
+                    <p id="resetPinEmployeeName">
+                        Reset the employee's PIN.
+                    </p>
 
-        <div class="modal-actions">
+                </div>
 
-            <button
-                type="button"
-                class="cancel-btn"
-                id="cancelResetPinButton"
-            >
-                Cancel
-            </button>
+                <button
+                    type="button"
+                    class="modal-close"
+                    id="closeResetPinModal"
+                >
+                    ×
+                </button>
 
-            <button
-                type="button"
-                class="save-employee-btn"
-                id="saveResetPinButton"
-            >
-                Reset PIN
-            </button>
-
-        </div>
-
-    </div>
-
-</div>
-
-<div class="modal-overlay" id="statusModal">
-
-    <div class="employee-modal">
-
-        <div class="modal-header">
-
-            <div>
-                <h2 id="statusModalTitle">
-                    Change Employee Status
-                </h2>
-
-                <p id="statusModalMessage">
-                    Are you sure you want to continue?
-                </p>
             </div>
 
-            <button
-                type="button"
-                class="modal-close"
-                id="closeStatusModal"
-            >
-                ×
-            </button>
+            <div class="form-group">
 
-        </div>
+                <label for="newEmployeePin">
+                    New PIN
+                </label>
 
-        <div class="modal-actions">
+                <input
+                    type="text"
+                    id="newEmployeePin"
+                    maxlength="6"
+                    inputmode="numeric"
+                    autocomplete="off"
+                    pattern="[0-9]{4,6}"
+                >
 
-            <button
-                type="button"
-                class="cancel-btn"
-                id="cancelStatusButton"
-            >
-                Cancel
-            </button>
+            </div>
 
-            <button
-                type="button"
-                class="save-employee-btn"
-                id="confirmStatusButton"
-            >
-                Confirm
-            </button>
+            <div class="form-group">
+
+                <label for="confirmEmployeePin">
+                    Confirm PIN
+                </label>
+
+                <input
+                    type="text"
+                    id="confirmEmployeePin"
+                    maxlength="6"
+                    inputmode="numeric"
+                    autocomplete="off"
+                    pattern="[0-9]{4,6}"
+                >
+
+            </div>
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    class="cancel-btn"
+                    id="cancelResetPinButton"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    type="button"
+                    class="save-employee-btn"
+                    id="saveResetPinButton"
+                >
+                    Reset PIN
+                </button>
+
+            </div>
 
         </div>
 
     </div>
 
-</div>
-    
-</main>
-        
+    <!-- Employee Status Modal -->
+
+    <div
+        class="modal-overlay"
+        id="statusModal"
+    >
+
+        <div class="employee-modal">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <h2 id="statusModalTitle">
+                        Change Employee Status
+                    </h2>
+
+                    <p id="statusModalMessage">
+                        Are you sure you want to continue?
+                    </p>
+
+                </div>
+
+                <button
+                    type="button"
+                    class="modal-close"
+                    id="closeStatusModal"
+                >
+                    ×
+                </button>
+
+            </div>
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    class="cancel-btn"
+                    id="cancelStatusButton"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    type="button"
+                    class="save-employee-btn"
+                    id="confirmStatusButton"
+                >
+                    Confirm
+                </button>
+
+            </div>
+
+        </div>
+
     </div>
 
-    <script type="module" src="js/employees.js"></script>
+    <div
+        id="notification"
+        class="notification"
+    >
 
-    <div id="notification" class="notification">
-    <span id="notificationMessage"></span>
-    <div class="notification-progress"></div>
-</div>
+        <span id="notificationMessage"></span>
+
+        <div class="notification-progress"></div>
+
+    </div>
+
+    <script
+        type="module"
+        src="js/employees.js"
+    ></script>
 
 </body>
 
