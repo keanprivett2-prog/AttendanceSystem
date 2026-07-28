@@ -773,9 +773,33 @@ confirmStatusButton.addEventListener("click", async () => {
             employeeToChangeStatus
         );
 
+        const employeeSnapshot =
+            await getDoc(employeeReference);
+
+        if (!employeeSnapshot.exists()) {
+
+            showNotification(
+                "❌ Employee could not be found.",
+                "error"
+            );
+
+            return;
+        }
+
+        const employee =
+            employeeSnapshot.data();
+
         await updateDoc(employeeReference, {
             active: newEmployeeStatus
         });
+
+        await writeAuditLog(
+            newEmployeeStatus
+                ? "Enabled Employee"
+                : "Disabled Employee",
+            employee.name,
+            `Employee Number: ${employee.employeeNumber}`
+        );
 
         closeStatusConfirmation();
 
@@ -783,11 +807,14 @@ confirmStatusButton.addEventListener("click", async () => {
             `✅ Employee ${newEmployeeStatus ? "enabled" : "disabled"} successfully.`
         );
 
-        loadEmployees();
+        await loadEmployees();
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "Error updating employee status:",
+            error
+        );
 
         showNotification(
             "❌ Unable to update employee status.",
