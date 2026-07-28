@@ -195,6 +195,8 @@ function displayReport(records) {
 
     });
 
+    updateSummaryCards(records);
+    
 }
 
 function showTableMessage(message) {
