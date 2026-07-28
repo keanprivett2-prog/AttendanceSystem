@@ -32,6 +32,7 @@ const closeDeleteModal = document.getElementById("closeDeleteModal");
 const confirmDeleteButton = document.getElementById("confirmDeleteButton");
 
 let editingEmployeeId = null;
+let employeeToDelete = null;
 
 function showNotification(messageText, type = "success") {
 
