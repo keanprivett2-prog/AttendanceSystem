@@ -6,12 +6,8 @@
 import { db, auth } from "../firebase/firebase.js";
 
 import {
-    collection,
-    getDocs,
-    query,
-    where,
-    orderBy
-} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+    signOut
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 import {
     onAuthStateChanged,
@@ -54,16 +50,7 @@ const attendanceRate =
 const logoutButton =
     document.getElementById("logoutButton");
 
-onAuthStateChanged(auth, async (user) => {
-
-    if (!user) {
-        window.location.href = "index.html";
-        return;
-    }
-
-    await loadEmployeeFilter();
-
-});
+loadEmployeeFilter();
 
 generateReportButton.addEventListener(
     "click",
