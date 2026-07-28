@@ -29,6 +29,39 @@ const employeeTableBody = document.getElementById("employeeTableBody");
 
 let editingEmployeeId = null;
 
+function showNotification(messageText, type = "success") {
+
+    const notification =
+        document.getElementById("notification");
+
+    const notificationMessage =
+        document.getElementById("notificationMessage");
+
+    notificationMessage.textContent =
+        messageText;
+
+    notification.classList.remove(
+        "error",
+        "warning"
+    );
+
+    if (type === "error") {
+        notification.classList.add("error");
+    }
+
+    if (type === "warning") {
+        notification.classList.add("warning");
+    }
+
+    notification.classList.add("show");
+
+    setTimeout(() => {
+
+        notification.classList.remove("show");
+
+    }, 3000);
+}
+
 // =====================================
 // Modal Controls
 // =====================================
