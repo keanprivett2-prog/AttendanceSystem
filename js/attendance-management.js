@@ -877,6 +877,10 @@ if (isToday) {
             <strong>${day}</strong>
         `;
 
+        dayCell.dataset.day = day;
+
+dayCell.style.cursor = "pointer";
+
         calendarGrid.appendChild(dayCell);
 
     }
