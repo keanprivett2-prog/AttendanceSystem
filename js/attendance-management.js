@@ -26,6 +26,9 @@ const attendanceStatus =
 const attendanceNotes =
     document.getElementById("attendanceNotes");
 
+const attendanceHistory =
+    document.getElementById("attendanceHistory");
+
 const attendanceMessage =
     document.getElementById("attendanceMessage");
 
