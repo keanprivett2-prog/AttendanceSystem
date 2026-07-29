@@ -141,6 +141,62 @@ if (!employeeSnapshot.exists()) {
 const employee =
     employeeSnapshot.data();
 
+      const selectedDate =
+    attendanceDate.value;
+
+const selectedStatus =
+    attendanceStatus.value;
+
+const notes =
+    attendanceNotes.value.trim();
+
+const currentTime =
+    new Date().toLocaleTimeString("en-ZA", {
+        hour: "2-digit",
+        minute: "2-digit"
+    });
+
+await addDoc(
+    collection(db, "attendance"),
+    {
+        employeeNumber:
+            employee.employeeNumber,
+
+        name:
+            employee.name,
+
+        department:
+            employee.department ?? "Unassigned",
+
+        date:
+            selectedDate,
+
+        dateKey:
+            selectedDate,
+
+        status:
+            selectedStatus,
+
+        notes:
+            notes,
+
+        checkInMethod:
+            "Manual",
+
+        time:
+            currentTime,
+
+        createdAt:
+            serverTimestamp()
+    }
+);
+
+attendanceMessage.style.color =
+    "green";
+
+attendanceMessage.textContent =
+    "Attendance saved successfully.";  
+
     }
 );
 
