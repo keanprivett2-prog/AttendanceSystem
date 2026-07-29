@@ -1950,3 +1950,122 @@ line-height: 1.5;
     line-height: 1.6;
 
 }
+/* =====================================================
+   Attendance Calendar
+===================================================== */
+
+.attendance-calendar {
+
+    background: #ffffff;
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 12px;
+
+    padding: 20px;
+
+    margin-bottom: 20px;
+
+}
+
+.calendar-header {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    margin-bottom: 18px;
+
+}
+
+.calendar-header h3 {
+
+    margin: 0;
+
+    font-size: 18px;
+
+    color: #1f2937;
+
+}
+
+.calendar-navigation-button {
+
+    background: var(--blue-primary);
+
+    color: white;
+
+    border: none;
+
+    border-radius: 8px;
+
+    padding: 8px 14px;
+
+    cursor: pointer;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+}
+
+.calendar-navigation-button:hover {
+
+    opacity: .9;
+
+}
+
+#attendanceCalendarGrid {
+
+    display: grid;
+
+    grid-template-columns: repeat(7, 1fr);
+
+    gap: 8px;
+
+}
+
+.calendar-day-header {
+
+    text-align: center;
+
+    font-weight: 700;
+
+    color: #6b7280;
+
+    padding: 8px 0;
+
+    font-size: 13px;
+
+}
+
+.calendar-day {
+
+    aspect-ratio: 1;
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 10px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    font-weight: 600;
+
+    background: white;
+
+    transition: .2s;
+
+}
+
+.calendar-day:hover {
+
+    transform: scale(1.05);
+
+    box-shadow: 0 4px 10px rgba(0,0,0,.08);
+
+}
