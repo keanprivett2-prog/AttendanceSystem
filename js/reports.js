@@ -54,6 +54,8 @@ const logoutButton =
 
 loadEmployeeFilter();
 
+loadDepartmentFilter();
+
 generateReportButton.addEventListener(
     "click",
     generateReport
@@ -140,6 +142,46 @@ async function loadEmployeeFilter() {
         );
 
     }
+
+}
+
+async function loadDepartmentFilter() {
+
+    const employeeSnapshot =
+        await getDocs(
+            collection(db, "employees")
+        );
+
+    const departments = new Set();
+
+    employeeSnapshot.forEach((employeeDocument) => {
+
+        const employeeData =
+            employeeDocument.data();
+
+        const department =
+            String(employeeData.department ?? "").trim();
+
+        if (department !== "") {
+            departments.add(department);
+        }
+
+    });
+
+    const sortedDepartments =
+        Array.from(departments).sort();
+
+    sortedDepartments.forEach((department) => {
+
+        const option =
+            document.createElement("option");
+
+        option.value = department;
+        option.textContent = department;
+
+        departmentFilter.appendChild(option);
+
+    });
 
 }
 
