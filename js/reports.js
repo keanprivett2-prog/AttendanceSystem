@@ -6,8 +6,12 @@
 import { db, auth } from "../firebase/firebase.js";
 
 import {
-    signOut
-} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+    collection,
+    getDocs,
+    query,
+    where,
+    orderBy
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 const startDateInput =
     document.getElementById("reportStartDate");
