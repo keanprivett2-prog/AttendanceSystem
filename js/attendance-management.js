@@ -167,7 +167,7 @@ async function loadExistingAttendance() {
                 attendance.notes ?? "";
 
             attendanceMessage.style.color =
-                "var(--green-primary)";
+                "var(--orange-primary)";
 
             attendanceMessage.textContent =
                 "Existing attendance record loaded.";
