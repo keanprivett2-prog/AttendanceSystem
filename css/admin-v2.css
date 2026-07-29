@@ -2044,6 +2044,8 @@ line-height: 1.5;
 
     aspect-ratio: 1;
 
+    max-width: 70px;
+
     border: 1px solid #e5e7eb;
 
     border-radius: 10px;
@@ -2059,6 +2061,7 @@ line-height: 1.5;
     background: white;
 
     transition: .2s;
+    
 
 }
 
