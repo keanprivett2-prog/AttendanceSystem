@@ -14,6 +14,21 @@ import {
 const employeeSelect =
     document.getElementById("employeeSelect");
 
+const attendanceManagementForm =
+    document.getElementById("attendanceManagementForm");
+
+const attendanceDate =
+    document.getElementById("attendanceDate");
+
+const attendanceStatus =
+    document.getElementById("attendanceStatus");
+
+const attendanceNotes =
+    document.getElementById("attendanceNotes");
+
+const attendanceMessage =
+    document.getElementById("attendanceMessage");
+
 async function loadEmployees() {
 
     employeeSelect.innerHTML = `
