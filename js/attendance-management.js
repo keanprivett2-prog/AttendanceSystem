@@ -118,6 +118,29 @@ attendanceManagementForm.addEventListener(
         attendanceMessage.style.color =
             "var(--text-secondary)";
 
+        const employeeId =
+    employeeSelect.value;
+
+const employeeReference =
+    doc(db, "employees", employeeId);
+
+const employeeSnapshot =
+    await getDoc(employeeReference);
+
+if (!employeeSnapshot.exists()) {
+
+    attendanceMessage.style.color = "red";
+
+    attendanceMessage.textContent =
+        "Employee not found.";
+
+    return;
+
+}
+
+const employee =
+    employeeSnapshot.data();
+
     }
 );
 
