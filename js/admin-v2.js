@@ -86,7 +86,14 @@ recentActivity.innerHTML = "";
         <td>${data.employeeNumber ?? "-"}</td>
         <td>${data.department ?? "-"}</td>
         <td>${data.time ?? "-"}</td>
-        <td>${data.status ?? "Checked In"}</td>
+        <td>
+            <span class="status-badge status-${String(data.status ?? "checked-in")
+                .trim()
+                .toLowerCase()
+                .replaceAll(" ", "-")}">
+                ${data.status ?? "Checked In"}
+            </span>
+        </td>
     </tr>
 `;
 
