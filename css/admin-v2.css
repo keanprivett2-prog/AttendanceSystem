@@ -2077,6 +2077,54 @@ line-height: 1.5;
 
 }
 
+.calendar-on-time {
+
+    background: #dcfce7;
+    color: #166534;
+    border-color: #22c55e;
+
+}
+
+.calendar-late {
+
+    background: #fef3c7;
+    color: #92400e;
+    border-color: #f59e0b;
+
+}
+
+.calendar-absent {
+
+    background: #fee2e2;
+    color: #991b1b;
+    border-color: #ef4444;
+
+}
+
+.calendar-leave {
+
+    background: #dbeafe;
+    color: #1d4ed8;
+    border-color: #3b82f6;
+
+}
+
+.calendar-work-from-home {
+
+    background: #ede9fe;
+    color: #6d28d9;
+    border-color: #8b5cf6;
+
+}
+
+.calendar-public-holiday {
+
+    background: #f3f4f6;
+    color: #374151;
+    border-color: #6b7280;
+
+}
+
 .calendar-day:hover {
 
     transform: scale(1.05);
