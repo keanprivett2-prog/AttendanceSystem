@@ -36,14 +36,14 @@ async function loadAttendance() {
         }
 
         tableBody.innerHTML += `
-            <tr>
-                <td>${data.employee ?? "-"}</td>
-                <td>${data.employeeNo ?? "-"}</td>
-                <td>${data.department ?? "-"}</td>
-                <td>${data.createdAt?.toDate().toLocaleTimeString() ?? "-"}</td>
-                <td>${data.locationStatus ?? "Checked In"}</td>
-            </tr>
-        `;
+    <tr>
+        <td>${data.name ?? "-"}</td>
+        <td>${data.employeeNumber ?? "-"}</td>
+        <td>${data.department ?? "-"}</td>
+        <td>${data.time ?? "-"}</td>
+        <td>${data.status ?? "Checked In"}</td>
+    </tr>
+`;
 
     });
 
