@@ -82,6 +82,8 @@ const snapshot =
 
         document.getElementById("checkedIn").textContent = checkedIn;
     document.getElementById("lateToday").textContent = lateToday;
+    document.getElementById("totalEmployees").textContent =
+    employeeSnapshot.size;
 
 }
 
