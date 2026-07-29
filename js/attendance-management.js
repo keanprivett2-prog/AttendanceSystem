@@ -790,6 +790,31 @@ function buildCalendar() {
 calendarTitle.textContent =
     `${monthNames[calendarMonth]} ${calendarYear}`;
 
+    const dayNames = [
+    "Sun",
+    "Mon",
+    "Tue",
+    "Wed",
+    "Thu",
+    "Fri",
+    "Sat"
+];
+
+dayNames.forEach((dayName) => {
+
+    const dayHeading =
+        document.createElement("div");
+
+    dayHeading.className =
+        "calendar-day-header";
+
+    dayHeading.textContent =
+        dayName;
+
+    calendarGrid.appendChild(dayHeading);
+
+});
+
 }
 
 // =====================================================
