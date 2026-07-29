@@ -196,6 +196,9 @@ async function generateReport() {
     const selectedEmployee =
     employeeFilter.value;
 
+    const selectedDepartment =
+    departmentFilter.value;
+
     if (!startDate || !endDate) {
 
         showTableMessage(
