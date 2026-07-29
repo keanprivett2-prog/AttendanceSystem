@@ -787,6 +787,75 @@ async function buildCalendar() {
 
 }
 
+    const selectedEmployeeNumber =
+    employeeSelect.value;
+
+    const monthStart =
+    new Date(
+        calendarYear,
+        calendarMonth,
+        1
+    );
+
+const monthEnd =
+    new Date(
+        calendarYear,
+        calendarMonth + 1,
+        0
+    );
+
+    const monthStartKey =
+    monthStart
+        .toISOString()
+        .split("T")[0];
+
+const monthEndKey =
+    monthEnd
+        .toISOString()
+        .split("T")[0];
+
+    const attendanceQuery =
+    query(
+        attendanceCollection,
+        where(
+            "employeeNumber",
+            "==",
+            selectedEmployeeNumber
+        ),
+        where(
+            "date",
+            ">=",
+            monthStartKey
+        ),
+        where(
+            "date",
+            "<=",
+            monthEndKey
+        )
+    );
+
+    const attendanceSnapshot =
+    await getDocs(attendanceQuery);
+
+    const monthlyAttendance =
+    attendanceSnapshot.docs.map(
+        (document) => ({
+            id: document.id,
+            ...document.data()
+        })
+    );
+
+    const attendanceByDate = {};
+
+monthlyAttendance.forEach(
+    (record) => {
+
+        attendanceByDate[record.date] =
+            record;
+
+    }
+);
+
     const monthNames = [
         "January",
         "February",
@@ -868,6 +937,34 @@ async function buildCalendar() {
 
         const dayCell =
             document.createElement("div");
+
+        const currentDate =
+    new Date(
+        calendarYear,
+        calendarMonth,
+        day
+    );
+
+const currentDateKey =
+    currentDate
+        .toISOString()
+        .split("T")[0];
+
+        const attendanceRecord =
+    attendanceByDate[currentDateKey];
+
+        if (attendanceRecord) {
+
+    const statusClass =
+        attendanceRecord.status
+            .toLowerCase()
+            .replaceAll(" ", "-");
+
+    dayCell.classList.add(
+        `calendar-${statusClass}`
+    );
+
+}
 
         dayCell.className =
             "calendar-day";
