@@ -1324,3 +1324,47 @@ body {
     font-size: 13px;
     color: #2563eb;
 }
+.department-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 13px 14px;
+    margin-bottom: 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #f8fafc;
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
+}
+
+.department-item:hover {
+    transform: translateX(3px);
+    background: #ffffff;
+    box-shadow: 0 5px 14px rgba(15, 23, 42, 0.07);
+}
+
+.department-item:last-child {
+    margin-bottom: 0;
+}
+
+.department-item span {
+    font-size: 14px;
+    font-weight: 500;
+    color: #334155;
+}
+
+.department-item strong {
+    display: grid;
+    place-items: center;
+    min-width: 34px;
+    height: 28px;
+    padding: 0 9px;
+    border-radius: 999px;
+    background: #dbeafe;
+    color: #1d4ed8;
+    font-size: 13px;
+    font-weight: 700;
+}
