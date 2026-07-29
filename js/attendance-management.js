@@ -354,40 +354,80 @@ async function loadAttendanceHistory() {
 
         historySnapshot.forEach((attendanceDocument) => {
 
-            const attendance =
-                attendanceDocument.data();
+    const attendance =
+        attendanceDocument.data();
 
-            const dateDisplay =
-                formatAttendanceDate(
-                    attendance.dateKey
-                );
+    const dateDisplay =
+        formatAttendanceDate(
+            attendance.dateKey
+        );
 
-            const statusClass =
-                createStatusClass(
-                    attendance.status
-                );
+    const statusClass =
+        createStatusClass(
+            attendance.status
+        );
 
-            attendanceHistory.innerHTML += `
-                <div class="history-item">
+    const method =
+        attendance.checkInMethod ?? "Unknown";
 
-                    <div>
-                        <strong>
-                            ${dateDisplay}
-                        </strong>
+    const notes =
+        attendance.notes?.trim() || "No notes added.";
 
-                        <small>
-                            ${attendance.time ?? ""}
-                        </small>
-                    </div>
+    attendanceHistory.innerHTML += `
+        <article class="attendance-history-card">
 
-                    <span class="status-badge ${statusClass}">
-                        ${attendance.status ?? "Unknown"}
+            <div class="history-card-header">
+
+                <span class="status-badge ${statusClass}">
+                    ${attendance.status ?? "Unknown"}
+                </span>
+
+                <span class="history-method">
+                    ${method}
+                </span>
+
+            </div>
+
+            <div class="history-card-details">
+
+                <div>
+                    <span class="history-label">
+                        Date
                     </span>
 
+                    <strong>
+                        ${dateDisplay}
+                    </strong>
                 </div>
-            `;
 
-        });
+                <div>
+                    <span class="history-label">
+                        Time
+                    </span>
+
+                    <strong>
+                        ${attendance.time ?? "Not recorded"}
+                    </strong>
+                </div>
+
+            </div>
+
+            <div class="history-card-notes">
+
+                <span class="history-label">
+                    Notes
+                </span>
+
+                <p>
+                    ${notes}
+                </p>
+
+            </div>
+
+        </article>
+    `;
+
+});
 
     } catch (error) {
 
