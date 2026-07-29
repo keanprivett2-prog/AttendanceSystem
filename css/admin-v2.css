@@ -1519,3 +1519,74 @@ line-height: 1.5;
     }
 
 }
+/* =====================================================
+   Attendance Summary
+===================================================== */
+
+.attendance-summary {
+
+    background: #f8fafc;
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 12px;
+
+    padding: 20px;
+
+    margin-bottom: 20px;
+
+}
+
+.attendance-summary h3 {
+
+    margin: 0 0 16px 0;
+
+    font-size: 18px;
+
+    color: #1f2937;
+
+}
+
+.summary-grid {
+
+    display: grid;
+
+    grid-template-columns: repeat(2, 1fr);
+
+    gap: 12px;
+
+}
+
+.summary-item {
+
+    background: white;
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 10px;
+
+    padding: 14px;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+}
+
+.summary-item span {
+
+    color: #6b7280;
+
+    font-size: 14px;
+
+}
+
+.summary-item strong {
+
+    font-size: 22px;
+
+    color: var(--blue-primary);
+
+}
