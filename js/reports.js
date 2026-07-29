@@ -227,45 +227,46 @@ async function generateReport() {
 
         let attendanceQuery;
 
-if (
-    selectedEmployee === "" &&
-    selectedDepartment === ""
-) {
-
-    attendanceQuery = query(
-        collection(db, "attendance"),
-        where("dateKey", ">=", startDate),
-        where("dateKey", "<=", endDate),
-        orderBy("dateKey", "desc")
-    );
-
-} else {
-
-    attendanceQuery = query(
-        collection(db, "attendance"),
-        where("employeeNumber", "==", selectedEmployee),
-        where("dateKey", ">=", startDate),
-        where("dateKey", "<=", endDate),
-        orderBy("dateKey", "desc")
-    );
+attendanceQuery = query(
+    collection(db, "attendance"),
+    where("dateKey", ">=", startDate),
+    where("dateKey", "<=", endDate),
+    orderBy("dateKey", "desc")
+);
 
 }
 
         const snapshot =
             await getDocs(attendanceQuery);
 
-        const records = [];
+        let records = [];
 
-        snapshot.forEach((documentSnapshot) => {
+snapshot.forEach((documentSnapshot) => {
 
-            records.push({
-                id: documentSnapshot.id,
-                ...documentSnapshot.data()
-            });
+    records.push({
+        id: documentSnapshot.id,
+        ...documentSnapshot.data()
+    });
 
-        });
+});
 
-        displayReport(records);
+if (selectedEmployee !== "") {
+
+    records = records.filter((record) =>
+        String(record.employeeNumber ?? "") === selectedEmployee
+    );
+
+}
+
+if (selectedDepartment !== "") {
+
+    records = records.filter((record) =>
+        String(record.department ?? "").trim() === selectedDepartment
+    );
+
+}
+
+displayReport(records);
 
     } catch (error) {
 
