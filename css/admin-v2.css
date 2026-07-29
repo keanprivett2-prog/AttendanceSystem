@@ -1194,3 +1194,18 @@ body {
         grid-template-columns: 1fr;
     }
 }
+.activity-item {
+    padding: 12px 0;
+    border-bottom: 1px solid #e5e7eb;
+    line-height: 1.4;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-item strong {
+    display: inline-block;
+    margin-bottom: 4px;
+    font-size: 14px;
+}
