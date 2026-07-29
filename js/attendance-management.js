@@ -687,6 +687,7 @@ async function saveAttendance(event) {
         }
 
         await loadAttendanceHistory();
+        await loadAttendanceSummary();
 
     } catch (error) {
 
@@ -726,6 +727,7 @@ employeeSelect.addEventListener(
 
         await loadExistingAttendance();
         await loadAttendanceHistory();
+        await loadAttendanceSummary();
 
     }
 );
