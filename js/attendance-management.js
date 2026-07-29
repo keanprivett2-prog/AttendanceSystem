@@ -966,9 +966,10 @@ employeeSelect.addEventListener(
         await loadAttendanceHistory();
         await loadAttendanceSummary();
 
+        buildCalendar();
+
     }
 );
-
 attendanceDate.addEventListener(
     "change",
     loadExistingAttendance
