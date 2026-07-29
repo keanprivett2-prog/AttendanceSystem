@@ -234,8 +234,6 @@ attendanceQuery = query(
     orderBy("dateKey", "desc")
 );
 
-}
-
         const snapshot =
             await getDocs(attendanceQuery);
 
