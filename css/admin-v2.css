@@ -1402,3 +1402,96 @@ line-height: 1.5;
     font-size: 13px;
     font-weight: 700;
 }
+/* ==========================================
+   Attendance Management
+========================================== */
+
+.attendance-management-card{
+    background: var(--background-card);
+    border-radius: var(--radius-large);
+    box-shadow: var(--shadow-small);
+    padding:30px;
+    margin-top:25px;
+}
+
+.section-heading{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:30px;
+}
+
+.section-heading h2{
+    margin:0;
+    color:var(--text-primary);
+}
+
+.section-heading p{
+    margin-top:6px;
+    color:var(--text-secondary);
+}
+
+.form-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    gap:20px;
+}
+
+.form-group{
+    display:flex;
+    flex-direction:column;
+}
+
+.form-group-full{
+    grid-column:1 / -1;
+}
+
+.form-group label{
+    font-weight:600;
+    margin-bottom:8px;
+    color:var(--text-primary);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea{
+    padding:12px;
+    border:1px solid var(--border-color);
+    border-radius:var(--radius-small);
+    font-size:15px;
+    background:#fff;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus{
+    outline:none;
+    border-color:var(--blue-primary);
+    box-shadow:0 0 0 3px var(--blue-light);
+}
+
+.form-actions{
+    margin-top:25px;
+}
+
+.primary-button{
+    background:var(--red-primary);
+    color:white;
+    border:none;
+    border-radius:var(--radius-small);
+    padding:12px 28px;
+    font-size:15px;
+    font-weight:600;
+    cursor:pointer;
+    transition:0.25s;
+}
+
+.primary-button:hover{
+    background:var(--red-dark);
+    transform:translateY(-2px);
+}
+
+#attendanceMessage{
+    margin-top:18px;
+    font-weight:600;
+}
