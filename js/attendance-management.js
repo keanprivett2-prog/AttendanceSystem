@@ -857,6 +857,22 @@ function buildCalendar() {
         dayCell.className =
             "calendar-day";
 
+        const today =
+    new Date();
+
+const isToday =
+    day === today.getDate() &&
+    calendarMonth === today.getMonth() &&
+    calendarYear === today.getFullYear();
+
+if (isToday) {
+
+    dayCell.classList.add(
+        "calendar-today"
+    );
+
+}
+
         dayCell.innerHTML = `
             <strong>${day}</strong>
         `;
