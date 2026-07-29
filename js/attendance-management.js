@@ -816,7 +816,7 @@ const monthEndKey =
 
     const attendanceQuery =
     query(
-        collection(db, "attendance")
+        collection(db, "attendance"),
         where(
             "employeeNumber",
             "==",
