@@ -54,6 +54,24 @@ const summaryLeave =
 const saveAttendanceButton =
     document.getElementById("saveAttendanceButton");
 
+const calendarTitle =
+    document.getElementById("calendarMonthTitle");
+
+const calendarGrid =
+    document.getElementById("attendanceCalendarGrid");
+
+const previousMonthButton =
+    document.getElementById("previousMonthButton");
+
+const nextMonthButton =
+    document.getElementById("nextMonthButton");
+
+let calendarMonth =
+    new Date().getMonth();
+
+let calendarYear =
+    new Date().getFullYear();
+
 
 // =====================================================
 // Message Helper
@@ -746,6 +764,71 @@ async function saveAttendance(event) {
 
 }
 
+// =====================================================
+// Build Calendar
+// =====================================================
+
+function buildCalendar() {
+
+    calendarGrid.innerHTML = "";
+    
+    const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December"
+];
+
+calendarTitle.textContent =
+    `${monthNames[calendarMonth]} ${calendarYear}`;
+
+}
+
+// =====================================================
+// Show Previous Calendar Month
+// =====================================================
+
+function showPreviousMonth() {
+
+    calendarMonth--;
+
+    if (calendarMonth < 0) {
+
+        calendarMonth = 11;
+        calendarYear--;
+
+    }
+
+    buildCalendar();
+    
+}
+
+// =====================================================
+// Show Next Calendar Month
+// =====================================================
+
+function showNextMonth() {
+
+    calendarMonth++;
+
+    if (calendarMonth > 11) {
+
+        calendarMonth = 0;
+        calendarYear++;
+
+    }
+
+    buildCalendar();
+
+}
 
 // =====================================================
 // Event Listeners
@@ -772,6 +855,15 @@ attendanceDate.addEventListener(
     loadExistingAttendance
 );
 
+previousMonthButton.addEventListener(
+    "click",
+    showPreviousMonth
+);
+
+nextMonthButton.addEventListener(
+    "click",
+    showNextMonth
+);
 
 // =====================================================
 // Page Initialization
@@ -781,3 +873,4 @@ attendanceDate.value =
     new Date().toISOString().split("T")[0];
 
 loadEmployees();
+buildCalendar();
