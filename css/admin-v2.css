@@ -1,3 +1,35 @@
+:root {
+    --red-primary: #b91c1c;
+    --red-dark: #7f1d1d;
+    --red-light: #fee2e2;
+
+    --blue-primary: #2563eb;
+    --blue-light: #dbeafe;
+
+    --green-primary: #16a34a;
+    --green-light: #dcfce7;
+
+    --orange-primary: #f59e0b;
+    --orange-light: #fef3c7;
+
+    --background-main: #f4f7fb;
+    --background-card: #ffffff;
+
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+
+    --border-color: #e2e8f0;
+
+    --shadow-small:
+        0 4px 14px rgba(15, 23, 42, 0.06);
+
+    --shadow-medium:
+        0 10px 30px rgba(15, 23, 42, 0.10);
+
+    --radius-small: 10px;
+    --radius-medium: 16px;
+    --radius-large: 22px;
+}
 /* =====================================
    R-E-D Attendance Enterprise
    Admin Dashboard V2
