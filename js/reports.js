@@ -202,6 +202,9 @@ async function generateReport() {
     const selectedDepartment =
     departmentFilter.value;
 
+    const selectedStatus =
+    statusFilter.value;
+
     if (!startDate || !endDate) {
 
         showTableMessage(
