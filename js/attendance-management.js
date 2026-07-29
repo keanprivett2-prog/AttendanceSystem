@@ -802,6 +802,56 @@ calendarTitle.textContent =
 
 dayNames.forEach((dayName) => {
 
+    const firstDayOfMonth =
+    new Date(
+        calendarYear,
+        calendarMonth,
+        1
+    ).getDay();
+
+const totalDaysInMonth =
+    new Date(
+        calendarYear,
+        calendarMonth + 1,
+        0
+    ).getDate();
+
+    for (
+    let emptyCell = 0;
+    emptyCell < firstDayOfMonth;
+    emptyCell++
+) {
+
+    const blankDay =
+        document.createElement("div");
+
+    blankDay.className =
+        "calendar-empty";
+
+    calendarGrid.appendChild(blankDay);
+
+}
+
+    for (
+    let day = 1;
+    day <= totalDaysInMonth;
+    day++
+) {
+
+    const dayCell =
+        document.createElement("div");
+
+    dayCell.className =
+        "calendar-day";
+
+    dayCell.innerHTML = `
+        <strong>${day}</strong>
+    `;
+
+    calendarGrid.appendChild(dayCell);
+
+}
+
     const dayHeading =
         document.createElement("div");
 
