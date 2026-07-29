@@ -270,6 +270,14 @@ if (selectedDepartment !== "") {
 
 }
 
+        if (selectedStatus !== "") {
+
+    records = records.filter((record) =>
+        String(record.status ?? "").trim() === selectedStatus
+    );
+
+}
+
 displayReport(records);
 
     } catch (error) {
