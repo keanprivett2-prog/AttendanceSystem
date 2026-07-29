@@ -25,6 +25,9 @@ const employeeFilter =
 const departmentFilter =
     document.getElementById("departmentFilter");
 
+const statusFilter =
+    document.getElementById("statusFilter");
+
 const generateReportButton =
     document.getElementById("generateReportButton");
 
