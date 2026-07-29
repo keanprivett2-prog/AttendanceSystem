@@ -13,6 +13,11 @@ import {
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
+
+// =====================================================
+// DOM Elements
+// =====================================================
+
 const employeeSelect =
     document.getElementById("employeeSelect");
 
@@ -28,11 +33,31 @@ const attendanceStatus =
 const attendanceNotes =
     document.getElementById("attendanceNotes");
 
+const attendanceMessage =
+    document.getElementById("attendanceMessage");
+
 const attendanceHistory =
     document.getElementById("attendanceHistory");
 
-const attendanceMessage =
-    document.getElementById("attendanceMessage");
+const saveAttendanceButton =
+    document.getElementById("saveAttendanceButton");
+
+
+// =====================================================
+// Message Helper
+// =====================================================
+
+function showMessage(message, color) {
+
+    attendanceMessage.textContent = message;
+    attendanceMessage.style.color = color;
+
+}
+
+
+// =====================================================
+// Load Active Employees
+// =====================================================
 
 async function loadEmployees() {
 
@@ -79,10 +104,14 @@ async function loadEmployees() {
             const option =
                 document.createElement("option");
 
-            option.value = employee.id;
+            option.value =
+                employee.id;
 
             option.textContent =
                 `${employee.name} (${employee.employeeNumber})`;
+
+            option.dataset.employeeNumber =
+                employee.employeeNumber ?? "";
 
             option.dataset.name =
                 employee.name ?? "";
@@ -107,41 +136,62 @@ async function loadEmployees() {
             </option>
         `;
 
+        showMessage(
+            "Unable to load employees.",
+            "red"
+        );
+
     }
 
 }
 
-async function loadExistingAttendance() {
 
-    const employeeId =
-        employeeSelect.value;
+// =====================================================
+// Get Selected Employee
+// =====================================================
 
-    const selectedDate =
-        attendanceDate.value;
-
-    if (!employeeId || !selectedDate) {
-
-        attendanceStatus.value = "";
-        attendanceNotes.value = "";
-
-        attendanceMessage.textContent = "";
-
-        return;
-
-    }
-
-    async function loadAttendanceHistory() {
+async function getSelectedEmployee() {
 
     const employeeId =
         employeeSelect.value;
 
     if (!employeeId) {
+        return null;
+    }
 
-        attendanceHistory.innerHTML = `
-            <p class="empty-state">
-                Select an employee to view attendance history.
-            </p>
-        `;
+    const employeeReference =
+        doc(db, "employees", employeeId);
+
+    const employeeSnapshot =
+        await getDoc(employeeReference);
+
+    if (!employeeSnapshot.exists()) {
+        return null;
+    }
+
+    return {
+        id: employeeSnapshot.id,
+        ...employeeSnapshot.data()
+    };
+
+}
+
+
+// =====================================================
+// Load Existing Attendance Record
+// =====================================================
+
+async function loadExistingAttendance() {
+
+    const selectedDate =
+        attendanceDate.value;
+
+    if (!employeeSelect.value || !selectedDate) {
+
+        attendanceStatus.value = "";
+        attendanceNotes.value = "";
+
+        showMessage("", "");
 
         return;
 
@@ -149,94 +199,19 @@ async function loadExistingAttendance() {
 
     try {
 
-        const employeeReference =
-            doc(db, "employees", employeeId);
-
-        const employeeSnapshot =
-            await getDoc(employeeReference);
-
-        if (!employeeSnapshot.exists()) {
-
-            return;
-
-        }
-
         const employee =
-            employeeSnapshot.data();
+            await getSelectedEmployee();
 
-        const historyQuery = query(
-            collection(db, "attendance"),
-            where(
-                "employeeNumber",
-                "==",
-                employee.employeeNumber
-            ),
-            orderBy("dateKey", "desc"),
-            limit(10)
-        );
+        if (!employee) {
 
-        const historySnapshot =
-            await getDocs(historyQuery);
-
-        attendanceHistory.innerHTML = "";
-
-        if (historySnapshot.empty) {
-
-            attendanceHistory.innerHTML = `
-                <p class="empty-state">
-                    No attendance history found.
-                </p>
-            `;
+            showMessage(
+                "Employee not found.",
+                "red"
+            );
 
             return;
 
         }
-
-        historySnapshot.forEach((attendanceDocument) => {
-
-            const attendance =
-                attendanceDocument.data();
-
-            attendanceHistory.innerHTML += `
-
-                <div class="history-item">
-
-                    <strong>${attendance.dateKey}</strong>
-
-                    <span>
-                        ${attendance.status}
-                    </span>
-
-                </div>
-
-            `;
-
-        });
-
-    } catch (error) {
-
-        console.error(error);
-
-    }
-
-}
-    
-    try {
-
-        const employeeReference =
-            doc(db, "employees", employeeId);
-
-        const employeeSnapshot =
-            await getDoc(employeeReference);
-
-        if (!employeeSnapshot.exists()) {
-
-            return;
-
-        }
-
-        const employee =
-            employeeSnapshot.data();
 
         const attendanceDocumentId =
             `${employee.employeeNumber}_${selectedDate}`;
@@ -262,22 +237,20 @@ async function loadExistingAttendance() {
             attendanceNotes.value =
                 attendance.notes ?? "";
 
-            attendanceMessage.style.color =
-                "var(--orange-primary)";
-
-            attendanceMessage.textContent =
-                "Existing attendance record loaded.";
+            showMessage(
+                "Existing attendance record loaded.",
+                "var(--orange-primary)"
+            );
 
         } else {
 
             attendanceStatus.value = "";
             attendanceNotes.value = "";
 
-            attendanceMessage.style.color =
-                "var(--blue-primary)";
-
-            attendanceMessage.textContent =
-                "No attendance record exists for this employee and date.";
+            showMessage(
+                "No attendance record exists for this employee and date.",
+                "var(--blue-primary)"
+            );
 
         }
 
@@ -288,117 +261,363 @@ async function loadExistingAttendance() {
             error
         );
 
+        showMessage(
+            "Unable to load attendance record.",
+            "red"
+        );
+
     }
 
 }
+
+
+// =====================================================
+// Load Attendance History
+// =====================================================
+
+async function loadAttendanceHistory() {
+
+    if (!employeeSelect.value) {
+
+        attendanceHistory.innerHTML = `
+            <p class="empty-state">
+                Select an employee to view attendance history.
+            </p>
+        `;
+
+        return;
+
+    }
+
+    attendanceHistory.innerHTML = `
+        <p class="empty-state">
+            Loading attendance history...
+        </p>
+    `;
+
+    try {
+
+        const employee =
+            await getSelectedEmployee();
+
+        if (!employee) {
+
+            attendanceHistory.innerHTML = `
+                <p class="empty-state">
+                    Employee not found.
+                </p>
+            `;
+
+            return;
+
+        }
+
+        const historyQuery = query(
+            collection(db, "attendance"),
+            where(
+                "employeeNumber",
+                "==",
+                employee.employeeNumber
+            ),
+            orderBy("dateKey", "desc"),
+            limit(10)
+        );
+
+        const historySnapshot =
+            await getDocs(historyQuery);
+
+        if (historySnapshot.empty) {
+
+            attendanceHistory.innerHTML = `
+                <p class="empty-state">
+                    No attendance history found.
+                </p>
+            `;
+
+            return;
+
+        }
+
+        attendanceHistory.innerHTML = "";
+
+        historySnapshot.forEach((attendanceDocument) => {
+
+            const attendance =
+                attendanceDocument.data();
+
+            const dateDisplay =
+                formatAttendanceDate(
+                    attendance.dateKey
+                );
+
+            const statusClass =
+                createStatusClass(
+                    attendance.status
+                );
+
+            attendanceHistory.innerHTML += `
+                <div class="history-item">
+
+                    <div>
+                        <strong>
+                            ${dateDisplay}
+                        </strong>
+
+                        <small>
+                            ${attendance.time ?? ""}
+                        </small>
+                    </div>
+
+                    <span class="status-badge ${statusClass}">
+                        ${attendance.status ?? "Unknown"}
+                    </span>
+
+                </div>
+            `;
+
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Unable to load attendance history:",
+            error
+        );
+
+        attendanceHistory.innerHTML = `
+            <p class="empty-state">
+                Unable to load attendance history.
+            </p>
+        `;
+
+    }
+
+}
+
+
+// =====================================================
+// Format Attendance Date
+// =====================================================
+
+function formatAttendanceDate(dateKey) {
+
+    if (!dateKey) {
+        return "Unknown date";
+    }
+
+    const date =
+        new Date(`${dateKey}T00:00:00`);
+
+    return date.toLocaleDateString(
+        "en-ZA",
+        {
+            day: "2-digit",
+            month: "short",
+            year: "numeric"
+        }
+    );
+
+}
+
+
+// =====================================================
+// Create Status CSS Class
+// =====================================================
+
+function createStatusClass(status) {
+
+    return `status-${String(status ?? "unknown")
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "")}`;
+
+}
+
+
+// =====================================================
+// Save Attendance
+// =====================================================
+
+async function saveAttendance(event) {
+
+    event.preventDefault();
+
+    const selectedDate =
+        attendanceDate.value;
+
+    const selectedStatus =
+        attendanceStatus.value;
+
+    const notes =
+        attendanceNotes.value.trim();
+
+    if (!employeeSelect.value) {
+
+        showMessage(
+            "Please select an employee.",
+            "red"
+        );
+
+        return;
+
+    }
+
+    if (!selectedDate) {
+
+        showMessage(
+            "Please select a date.",
+            "red"
+        );
+
+        return;
+
+    }
+
+    if (!selectedStatus) {
+
+        showMessage(
+            "Please select an attendance status.",
+            "red"
+        );
+
+        return;
+
+    }
+
+    saveAttendanceButton.disabled = true;
+    saveAttendanceButton.textContent =
+        "Saving...";
+
+    showMessage(
+        "Saving attendance...",
+        "var(--text-secondary)"
+    );
+
+    try {
+
+        const employee =
+            await getSelectedEmployee();
+
+        if (!employee) {
+
+            showMessage(
+                "Employee not found.",
+                "red"
+            );
+
+            return;
+
+        }
+
+        const attendanceDocumentId =
+            `${employee.employeeNumber}_${selectedDate}`;
+
+        const attendanceReference =
+            doc(
+                db,
+                "attendance",
+                attendanceDocumentId
+            );
+
+        const existingSnapshot =
+            await getDoc(attendanceReference);
+
+        const recordAlreadyExists =
+            existingSnapshot.exists();
+
+        const currentTime =
+            new Date().toLocaleTimeString(
+                "en-ZA",
+                {
+                    hour: "2-digit",
+                    minute: "2-digit"
+                }
+            );
+
+        await setDoc(
+            attendanceReference,
+            {
+                employeeNumber:
+                    employee.employeeNumber,
+
+                name:
+                    employee.name,
+
+                department:
+                    employee.department ?? "Unassigned",
+
+                date:
+                    selectedDate,
+
+                dateKey:
+                    selectedDate,
+
+                status:
+                    selectedStatus,
+
+                notes:
+                    notes,
+
+                checkInMethod:
+                    "Manual",
+
+                time:
+                    currentTime,
+
+                createdAt:
+                    serverTimestamp()
+            }
+        );
+
+        if (recordAlreadyExists) {
+
+            showMessage(
+                "Attendance record updated.",
+                "var(--orange-primary)"
+            );
+
+        } else {
+
+            showMessage(
+                "Attendance record created.",
+                "var(--green-primary)"
+            );
+
+        }
+
+        await loadAttendanceHistory();
+
+    } catch (error) {
+
+        console.error(
+            "Unable to save attendance:",
+            error
+        );
+
+        showMessage(
+            "Unable to save attendance.",
+            "red"
+        );
+
+    } finally {
+
+        saveAttendanceButton.disabled = false;
+        saveAttendanceButton.textContent =
+            "Save Attendance";
+
+    }
+
+}
+
+
+// =====================================================
+// Event Listeners
+// =====================================================
 
 attendanceManagementForm.addEventListener(
     "submit",
-    async (event) => {
-
-        event.preventDefault();
-
-        attendanceMessage.textContent =
-            "Saving attendance...";
-
-        attendanceMessage.style.color =
-            "var(--text-secondary)";
-
-        const employeeId =
-    employeeSelect.value;
-
-const employeeReference =
-    doc(db, "employees", employeeId);
-
-const employeeSnapshot =
-    await getDoc(employeeReference);
-
-if (!employeeSnapshot.exists()) {
-
-    attendanceMessage.style.color = "red";
-
-    attendanceMessage.textContent =
-        "Employee not found.";
-
-    return;
-
-}
-
-const employee =
-    employeeSnapshot.data();
-
-      const selectedDate =
-    attendanceDate.value;
-
-const selectedStatus =
-    attendanceStatus.value;
-
-const notes =
-    attendanceNotes.value.trim();
-
-const currentTime =
-    new Date().toLocaleTimeString("en-ZA", {
-        hour: "2-digit",
-        minute: "2-digit"
-    });
-
-const attendanceDocumentId =
-    `${employee.employeeNumber}_${selectedDate}`;
-
-await setDoc(
-    doc(
-        db,
-        "attendance",
-        attendanceDocumentId
-    ),
-    {
-        employeeNumber:
-            employee.employeeNumber,
-
-        name:
-            employee.name,
-
-        department:
-            employee.department ?? "Unassigned",
-
-        date:
-            selectedDate,
-
-        dateKey:
-            selectedDate,
-
-        status:
-            selectedStatus,
-
-        notes:
-            notes,
-
-        checkInMethod:
-            "Manual",
-
-        time:
-            currentTime,
-
-        createdAt:
-            serverTimestamp()
-    }
+    saveAttendance
 );
-
-attendanceMessage.style.color =
-    "green";
-
-attendanceMessage.textContent =
-    "Attendance saved successfully."; 
-
-        await loadExistingAttendance();
-
-    }
-);
-
-attendanceDate.value =
-    new Date().toISOString().split("T")[0];
-
-loadEmployees();
 
 employeeSelect.addEventListener(
     "change",
@@ -414,3 +633,13 @@ attendanceDate.addEventListener(
     "change",
     loadExistingAttendance
 );
+
+
+// =====================================================
+// Page Initialization
+// =====================================================
+
+attendanceDate.value =
+    new Date().toISOString().split("T")[0];
+
+loadEmployees();
