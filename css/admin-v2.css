@@ -1209,3 +1209,33 @@ body {
     margin-bottom: 4px;
     font-size: 14px;
 }
+.status-badge {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    text-align: center;
+    min-width: 80px;
+}
+
+.status-on-time {
+    background: #16a34a;
+}
+
+.status-late {
+    background: #f59e0b;
+}
+
+.status-absent {
+    background: #dc2626;
+}
+
+.status-sick-leave,
+.status-annual-leave,
+.status-maternity-leave,
+.status-unpaid-leave,
+.status-work-from-home {
+    background: #2563eb;
+}
