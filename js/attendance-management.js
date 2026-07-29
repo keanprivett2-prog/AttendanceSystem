@@ -406,7 +406,96 @@ async function loadAttendanceHistory() {
 
 }
 
+// =====================================================
+// Load Attendance Summary
+// =====================================================
 
+async function loadAttendanceSummary() {
+
+    if (!employeeSelect.value) {
+
+        summaryOnTime.textContent = "0";
+        summaryLate.textContent = "0";
+        summaryAbsent.textContent = "0";
+        summaryLeave.textContent = "0";
+
+        return;
+
+    }
+
+    try {
+
+        const employee =
+            await getSelectedEmployee();
+
+        if (!employee) {
+            return;
+        }
+
+        const attendanceQuery = query(
+            collection(db, "attendance"),
+            where(
+                "employeeNumber",
+                "==",
+                employee.employeeNumber
+            )
+        );
+
+        const attendanceSnapshot =
+            await getDocs(attendanceQuery);
+
+        let onTime = 0;
+        let late = 0;
+        let absent = 0;
+        let leave = 0;
+
+        attendanceSnapshot.forEach((attendanceDocument) => {
+
+            const attendance =
+                attendanceDocument.data();
+
+            switch (attendance.status) {
+
+                case "On Time":
+                    onTime++;
+                    break;
+
+                case "Late":
+                    late++;
+                    break;
+
+                case "Absent":
+                    absent++;
+                    break;
+
+                case "Annual Leave":
+                case "Sick Leave":
+                case "Family Responsibility Leave":
+                case "Maternity Leave":
+                case "Unpaid Leave":
+                case "Public Holiday":
+                    leave++;
+                    break;
+
+            }
+
+        });
+
+        summaryOnTime.textContent = onTime;
+        summaryLate.textContent = late;
+        summaryAbsent.textContent = absent;
+        summaryLeave.textContent = leave;
+
+    } catch (error) {
+
+        console.error(
+            "Unable to load attendance summary:",
+            error
+        );
+
+    }
+
+}
 // =====================================================
 // Format Attendance Date
 // =====================================================
