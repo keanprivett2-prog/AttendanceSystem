@@ -1821,3 +1821,132 @@ line-height: 1.5;
     background: #f3f4f6;
     color: #6b7280;
 }
+/* =====================================================
+   Expandable Attendance History
+===================================================== */
+
+.attendance-history-card {
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 12px;
+
+    background: #ffffff;
+
+    margin-bottom: 14px;
+
+    overflow: hidden;
+
+    transition: all .2s ease;
+
+}
+
+.attendance-history-card:hover {
+
+    box-shadow: 0 6px 18px rgba(0,0,0,.08);
+
+}
+
+.history-summary {
+
+    list-style: none;
+
+    cursor: pointer;
+
+    padding: 18px 20px;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+}
+
+.history-summary::-webkit-details-marker {
+
+    display: none;
+
+}
+
+.history-summary::after {
+
+    content: "▼";
+
+    font-size: 12px;
+
+    color: #6b7280;
+
+    transition: transform .25s ease;
+
+}
+
+.attendance-history-card[open] .history-summary::after {
+
+    transform: rotate(180deg);
+
+}
+
+.history-summary-main {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 18px;
+
+}
+
+.history-summary-date {
+
+    display: flex;
+
+    flex-direction: column;
+
+}
+
+.history-summary-date strong {
+
+    font-size: 15px;
+
+    color: #111827;
+
+}
+
+.history-summary-date span {
+
+    font-size: 13px;
+
+    color: #6b7280;
+
+    margin-top: 2px;
+
+}
+
+.history-summary-method {
+
+    color: #6b7280;
+
+    font-size: 13px;
+
+}
+
+.history-expanded {
+
+    border-top: 1px solid #e5e7eb;
+
+    padding: 18px 20px;
+
+    background: #fafafa;
+
+}
+
+.history-detail-row p {
+
+    margin: 8px 0 0;
+
+    color: #4b5563;
+
+    line-height: 1.6;
+
+}
