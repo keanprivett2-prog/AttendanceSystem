@@ -130,6 +130,97 @@ async function loadExistingAttendance() {
 
     }
 
+    async function loadAttendanceHistory() {
+
+    const employeeId =
+        employeeSelect.value;
+
+    if (!employeeId) {
+
+        attendanceHistory.innerHTML = `
+            <p class="empty-state">
+                Select an employee to view attendance history.
+            </p>
+        `;
+
+        return;
+
+    }
+
+    try {
+
+        const employeeReference =
+            doc(db, "employees", employeeId);
+
+        const employeeSnapshot =
+            await getDoc(employeeReference);
+
+        if (!employeeSnapshot.exists()) {
+
+            return;
+
+        }
+
+        const employee =
+            employeeSnapshot.data();
+
+        const historyQuery = query(
+            collection(db, "attendance"),
+            where(
+                "employeeNumber",
+                "==",
+                employee.employeeNumber
+            ),
+            orderBy("dateKey", "desc"),
+            limit(10)
+        );
+
+        const historySnapshot =
+            await getDocs(historyQuery);
+
+        attendanceHistory.innerHTML = "";
+
+        if (historySnapshot.empty) {
+
+            attendanceHistory.innerHTML = `
+                <p class="empty-state">
+                    No attendance history found.
+                </p>
+            `;
+
+            return;
+
+        }
+
+        historySnapshot.forEach((attendanceDocument) => {
+
+            const attendance =
+                attendanceDocument.data();
+
+            attendanceHistory.innerHTML += `
+
+                <div class="history-item">
+
+                    <strong>${attendance.dateKey}</strong>
+
+                    <span>
+                        ${attendance.status}
+                    </span>
+
+                </div>
+
+            `;
+
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+    }
+
+}
+    
     try {
 
         const employeeReference =
