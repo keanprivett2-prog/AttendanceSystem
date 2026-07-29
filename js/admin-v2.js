@@ -17,7 +17,29 @@ import {
 
 async function loadAttendance() {
 
-    const snapshot = await getDocs(collection(db, "attendance"));
+    const today =
+    new Date();
+
+const year =
+    today.getFullYear();
+
+const month =
+    String(today.getMonth() + 1).padStart(2, "0");
+
+const day =
+    String(today.getDate()).padStart(2, "0");
+
+const todayDateKey =
+    `${year}-${month}-${day}`;
+
+const attendanceQuery =
+    query(
+        collection(db, "attendance"),
+        where("dateKey", "==", todayDateKey)
+    );
+
+const snapshot =
+    await getDocs(attendanceQuery);
 
     const tableBody = document.getElementById("attendanceTableBody");
 
