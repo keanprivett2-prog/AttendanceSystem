@@ -106,6 +106,21 @@ async function loadEmployees() {
 
 }
 
+attendanceManagementForm.addEventListener(
+    "submit",
+    async (event) => {
+
+        event.preventDefault();
+
+        attendanceMessage.textContent =
+            "Saving attendance...";
+
+        attendanceMessage.style.color =
+            "var(--text-secondary)";
+
+    }
+);
+
 attendanceDate.value =
     new Date().toISOString().split("T")[0];
 
