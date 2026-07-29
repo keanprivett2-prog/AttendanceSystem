@@ -52,6 +52,8 @@ const snapshot =
         collection(db, "employees")
     );
 
+    const departmentCounts = {};
+    
     const tableBody = document.getElementById("attendanceTableBody");
 
     tableBody.innerHTML = "";
