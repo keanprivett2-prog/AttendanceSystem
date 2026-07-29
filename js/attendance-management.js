@@ -39,6 +39,18 @@ const attendanceMessage =
 const attendanceHistory =
     document.getElementById("attendanceHistory");
 
+const summaryOnTime =
+    document.getElementById("summaryOnTime");
+
+const summaryLate =
+    document.getElementById("summaryLate");
+
+const summaryAbsent =
+    document.getElementById("summaryAbsent");
+
+const summaryLeave =
+    document.getElementById("summaryLeave");
+
 const saveAttendanceButton =
     document.getElementById("saveAttendanceButton");
 
