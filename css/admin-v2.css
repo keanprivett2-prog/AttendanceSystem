@@ -1283,3 +1283,44 @@ body {
     font-weight: 700;
     color: #0f172a;
 }
+.activity-item {
+    position: relative;
+    padding: 14px 14px 14px 44px;
+    border-bottom: 1px solid #e5e7eb;
+    border-radius: 10px;
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease;
+}
+
+.activity-item::before {
+    content: "✓";
+    position: absolute;
+    left: 12px;
+    top: 15px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #dcfce7;
+    color: #15803d;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.activity-item:hover {
+    background: #f8fafc;
+    transform: translateX(3px);
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-item strong {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 13px;
+    color: #2563eb;
+}
