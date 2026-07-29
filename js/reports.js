@@ -22,6 +22,9 @@ const endDateInput =
 const employeeFilter =
     document.getElementById("employeeFilter");
 
+const departmentFilter =
+    document.getElementById("departmentFilter");
+
 const generateReportButton =
     document.getElementById("generateReportButton");
 
