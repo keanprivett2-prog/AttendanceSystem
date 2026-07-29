@@ -156,8 +156,15 @@ const currentTime =
         minute: "2-digit"
     });
 
-await addDoc(
-    collection(db, "attendance"),
+const attendanceDocumentId =
+    `${employee.employeeNumber}_${selectedDate}`;
+
+await setDoc(
+    doc(
+        db,
+        "attendance",
+        attendanceDocumentId
+    ),
     {
         employeeNumber:
             employee.employeeNumber,
