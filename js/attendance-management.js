@@ -292,7 +292,9 @@ attendanceMessage.style.color =
     "green";
 
 attendanceMessage.textContent =
-    "Attendance saved successfully.";  
+    "Attendance saved successfully."; 
+
+        await loadExistingAttendance();
 
     }
 );
