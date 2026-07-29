@@ -69,6 +69,21 @@ const snapshot =
     departmentCounts[department]++;
 
 });
+
+    departmentSummary.innerHTML = "";
+
+Object.entries(departmentCounts)
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .forEach(([department, total]) => {
+
+        departmentSummary.innerHTML += `
+            <div class="department-item">
+                <span>${department}</span>
+                <strong>${total}</strong>
+            </div>
+        `;
+
+    });
     
     const tableBody = document.getElementById("attendanceTableBody");
 
