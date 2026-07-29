@@ -53,6 +53,22 @@ const snapshot =
     );
 
     const departmentCounts = {};
+
+    employeeSnapshot.forEach((employeeDocument) => {
+
+    const employeeData =
+        employeeDocument.data();
+
+    const department =
+        String(employeeData.department ?? "Unassigned").trim();
+
+    if (!departmentCounts[department]) {
+        departmentCounts[department] = 0;
+    }
+
+    departmentCounts[department]++;
+
+});
     
     const tableBody = document.getElementById("attendanceTableBody");
 
