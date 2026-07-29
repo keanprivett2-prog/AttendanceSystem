@@ -402,7 +402,12 @@ loadEmployees();
 
 employeeSelect.addEventListener(
     "change",
-    loadExistingAttendance
+    async () => {
+
+        await loadExistingAttendance();
+        await loadAttendanceHistory();
+
+    }
 );
 
 attendanceDate.addEventListener(
