@@ -41,6 +41,11 @@ const attendanceQuery =
 const snapshot =
     await getDocs(attendanceQuery);
 
+    const employeeSnapshot =
+    await getDocs(
+        collection(db, "employees")
+    );
+
     const tableBody = document.getElementById("attendanceTableBody");
 
     tableBody.innerHTML = "";
