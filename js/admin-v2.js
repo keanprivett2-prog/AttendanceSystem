@@ -55,9 +55,13 @@ const snapshot =
 
         checkedIn++;
 
-        if (data.locationStatus === "Late") {
-            lateToday++;
-        }
+        if (
+    String(data.status ?? "")
+        .trim()
+        .toLowerCase() === "late"
+) {
+    lateToday++;
+}
 
         tableBody.innerHTML += `
     <tr>
