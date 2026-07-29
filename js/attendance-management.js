@@ -771,99 +771,99 @@ async function saveAttendance(event) {
 function buildCalendar() {
 
     calendarGrid.innerHTML = "";
-    
-    const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December"
-];
 
-calendarTitle.textContent =
-    `${monthNames[calendarMonth]} ${calendarYear}`;
+    const monthNames = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December"
+    ];
+
+    calendarTitle.textContent =
+        `${monthNames[calendarMonth]} ${calendarYear}`;
 
     const dayNames = [
-    "Sun",
-    "Mon",
-    "Tue",
-    "Wed",
-    "Thu",
-    "Fri",
-    "Sat"
-];
+        "Sun",
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat"
+    ];
 
-dayNames.forEach((dayName) => {
+    dayNames.forEach((dayName) => {
+
+        const dayHeading =
+            document.createElement("div");
+
+        dayHeading.className =
+            "calendar-day-header";
+
+        dayHeading.textContent =
+            dayName;
+
+        calendarGrid.appendChild(dayHeading);
+
+    });
 
     const firstDayOfMonth =
-    new Date(
-        calendarYear,
-        calendarMonth,
-        1
-    ).getDay();
+        new Date(
+            calendarYear,
+            calendarMonth,
+            1
+        ).getDay();
 
-const totalDaysInMonth =
-    new Date(
-        calendarYear,
-        calendarMonth + 1,
-        0
-    ).getDate();
-
-    for (
-    let emptyCell = 0;
-    emptyCell < firstDayOfMonth;
-    emptyCell++
-) {
-
-    const blankDay =
-        document.createElement("div");
-
-    blankDay.className =
-        "calendar-empty";
-
-    calendarGrid.appendChild(blankDay);
-
-}
+    const totalDaysInMonth =
+        new Date(
+            calendarYear,
+            calendarMonth + 1,
+            0
+        ).getDate();
 
     for (
-    let day = 1;
-    day <= totalDaysInMonth;
-    day++
-) {
+        let emptyCell = 0;
+        emptyCell < firstDayOfMonth;
+        emptyCell++
+    ) {
 
-    const dayCell =
-        document.createElement("div");
+        const blankDay =
+            document.createElement("div");
 
-    dayCell.className =
-        "calendar-day";
+        blankDay.className =
+            "calendar-empty";
 
-    dayCell.innerHTML = `
-        <strong>${day}</strong>
-    `;
+        calendarGrid.appendChild(blankDay);
 
-    calendarGrid.appendChild(dayCell);
+    }
 
-}
+    for (
+        let day = 1;
+        day <= totalDaysInMonth;
+        day++
+    ) {
 
-    const dayHeading =
-        document.createElement("div");
+        const dayCell =
+            document.createElement("div");
 
-    dayHeading.className =
-        "calendar-day-header";
+        dayCell.className =
+            "calendar-day";
 
-    dayHeading.textContent =
-        dayName;
+        dayCell.innerHTML = `
+            <strong>${day}</strong>
+        `;
 
-    calendarGrid.appendChild(dayHeading);
+        calendarGrid.appendChild(dayCell);
 
-});
+    }
 
 }
 
