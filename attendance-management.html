@@ -58,15 +58,160 @@
 
         </header>
 
-        <div class="dashboard-card">
+        <section class="attendance-management-card">
 
-            <h2>Coming Soon</h2>
+    <div class="section-heading">
+
+        <div>
+            <h2>Record Attendance Status</h2>
 
             <p>
-                Attendance Management will be built here.
+                Assign or update an employee’s attendance status for a selected date.
             </p>
+        </div>
+
+    </div>
+
+    <form id="attendanceManagementForm">
+
+        <div class="form-grid">
+
+            <div class="form-group">
+
+                <label for="employeeSelect">
+                    Employee
+                </label>
+
+                <select id="employeeSelect" required>
+
+                    <option value="">
+                        Select an employee
+                    </option>
+
+                </select>
+
+            </div>
+
+            <div class="form-group">
+
+                <label for="attendanceDate">
+                    Date
+                </label>
+
+                <input
+                    type="date"
+                    id="attendanceDate"
+                    required
+                >
+
+            </div>
+
+            <div class="form-group">
+
+                <label for="attendanceStatus">
+                    Status
+                </label>
+
+                <select id="attendanceStatus" required>
+
+                    <option value="">
+                        Select a status
+                    </option>
+
+                    <option value="On Time">
+                        On Time
+                    </option>
+
+                    <option value="Late">
+                        Late
+                    </option>
+
+                    <option value="Absent">
+                        Absent
+                    </option>
+
+                    <option value="Annual Leave">
+                        Annual Leave
+                    </option>
+
+                    <option value="Sick Leave">
+                        Sick Leave
+                    </option>
+
+                    <option value="Maternity Leave">
+                        Maternity Leave
+                    </option>
+
+                    <option value="Family Responsibility Leave">
+                        Family Responsibility Leave
+                    </option>
+
+                    <option value="Work From Home">
+                        Work From Home
+                    </option>
+
+                    <option value="Business Trip">
+                        Business Trip
+                    </option>
+
+                    <option value="Training">
+                        Training
+                    </option>
+
+                    <option value="Medical Appointment">
+                        Medical Appointment
+                    </option>
+
+                    <option value="Half Day">
+                        Half Day
+                    </option>
+
+                    <option value="Unpaid Leave">
+                        Unpaid Leave
+                    </option>
+
+                    <option value="Public Holiday">
+                        Public Holiday
+                    </option>
+
+                </select>
+
+            </div>
+
+            <div class="form-group form-group-full">
+
+                <label for="attendanceNotes">
+                    Notes
+                </label>
+
+                <textarea
+                    id="attendanceNotes"
+                    rows="4"
+                    maxlength="500"
+                    placeholder="Add an optional note..."
+                ></textarea>
+
+            </div>
 
         </div>
+
+        <div class="form-actions">
+
+            <button
+                type="submit"
+                class="primary-button"
+                id="saveAttendanceButton"
+            >
+                Save Attendance
+            </button>
+
+        </div>
+
+        <p id="attendanceMessage"></p>
+
+    </form>
+
+</section>
 
     </main>
 
