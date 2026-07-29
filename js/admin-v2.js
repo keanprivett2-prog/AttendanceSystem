@@ -57,9 +57,18 @@ const snapshot =
     let checkedIn = 0;
     let lateToday = 0;
 
-    snapshot.forEach((doc) => {
+recentActivity.innerHTML = "";
+    
+    snapshot.forEach((doc) => {  
 
         const data = doc.data();
+
+        recentActivity.innerHTML += `
+    <div class="activity-item">
+        <strong>${data.time ?? "--:--"}</strong><br>
+        ${data.name ?? "Unknown Employee"}
+    </div>
+`;
 
         checkedIn++;
 
