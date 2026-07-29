@@ -371,64 +371,59 @@ async function loadAttendanceHistory() {
         attendance.checkInMethod ?? "Unknown";
 
     const notes =
-        attendance.notes?.trim() || "No notes added.";
+        attendance.notes?.trim() || "No additional notes.";
 
     attendanceHistory.innerHTML += `
-        <article class="attendance-history-card">
+        <details class="attendance-history-card">
 
-            <div class="history-card-header">
+            <summary class="history-summary">
 
-                <span class="status-badge ${statusClass}">
-                    ${attendance.status ?? "Unknown"}
-                </span>
+                <div class="history-summary-main">
 
-                <span class="history-method">
+                    <span class="status-badge ${statusClass}">
+                        ${attendance.status ?? "Unknown"}
+                    </span>
+
+                    <div class="history-summary-date">
+
+                        <strong>
+                            ${dateDisplay}
+                        </strong>
+
+                        <span>
+                            ${attendance.time ?? "Time not recorded"}
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <div class="history-summary-method">
                     ${method}
-                </span>
-
-            </div>
-
-            <div class="history-card-details">
-
-                <div>
-                    <span class="history-label">
-                        Date
-                    </span>
-
-                    <strong>
-                        ${dateDisplay}
-                    </strong>
                 </div>
 
-                <div>
+            </summary>
+
+            <div class="history-expanded">
+
+                <div class="history-detail-row">
+
                     <span class="history-label">
-                        Time
+                        Notes
                     </span>
 
-                    <strong>
-                        ${attendance.time ?? "Not recorded"}
-                    </strong>
+                    <p>
+                        ${notes}
+                    </p>
+
                 </div>
 
             </div>
 
-            <div class="history-card-notes">
-
-                <span class="history-label">
-                    Notes
-                </span>
-
-                <p>
-                    ${notes}
-                </p>
-
-            </div>
-
-        </article>
+        </details>
     `;
 
 });
-
     } catch (error) {
 
         console.error(
