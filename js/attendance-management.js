@@ -106,4 +106,7 @@ async function loadEmployees() {
 
 }
 
+attendanceDate.value =
+    new Date().toISOString().split("T")[0];
+
 loadEmployees();
