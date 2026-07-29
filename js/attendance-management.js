@@ -106,6 +106,96 @@ async function loadEmployees() {
 
 }
 
+async function loadExistingAttendance() {
+
+    const employeeId =
+        employeeSelect.value;
+
+    const selectedDate =
+        attendanceDate.value;
+
+    if (!employeeId || !selectedDate) {
+
+        attendanceStatus.value = "";
+        attendanceNotes.value = "";
+
+        attendanceMessage.textContent = "";
+
+        return;
+
+    }
+
+    try {
+
+        const employeeReference =
+            doc(db, "employees", employeeId);
+
+        const employeeSnapshot =
+            await getDoc(employeeReference);
+
+        if (!employeeSnapshot.exists()) {
+
+            return;
+
+        }
+
+        const employee =
+            employeeSnapshot.data();
+
+        const attendanceDocumentId =
+            `${employee.employeeNumber}_${selectedDate}`;
+
+        const attendanceReference =
+            doc(
+                db,
+                "attendance",
+                attendanceDocumentId
+            );
+
+        const attendanceSnapshot =
+            await getDoc(attendanceReference);
+
+        if (attendanceSnapshot.exists()) {
+
+            const attendance =
+                attendanceSnapshot.data();
+
+            attendanceStatus.value =
+                attendance.status ?? "";
+
+            attendanceNotes.value =
+                attendance.notes ?? "";
+
+            attendanceMessage.style.color =
+                "var(--green-primary)";
+
+            attendanceMessage.textContent =
+                "Existing attendance record loaded.";
+
+        } else {
+
+            attendanceStatus.value = "";
+            attendanceNotes.value = "";
+
+            attendanceMessage.style.color =
+                "var(--blue-primary)";
+
+            attendanceMessage.textContent =
+                "No attendance record exists for this employee and date.";
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Unable to load attendance:",
+            error
+        );
+
+    }
+
+}
+
 attendanceManagementForm.addEventListener(
     "submit",
     async (event) => {
