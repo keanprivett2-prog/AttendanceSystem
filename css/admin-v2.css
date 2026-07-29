@@ -1495,3 +1495,27 @@ line-height: 1.5;
     margin-top:18px;
     font-weight:600;
 }
+/* =====================================================
+   Attendance Management Layout
+===================================================== */
+
+.attendance-layout {
+    display: grid;
+    grid-template-columns:
+        minmax(320px, 0.9fr)
+        minmax(420px, 1.4fr);
+    gap: 24px;
+    align-items: start;
+}
+
+.attendance-layout .attendance-management-card {
+    min-width: 0;
+}
+
+@media (max-width: 1000px) {
+
+    .attendance-layout {
+        grid-template-columns: 1fr;
+    }
+
+}
