@@ -4,7 +4,11 @@ import {
     collection,
     getDocs,
     query,
-    where
+    where,
+    doc,
+    getDoc,
+    addDoc,
+    serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 const employeeSelect =
