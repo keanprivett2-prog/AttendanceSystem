@@ -227,7 +227,10 @@ async function generateReport() {
 
         let attendanceQuery;
 
-if (selectedEmployee === "") {
+if (
+    selectedEmployee === "" &&
+    selectedDepartment === ""
+) {
 
     attendanceQuery = query(
         collection(db, "attendance"),
