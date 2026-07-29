@@ -122,7 +122,82 @@ function getLocalDateKey() {
         + "-"
         + day;
 }
+async function saveFailedAttendanceAttempt(
+    employee,
+    reason,
+    location = null,
+    distanceMetres = null,
+    locationStatus = null
+) {
 
+    try {
+
+        const now =
+            new Date();
+
+        await addDoc(
+            collection(db, "attendanceAttempts"),
+            {
+                employeeNumber:
+                    employee.employeeNumber ?? "",
+
+                name:
+                    employee.name ?? "",
+
+                department:
+                    employee.department ?? "",
+
+                result:
+                    "Failed",
+
+                reason:
+                    reason,
+
+                dateKey:
+                    getLocalDateKey(),
+
+                date:
+                    now.toLocaleDateString("en-ZA"),
+
+                time:
+                    now.toLocaleTimeString("en-ZA"),
+
+                latitude:
+                    location?.latitude ?? null,
+
+                longitude:
+                    location?.longitude ?? null,
+
+                accuracy:
+                    location?.accuracy ?? null,
+
+                distanceMetres:
+                    distanceMetres ?? null,
+
+                locationStatus:
+                    locationStatus ?? null,
+
+                deviceId:
+                    getDeviceId(),
+
+                fingerprint:
+                    getFingerprint(),
+
+                createdAt:
+                    serverTimestamp()
+            }
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Failed attempt could not be logged:",
+            error
+        );
+
+    }
+
+}
 // =====================================================
 // Distance to Office Boundary
 // =====================================================
@@ -338,6 +413,16 @@ try {
             + "<br>You are outside the office boundary.";
 
     }
+
+    await saveFailedAttendanceAttempt(
+        employee,
+        locationStatus === "Location Uncertain"
+            ? "GPS location was not accurate enough"
+            : "Outside office boundary",
+        location,
+        distanceMetres,
+        locationStatus
+    );
 
     return;
 }
