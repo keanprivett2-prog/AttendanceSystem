@@ -3,6 +3,7 @@ import { db } from "../firebase/firebase.js";
 import {
     collection,
     doc,
+    addDoc,
     getDocs,
     query,
     where,
