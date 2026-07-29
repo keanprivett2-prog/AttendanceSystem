@@ -301,3 +301,13 @@ attendanceDate.value =
     new Date().toISOString().split("T")[0];
 
 loadEmployees();
+
+employeeSelect.addEventListener(
+    "change",
+    loadExistingAttendance
+);
+
+attendanceDate.addEventListener(
+    "change",
+    loadExistingAttendance
+);
