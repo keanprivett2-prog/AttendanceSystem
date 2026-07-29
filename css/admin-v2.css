@@ -1166,3 +1166,31 @@ body {
     color: #1f2937;
 
 }
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.dashboard-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    min-height: 220px;
+}
+
+.dashboard-card .table-header {
+    margin-bottom: 16px;
+}
+
+.dashboard-card .table-header h2 {
+    margin: 0;
+}
+
+@media (max-width: 900px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
