@@ -768,7 +768,7 @@ async function saveAttendance(event) {
 // Build Calendar
 // =====================================================
 
-function buildCalendar() {
+async function buildCalendar() {
 
     calendarGrid.innerHTML = "";
 
