@@ -881,6 +881,30 @@ if (isToday) {
 
 dayCell.style.cursor = "pointer";
 
+        dayCell.addEventListener(
+    "click",
+    () => {
+
+        const selectedCalendarDate =
+            new Date(
+                calendarYear,
+                calendarMonth,
+                day
+            );
+
+        const dateKey =
+            selectedCalendarDate
+                .toISOString()
+                .split("T")[0];
+
+        attendanceDate.value =
+            dateKey;
+
+        loadExistingAttendance();
+
+    }
+);
+
         calendarGrid.appendChild(dayCell);
 
     }
