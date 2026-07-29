@@ -55,8 +55,7 @@ async function loadEmployees() {
             const option =
                 document.createElement("option");
 
-            option.value =
-                employee.employeeNumber;
+            option.value = employee.id;
 
             option.textContent =
                 `${employee.name} (${employee.employeeNumber})`;
