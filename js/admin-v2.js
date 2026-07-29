@@ -14,6 +14,9 @@ import {
 const recentActivity =
     document.getElementById("recentActivity");
 
+const departmentSummary =
+    document.getElementById("departmentSummary");
+
 // =====================================
 // Load Attendance
 // =====================================
