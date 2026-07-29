@@ -772,6 +772,21 @@ async function buildCalendar() {
 
     calendarGrid.innerHTML = "";
 
+    if (!employeeSelect.value) {
+
+    calendarGrid.innerHTML = `
+        <p class="empty-state">
+            Select an employee to view the attendance calendar.
+        </p>
+    `;
+
+    calendarTitle.textContent =
+        "Calendar";
+
+    return;
+
+}
+
     const monthNames = [
         "January",
         "February",
