@@ -972,15 +972,26 @@ const currentDateKey =
 
 if (attendanceRecord) {
 
-    const statusClass =
-        String(attendanceRecord.status)
-            .trim()
-            .toLowerCase()
-            .replace(/\s+/g, "-");
+   const rawStatus =
+    String(attendanceRecord.status ?? "");
+
+const statusClass =
+    rawStatus
+        .normalize("NFKC")
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
 
     dayCell.classList.add(
         `calendar-${statusClass}`
     );
+
+    console.log(
+    "Status check:",
+    JSON.stringify(rawStatus),
+    `calendar-${statusClass}`
+);
 
     console.log(
         "Final calendar classes:",
