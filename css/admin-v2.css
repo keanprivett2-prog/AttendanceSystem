@@ -2132,3 +2132,18 @@ line-height: 1.5;
     box-shadow: 0 4px 10px rgba(0,0,0,.08);
 
 }
+.calendar-sick-leave {
+
+    background: #fce7f3;
+    color: #9d174d;
+    border-color: #ec4899;
+
+}
+
+.calendar-annual {
+
+    background: #dbeafe;
+    color: #1d4ed8;
+    border-color: #3b82f6;
+
+}
