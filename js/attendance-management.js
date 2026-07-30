@@ -983,8 +983,13 @@ console.log(
 
     dayCell.classList.add(
         `calendar-${statusClass}`
+        
     );
 
+            console.log(
+    "Classes added:",
+    dayCell.className
+);
 }
 
         dayCell.classList.add("calendar-day");
