@@ -2147,3 +2147,10 @@ line-height: 1.5;
     border-color: #3b82f6;
 
 }
+.calendar-day.calendar-annual {
+
+    background: #dbeafe !important;
+    color: #1d4ed8 !important;
+    border-color: #3b82f6 !important;
+
+}
