@@ -987,8 +987,7 @@ console.log(
 
 }
 
-        dayCell.className =
-            "calendar-day";
+        dayCell.classList.add("calendar-day");
 
         const today =
     new Date();
