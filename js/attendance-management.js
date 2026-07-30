@@ -986,6 +986,14 @@ console.log(
         
     );
 
+            if (statusClass.includes("leave")) {
+
+    dayCell.classList.add(
+        "calendar-leave"
+    );
+
+}
+
             console.log(
     "Classes added:",
     dayCell.className
