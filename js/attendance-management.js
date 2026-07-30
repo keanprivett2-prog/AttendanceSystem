@@ -787,8 +787,13 @@ async function buildCalendar() {
 
 }
 
-    const selectedEmployeeNumber =
-    employeeSelect.value;
+    const selectedOption =
+    employeeSelect.options[
+        employeeSelect.selectedIndex
+    ];
+
+const selectedEmployeeNumber =
+    selectedOption.dataset.employeeNumber;
 
     console.log(
     "Selected employee number:",
