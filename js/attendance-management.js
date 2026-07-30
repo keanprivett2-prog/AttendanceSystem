@@ -970,6 +970,12 @@ const currentDateKey =
 
         if (attendanceRecord) {
 
+console.log(
+    "Calendar record:",
+    currentDateKey,
+    attendanceRecord.status
+);
+            
     const statusClass =
         attendanceRecord.status
             .toLowerCase()
