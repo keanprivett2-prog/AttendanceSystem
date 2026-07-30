@@ -968,39 +968,28 @@ const currentDateKey =
         const attendanceRecord =
     attendanceByDate[currentDateKey];
 
-        if (attendanceRecord) {
+        dayCell.classList.add("calendar-day");
 
-console.log(
-    "Calendar record:",
-    currentDateKey,
-    attendanceRecord.status
-);
-            
+if (attendanceRecord) {
+
     const statusClass =
-        attendanceRecord.status
+        String(attendanceRecord.status)
+            .trim()
             .toLowerCase()
-            .replaceAll(" ", "-");
+            .replace(/\s+/g, "-");
 
     dayCell.classList.add(
         `calendar-${statusClass}`
-        
     );
 
-            if (statusClass.includes("leave")) {
-
-    dayCell.classList.add(
-        "calendar-leave"
+    console.log(
+        "Final calendar classes:",
+        currentDateKey,
+        dayCell.className
     );
 
 }
 
-            console.log(
-    "Classes added:",
-    dayCell.className
-);
-}
-
-        dayCell.classList.add("calendar-day");
 
         const today =
     new Date();
