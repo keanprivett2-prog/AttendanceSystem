@@ -845,6 +845,11 @@ const monthEndKey =
         })
     );
 
+    console.log(
+    "Monthly attendance records:",
+    monthlyAttendance
+);
+
     const attendanceByDate = {};
 
 monthlyAttendance.forEach(
