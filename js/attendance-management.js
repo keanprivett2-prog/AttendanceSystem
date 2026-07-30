@@ -790,6 +790,11 @@ async function buildCalendar() {
     const selectedEmployeeNumber =
     employeeSelect.value;
 
+    console.log(
+    "Selected employee number:",
+    selectedEmployeeNumber
+);
+
     const monthStart =
     new Date(
         calendarYear,
