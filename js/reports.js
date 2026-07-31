@@ -43,6 +43,9 @@ const generateReportButton =
 const exportCsvButton =
     document.getElementById("exportCsvButton");
 
+const printReportButton =
+    document.getElementById("printReportButton");
+
 const reportTableBody =
     document.getElementById("reportTableBody");
 
@@ -118,6 +121,11 @@ generateReportButton.addEventListener(
 exportCsvButton.addEventListener(
     "click",
     exportReportToCsv
+);
+
+printReportButton.addEventListener(
+    "click",
+    printReport
 );
 
 logoutButton.addEventListener(
@@ -573,5 +581,24 @@ function exportReportToCsv() {
     document.body.removeChild(downloadLink);
 
     URL.revokeObjectURL(downloadUrl);
+
+}
+function printReport() {
+
+    const rows =
+        reportTableBody.querySelectorAll("tr");
+
+    if (
+        rows.length === 0 ||
+        rows[0].querySelector(".empty-row")
+    ) {
+
+        alert("Please generate a report before printing.");
+
+        return;
+
+    }
+
+    window.print();
 
 }
