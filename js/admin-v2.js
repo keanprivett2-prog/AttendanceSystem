@@ -30,6 +30,61 @@ const dashboardCompanyLogo =
     );
 
 // =====================================
+// Load Company Branding
+// =====================================
+
+async function loadCompanyBranding() {
+
+    try {
+
+        const settingsReference =
+            doc(db, "systemSettings", "attendance");
+
+        const settingsSnapshot =
+            await getDoc(settingsReference);
+
+        if (!settingsSnapshot.exists()) {
+            return;
+        }
+
+        const settings =
+            settingsSnapshot.data();
+
+        if (
+            dashboardCompanyName &&
+            settings.companyName
+        ) {
+
+            dashboardCompanyName.textContent =
+                settings.companyName;
+
+        }
+
+        if (
+            dashboardCompanyLogo &&
+            settings.companyLogo
+        ) {
+
+            dashboardCompanyLogo.src =
+                settings.companyLogo;
+
+            dashboardCompanyLogo.hidden =
+                false;
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Load company branding error:",
+            error
+        );
+
+    }
+
+}
+
+// =====================================
 // Load Attendance
 // =====================================
 
@@ -154,4 +209,5 @@ recentActivity.innerHTML = "";
 
 }
 
+loadCompanyBranding();
 loadAttendance();
