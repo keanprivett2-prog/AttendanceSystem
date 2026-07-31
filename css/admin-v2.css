@@ -113,7 +113,7 @@ line-height: 1.5;
 .sidebar-menu {
     display: flex;
     flex-direction: column;
-    gap: 7px;
+    gap: 2px;
 }
 
 .menu-link {
@@ -121,7 +121,7 @@ line-height: 1.5;
     align-items: center;
     gap: 12px;
 
-    padding: 12px 14px;
+    padding: 10px 14px;
 
     border-radius: 9px;
 
@@ -136,9 +136,8 @@ line-height: 1.5;
 }
 
 .menu-link:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
     color: white;
-    transform: translateX(3px);
 }
 
 .menu-link.active {
