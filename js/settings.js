@@ -85,18 +85,28 @@ const noCompanyLogoMessage =
 // Start Settings Page
 // =====================================
 
-loadSettings();
+initializeSettingsPage();
 
-settingsForm.addEventListener(
-    "submit",
-    saveSettings
-);
+function initializeSettingsPage() {
 
-logoutButton.addEventListener(
-    "click",
-    logoutAdministrator
-);
+    loadSettings();
 
+    settingsForm.addEventListener(
+        "submit",
+        saveSettings
+    );
+
+    logoutButton.addEventListener(
+        "click",
+        logoutAdministrator
+    );
+
+    companyLogoInput.addEventListener(
+        "change",
+        previewCompanyLogo
+    );
+
+}
 
 // =====================================
 // Load Settings
@@ -328,7 +338,8 @@ function previewCompanyLogo() {
 
     if (!selectedFile) {
 
-        companyLogoPreview.src = "";
+        companyLogoPreview.removeAttribute("src");
+
         companyLogoPreview.hidden = true;
 
         noCompanyLogoMessage.style.display =
@@ -338,21 +349,18 @@ function previewCompanyLogo() {
 
     }
 
-    const allowedFileTypes = [
+    const allowedTypes = [
         "image/png",
         "image/jpeg",
         "image/webp"
     ];
 
-    if (
-        !allowedFileTypes.includes(
-            selectedFile.type
-        )
-    ) {
+    if (!allowedTypes.includes(selectedFile.type)) {
 
         companyLogoInput.value = "";
 
-        companyLogoPreview.src = "";
+        companyLogoPreview.removeAttribute("src");
+
         companyLogoPreview.hidden = true;
 
         noCompanyLogoMessage.style.display =
@@ -367,24 +375,22 @@ function previewCompanyLogo() {
 
     }
 
-    const maximumFileSize =
+    const maxFileSize =
         2 * 1024 * 1024;
 
-    if (
-        selectedFile.size >
-        maximumFileSize
-    ) {
+    if (selectedFile.size > maxFileSize) {
 
         companyLogoInput.value = "";
 
-        companyLogoPreview.src = "";
+        companyLogoPreview.removeAttribute("src");
+
         companyLogoPreview.hidden = true;
 
         noCompanyLogoMessage.style.display =
             "block";
 
         showMessage(
-            "The company logo must be smaller than 2 MB.",
+            "The logo must be smaller than 2 MB.",
             "error"
         );
 
@@ -392,11 +398,8 @@ function previewCompanyLogo() {
 
     }
 
-    const logoPreviewUrl =
-        URL.createObjectURL(selectedFile);
-
     companyLogoPreview.src =
-        logoPreviewUrl;
+        URL.createObjectURL(selectedFile);
 
     companyLogoPreview.hidden = false;
 
@@ -404,12 +407,11 @@ function previewCompanyLogo() {
         "none";
 
     showMessage(
-        "Logo selected. Save settings to upload it.",
+        "Logo selected. Click Save Settings to upload later.",
         "info"
     );
 
 }
-
 // =====================================
 // Logout
 // =====================================
