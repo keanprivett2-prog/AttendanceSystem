@@ -80,6 +80,11 @@ const noCompanyLogoMessage =
         "noCompanyLogoMessage"
     );
 
+const removeCompanyLogoButton =
+    document.getElementById(
+        "removeCompanyLogoButton"
+    );
+
 let selectedCompanyLogoData = "";
 
 
@@ -108,6 +113,11 @@ function initializeSettingsPage() {
         previewCompanyLogo
     );
 
+    removeCompanyLogoButton.addEventListener(
+    "click",
+    removeCompanyLogo
+);
+    
 }
 
 // =====================================
@@ -474,6 +484,73 @@ function previewCompanyLogo() {
     fileReader.readAsDataURL(selectedFile);
 
 }
+
+// =====================================
+// Remove Company Logo
+// =====================================
+
+async function removeCompanyLogo() {
+
+    const confirmed =
+        confirm(
+            "Are you sure you want to remove the company logo?"
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+
+        showMessage(
+            "Removing logo...",
+            "info"
+        );
+
+        selectedCompanyLogoData = "";
+
+        companyLogoInput.value = "";
+
+        companyLogoPreview.removeAttribute("src");
+        companyLogoPreview.hidden = true;
+
+        noCompanyLogoMessage.style.display =
+            "block";
+
+        const settingsReference =
+            doc(db, "systemSettings", "attendance");
+
+        await setDoc(
+            settingsReference,
+            {
+                companyLogo: ""
+            },
+            {
+                merge: true
+            }
+        );
+
+        showMessage(
+            "Company logo removed successfully.",
+            "success"
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Remove logo error:",
+            error
+        );
+
+        showMessage(
+            "The company logo could not be removed.",
+            "error"
+        );
+
+    }
+
+}
+
 // =====================================
 // Logout
 // =====================================
