@@ -80,6 +80,8 @@ const noCompanyLogoMessage =
         "noCompanyLogoMessage"
     );
 
+let selectedCompanyLogoData = "";
+
 
 // =====================================
 // Start Settings Page
@@ -338,8 +340,9 @@ function previewCompanyLogo() {
 
     if (!selectedFile) {
 
-        companyLogoPreview.removeAttribute("src");
+        selectedCompanyLogoData = "";
 
+        companyLogoPreview.removeAttribute("src");
         companyLogoPreview.hidden = true;
 
         noCompanyLogoMessage.style.display =
@@ -358,9 +361,9 @@ function previewCompanyLogo() {
     if (!allowedTypes.includes(selectedFile.type)) {
 
         companyLogoInput.value = "";
+        selectedCompanyLogoData = "";
 
         companyLogoPreview.removeAttribute("src");
-
         companyLogoPreview.hidden = true;
 
         noCompanyLogoMessage.style.display =
@@ -376,14 +379,14 @@ function previewCompanyLogo() {
     }
 
     const maxFileSize =
-    500 * 1024;
+        500 * 1024;
 
     if (selectedFile.size > maxFileSize) {
 
         companyLogoInput.value = "";
+        selectedCompanyLogoData = "";
 
         companyLogoPreview.removeAttribute("src");
-
         companyLogoPreview.hidden = true;
 
         noCompanyLogoMessage.style.display =
@@ -398,18 +401,42 @@ function previewCompanyLogo() {
 
     }
 
-    companyLogoPreview.src =
-        URL.createObjectURL(selectedFile);
+    const fileReader =
+        new FileReader();
 
-    companyLogoPreview.hidden = false;
+    fileReader.onload = function (event) {
 
-    noCompanyLogoMessage.style.display =
-        "none";
+        selectedCompanyLogoData =
+            event.target.result;
 
-    showMessage(
-        "Logo selected. Click Save Settings to upload later.",
-        "info"
-    );
+        companyLogoPreview.src =
+            selectedCompanyLogoData;
+
+        companyLogoPreview.hidden =
+            false;
+
+        noCompanyLogoMessage.style.display =
+            "none";
+
+        showMessage(
+            "Logo selected. Click Save Settings to store it.",
+            "info"
+        );
+
+    };
+
+    fileReader.onerror = function () {
+
+        selectedCompanyLogoData = "";
+
+        showMessage(
+            "The logo could not be read.",
+            "error"
+        );
+
+    };
+
+    fileReader.readAsDataURL(selectedFile);
 
 }
 // =====================================
