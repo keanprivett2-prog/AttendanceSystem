@@ -17,6 +17,16 @@ const recentActivity =
 const departmentSummary =
     document.getElementById("departmentSummary");
 
+const dashboardCompanyName =
+    document.getElementById(
+        "dashboardCompanyName"
+    );
+
+const dashboardCompanyLogo =
+    document.getElementById(
+        "dashboardCompanyLogo"
+    );
+
 // =====================================
 // Load Attendance
 // =====================================
