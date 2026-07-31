@@ -349,6 +349,26 @@ function updateSummaryCards(records) {
 
 }
 
+function formatReportDate(dateKey) {
+
+    if (!dateKey) {
+        return "-";
+    }
+
+    const date =
+        new Date(`${dateKey}T00:00:00`);
+
+    return date.toLocaleDateString(
+        "en-ZA",
+        {
+            day: "2-digit",
+            month: "short",
+            year: "numeric"
+        }
+    );
+
+}
+
 function displayReport(records) {
 
     reportTableBody.innerHTML = "";
@@ -369,7 +389,13 @@ function displayReport(records) {
             document.createElement("tr");
 
         row.innerHTML = `
-            <td>${escapeHtml(record.dateKey ?? record.date ?? "-")}</td>
+            <td>
+    ${escapeHtml(
+        formatReportDate(
+            record.dateKey ?? record.date
+        )
+    )}
+</td>
             <td>${escapeHtml(record.employeeNumber ?? "-")}</td>
             <td>${escapeHtml(record.name ?? "-")}</td>
             <td>${escapeHtml(record.department ?? "-")}</td>
