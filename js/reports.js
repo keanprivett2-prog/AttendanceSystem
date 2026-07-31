@@ -386,8 +386,6 @@ function createStatusClass(status) {
 
 function displayReport(records) {
 
-function displayReport(records) {
-
     reportTableBody.innerHTML = "";
 
     if (records.length === 0) {
