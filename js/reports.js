@@ -23,8 +23,7 @@ import {
 
 const startDateInput =
     document.getElementById("reportStartDate");
-const startDateInput =
-    document.getElementById("reportStartDate");
+
 
 const endDateInput =
     document.getElementById("reportEndDate");
