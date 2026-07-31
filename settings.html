@@ -38,31 +38,52 @@
 
             <nav class="sidebar-menu">
 
-                <a href="admin-v2.html" class="menu-link">
+                <a
+                    href="admin-v2.html"
+                    class="menu-link"
+                >
                     Dashboard
                 </a>
 
-                <a href="employees.html" class="menu-link">
+                <a
+                    href="employees.html"
+                    class="menu-link"
+                >
                     Employees
                 </a>
 
-                <a href="attendance-management.html" class="menu-link">
+                <a
+                    href="attendance-management.html"
+                    class="menu-link"
+                >
                     Attendance Management
                 </a>
 
-                <a href="reports.html" class="menu-link">
+                <a
+                    href="reports.html"
+                    class="menu-link"
+                >
                     Reports
                 </a>
 
-                <a href="settings.html" class="menu-link active">
+                <a
+                    href="settings.html"
+                    class="menu-link active"
+                >
                     Settings
                 </a>
 
-                <a href="#" class="menu-link">
+                <a
+                    href="#"
+                    class="menu-link"
+                >
                     Administrators
                 </a>
 
-                <a href="audit-log.html" class="menu-link">
+                <a
+                    href="audit-log.html"
+                    class="menu-link"
+                >
                     Audit Log
                 </a>
 
@@ -80,8 +101,13 @@
             <header class="topbar">
 
                 <div>
+
                     <h1>Settings</h1>
-                    <p>Configure company and attendance settings.</p>
+
+                    <p>
+                        Configure company and attendance settings.
+                    </p>
+
                 </div>
 
                 <div class="topbar-right">
@@ -101,8 +127,13 @@
             <section class="employee-actions">
 
                 <div>
+
                     <h2>System Settings</h2>
-                    <p>Manage your organisation and attendance rules.</p>
+
+                    <p>
+                        Manage your organisation and attendance rules.
+                    </p>
+
                 </div>
 
             </section>
@@ -111,6 +142,7 @@
 
                 <form id="settingsForm">
 
+                    <!-- Company Information -->
                     <div class="settings-section">
 
                         <h3>Company Information</h3>
@@ -125,12 +157,52 @@
                                 type="text"
                                 id="companyName"
                                 placeholder="Enter company name"
+                                required
                             >
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label for="companyLogo">
+                                Company Logo
+                            </label>
+
+                            <input
+                                type="file"
+                                id="companyLogo"
+                                accept="image/png, image/jpeg, image/webp"
+                            >
+
+                            <small>
+                                Accepted formats: PNG, JPG and WEBP.
+                                Maximum file size: 2 MB.
+                            </small>
+
+                        </div>
+
+                        <div
+                            class="company-logo-preview"
+                            id="companyLogoPreviewContainer"
+                        >
+
+                            <p>Current Logo</p>
+
+                            <img
+                                id="companyLogoPreview"
+                                alt="Company logo preview"
+                                hidden
+                            >
+
+                            <p id="noCompanyLogoMessage">
+                                No company logo uploaded.
+                            </p>
 
                         </div>
 
                     </div>
 
+                    <!-- Attendance Rules -->
                     <div class="settings-section">
 
                         <h3>Attendance Rules</h3>
@@ -145,6 +217,7 @@
                                 type="time"
                                 id="standardStartTime"
                                 value="08:00"
+                                required
                             >
 
                         </div>
@@ -159,113 +232,103 @@
                                 type="time"
                                 id="lateThreshold"
                                 value="08:15"
+                                required
                             >
 
                         </div>
 
                     </div>
 
-                    <div class="form-group">
-
-    <label for="companyLogo">
-        Company Logo
-    </label>
-
-    <input
-        type="file"
-        id="companyLogo"
-        accept="image/png, image/jpeg, image/webp"
-    >
-
-    <small>
-        Accepted formats: PNG, JPG and WEBP.
-    </small>
-
-</div>
-
-<div
-    class="company-logo-preview"
-    id="companyLogoPreviewContainer"
->
-
-    <p>Current Logo</p>
-
-    <img
-        id="companyLogoPreview"
-        alt="Company logo preview"
-        hidden
-    >
-
-    <p id="noCompanyLogoMessage">
-        No company logo uploaded.
-    </p>
-
-</div>
-
+                    <!-- Working Week -->
                     <div class="settings-section">
 
                         <h3>Working Week</h3>
 
-                        <label>
-                            <input
-                                type="checkbox"
-                                id="workMonday"
-                                checked
-                            >
-                            Monday
-                        </label>
+                        <div class="working-days">
 
-                        <label>
-                            <input
-                                type="checkbox"
-                                id="workTuesday"
-                                checked
-                            >
-                            Tuesday
-                        </label>
+                            <label>
 
-                        <label>
-                            <input
-                                type="checkbox"
-                                id="workWednesday"
-                                checked
-                            >
-                            Wednesday
-                        </label>
+                                <input
+                                    type="checkbox"
+                                    id="workMonday"
+                                    checked
+                                >
 
-                        <label>
-                            <input
-                                type="checkbox"
-                                id="workThursday"
-                                checked
-                            >
-                            Thursday
-                        </label>
+                                Monday
 
-                        <label>
-                            <input
-                                type="checkbox"
-                                id="workFriday"
-                                checked
-                            >
-                            Friday
-                        </label>
+                            </label>
 
-                        <label>
-                            <input
-                                type="checkbox"
-                                id="workSaturday"
-                            >
-                            Saturday
-                        </label>
+                            <label>
 
-                        <label>
-                            <input
-                                type="checkbox"
-                                id="workSunday"
-                            >
-                            Sunday
-                        </label>
+                                <input
+                                    type="checkbox"
+                                    id="workTuesday"
+                                    checked
+                                >
+
+                                Tuesday
+
+                            </label>
+
+                            <label>
+
+                                <input
+                                    type="checkbox"
+                                    id="workWednesday"
+                                    checked
+                                >
+
+                                Wednesday
+
+                            </label>
+
+                            <label>
+
+                                <input
+                                    type="checkbox"
+                                    id="workThursday"
+                                    checked
+                                >
+
+                                Thursday
+
+                            </label>
+
+                            <label>
+
+                                <input
+                                    type="checkbox"
+                                    id="workFriday"
+                                    checked
+                                >
+
+                                Friday
+
+                            </label>
+
+                            <label>
+
+                                <input
+                                    type="checkbox"
+                                    id="workSaturday"
+                                >
+
+                                Saturday
+
+                            </label>
+
+                            <label>
+
+                                <input
+                                    type="checkbox"
+                                    id="workSunday"
+                                >
+
+                                Sunday
+
+                            </label>
+
+                        </div>
 
                     </div>
 
