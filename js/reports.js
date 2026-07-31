@@ -369,6 +369,23 @@ function formatReportDate(dateKey) {
 
 }
 
+
+// =====================================
+// Create Status CSS Class
+// =====================================
+
+function createStatusClass(status) {
+
+    return `status-${String(status ?? "unknown")
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "")}`;
+
+}
+
+
+function displayReport(records) {
+
 function displayReport(records) {
 
     reportTableBody.innerHTML = "";
@@ -388,20 +405,22 @@ function displayReport(records) {
         const row =
             document.createElement("tr");
 
-        row.innerHTML = `
-            <td>
-    ${escapeHtml(
-        formatReportDate(
-            record.dateKey ?? record.date
-        )
-    )}
-</td>
-            <td>${escapeHtml(record.employeeNumber ?? "-")}</td>
-            <td>${escapeHtml(record.name ?? "-")}</td>
-            <td>${escapeHtml(record.department ?? "-")}</td>
-            <td>${escapeHtml(record.time ?? "-")}</td>
-            <td>${escapeHtml(record.status ?? "Checked In")}</td>
-        `;
+        const statusClass =
+    createStatusClass(record.status);
+
+row.innerHTML = `
+    <td>${escapeHtml(formatReportDate(record.dateKey ?? record.date))}</td>
+    <td>${escapeHtml(record.employeeNumber ?? "-")}</td>
+    <td>${escapeHtml(record.name ?? "-")}</td>
+    <td>${escapeHtml(record.department ?? "-")}</td>
+    <td>${escapeHtml(record.time ?? "-")}</td>
+
+    <td>
+        <span class="status-badge ${statusClass}">
+            ${escapeHtml(record.status ?? "Unknown")}
+        </span>
+    </td>
+`;
 
         reportTableBody.appendChild(row);
 
