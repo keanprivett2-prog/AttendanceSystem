@@ -62,6 +62,24 @@ const settingsMessage =
 const logoutButton =
     document.getElementById("logoutButton");
 
+const companyLogoInput =
+    document.getElementById("companyLogo");
+
+const companyLogoPreviewContainer =
+    document.getElementById(
+        "companyLogoPreviewContainer"
+    );
+
+const companyLogoPreview =
+    document.getElementById(
+        "companyLogoPreview"
+    );
+
+const noCompanyLogoMessage =
+    document.getElementById(
+        "noCompanyLogoMessage"
+    );
+
 
 // =====================================
 // Start Settings Page
@@ -299,6 +317,98 @@ function showMessage(message, type) {
 
 }
 
+// =====================================
+// Preview Company Logo
+// =====================================
+
+function previewCompanyLogo() {
+
+    const selectedFile =
+        companyLogoInput.files[0];
+
+    if (!selectedFile) {
+
+        companyLogoPreview.src = "";
+        companyLogoPreview.hidden = true;
+
+        noCompanyLogoMessage.style.display =
+            "block";
+
+        return;
+
+    }
+
+    const allowedFileTypes = [
+        "image/png",
+        "image/jpeg",
+        "image/webp"
+    ];
+
+    if (
+        !allowedFileTypes.includes(
+            selectedFile.type
+        )
+    ) {
+
+        companyLogoInput.value = "";
+
+        companyLogoPreview.src = "";
+        companyLogoPreview.hidden = true;
+
+        noCompanyLogoMessage.style.display =
+            "block";
+
+        showMessage(
+            "Please select a PNG, JPG or WEBP image.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    const maximumFileSize =
+        2 * 1024 * 1024;
+
+    if (
+        selectedFile.size >
+        maximumFileSize
+    ) {
+
+        companyLogoInput.value = "";
+
+        companyLogoPreview.src = "";
+        companyLogoPreview.hidden = true;
+
+        noCompanyLogoMessage.style.display =
+            "block";
+
+        showMessage(
+            "The company logo must be smaller than 2 MB.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    const logoPreviewUrl =
+        URL.createObjectURL(selectedFile);
+
+    companyLogoPreview.src =
+        logoPreviewUrl;
+
+    companyLogoPreview.hidden = false;
+
+    noCompanyLogoMessage.style.display =
+        "none";
+
+    showMessage(
+        "Logo selected. Save settings to upload it.",
+        "info"
+    );
+
+}
 
 // =====================================
 // Logout
