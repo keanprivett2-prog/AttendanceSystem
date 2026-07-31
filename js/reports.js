@@ -3,7 +3,10 @@
 // Reports
 // =====================================
 
-import { db, auth } from "../firebase/firebase.js";
+import {
+    db,
+    auth
+} from "../firebase/firebase.js";
 
 import {
     collection,
@@ -13,6 +16,13 @@ import {
     orderBy
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
+import {
+    signOut
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+
+
+const startDateInput =
+    document.getElementById("reportStartDate");
 const startDateInput =
     document.getElementById("reportStartDate");
 
@@ -77,9 +87,7 @@ logoutButton.addEventListener(
 
             await signOut(auth);
 
-            import {
-    signOut
-} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+             from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
             window.location.href = "index.html";
 
