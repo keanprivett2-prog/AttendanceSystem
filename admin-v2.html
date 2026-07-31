@@ -3,11 +3,18 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>R-E-D Attendance Enterprise</title>
 
-    <link rel="stylesheet" href="css/admin-v2.css">
+    <link
+        rel="stylesheet"
+        href="css/admin-v2.css"
+    >
 </head>
 
 <body>
@@ -16,210 +23,276 @@
 
         <aside class="sidebar">
 
-    <div class="sidebar-brand">
-        <div class="brand-logo">R</div>
+            <div class="sidebar-brand">
 
-        <div>
-            <h2>R-E-D</h2>
-            <span>Attendance</span>
-        </div>
-    </div>
+                <div class="brand-logo">
+                    R
+                </div>
 
-    <nav class="sidebar-menu">
+                <div>
+                    <h2>R-E-D</h2>
+                    <span>Attendance</span>
+                </div>
 
-        <a href="admin-v2.html" class="menu-link active">
-            
-            Dashboard
-        </a>
+            </div>
 
-        <a href="employees.html" class="menu-link">
-    
-    Employees
-</a>
+            <nav class="sidebar-menu">
 
-        <a href="attendance-management.html" class="menu-link">
-    
-    Attendance Management
-</a>
+                <a
+                    href="admin-v2.html"
+                    class="menu-link active"
+                >
+                    Dashboard
+                </a>
 
-        <a href="reports.html" class="menu-link">
-    
-    Reports
-</a>
+                <a
+                    href="employees.html"
+                    class="menu-link"
+                >
+                    Employees
+                </a>
 
-        <a href="settings.html" class="menu-link">
-    Settings
-</a>
+                <a
+                    href="attendance-management.html"
+                    class="menu-link"
+                >
+                    Attendance Management
+                </a>
 
-        <a href="#" class="menu-link"class="menu-link">
-            
-            Administrators
-        </a>
+                <a
+                    href="reports.html"
+                    class="menu-link"
+                >
+                    Reports
+                </a>
 
-        <a href="audit-log.html" class="menu-link">
-    
-    Audit Log
-</a>
+                <a
+                    href="settings.html"
+                    class="menu-link"
+                >
+                    Settings
+                </a>
 
-    </nav>
+                <a
+                    href="#"
+                    class="menu-link"
+                >
+                    Administrators
+                </a>
 
-    <div class="sidebar-footer">
-        <span>R-E-D Attendance</span>
-        <small>Enterprise Edition</small>
-    </div>
+                <a
+                    href="audit-log.html"
+                    class="menu-link"
+                >
+                    Audit Log
+                </a>
 
-</aside>
+            </nav>
+
+            <div class="sidebar-footer">
+                <span>R-E-D Attendance</span>
+                <small>Enterprise Edition</small>
+            </div>
+
+        </aside>
 
         <main class="content">
 
-    <header class="topbar">
+            <header class="topbar">
 
-        <div class="dashboard-heading">
+                <div class="dashboard-heading">
 
-    <img
-        id="dashboardCompanyLogo"
-        class="dashboard-company-logo"
-        alt="Company logo"
-        hidden
-    >
+                    <img
+                        id="dashboardCompanyLogo"
+                        class="dashboard-company-logo"
+                        alt="Company logo"
+                        hidden
+                    >
 
-    <div>
+                    <div class="dashboard-heading-text">
 
-        <h1 id="dashboardCompanyName">
-            Dashboard
-        </h1>
+                        <h2
+                            id="dashboardCompanyName"
+                            class="dashboard-company-name"
+                        >
+                            Company Name
+                        </h2>
 
-        <p id="adminWelcome">
-            Welcome
-        </p>
+                        <h1>
+                            Dashboard
+                        </h1>
 
-    </div>
+                        <p id="adminWelcome">
+                            Welcome
+                        </p>
 
-</div>
+                    </div>
 
-        <div class="topbar-right">
+                </div>
 
-            <button class="logout-btn">
-                Logout
-            </button>
+                <div class="topbar-right">
 
-        </div>
+                    <button
+                        type="button"
+                        class="logout-btn"
+                        id="logoutButton"
+                    >
+                        Logout
+                    </button>
 
-    </header>
+                </div>
 
-      <section class="stats-grid">
+            </header>
 
-    <div class="stat-card">
-        <h3>Total Employees</h3>
-        <span id="totalEmployees">0</span>
-    </div>
+            <section class="stats-grid">
 
-    <div class="stat-card">
-        <h3>Checked In</h3>
-        <span id="checkedIn">0</span>
-    </div>
+                <div class="stat-card">
 
-    <div class="stat-card">
-        <h3>Late Today</h3>
-        <span id="lateToday">0</span>
-    </div>
+                    <h3>Total Employees</h3>
 
-    <div class="stat-card">
-        <h3>Absent</h3>
-        <span id="absentToday">0</span>
-    </div>
+                    <span id="totalEmployees">
+                        0
+                    </span>
 
-</section>  
+                </div>
+
+                <div class="stat-card">
+
+                    <h3>Checked In</h3>
+
+                    <span id="checkedIn">
+                        0
+                    </span>
+
+                </div>
+
+                <div class="stat-card">
+
+                    <h3>Late Today</h3>
+
+                    <span id="lateToday">
+                        0
+                    </span>
+
+                </div>
+
+                <div class="stat-card">
+
+                    <h3>Absent</h3>
+
+                    <span id="absentToday">
+                        0
+                    </span>
+
+                </div>
+
+            </section>
 
             <section class="dashboard-grid">
 
-    <div class="dashboard-card">
+                <div class="dashboard-card">
 
-        <div class="table-header">
+                    <div class="table-header">
 
-            <h2>Recent Activity</h2>
+                        <h2>
+                            Recent Activity
+                        </h2>
 
-        </div>
+                    </div>
 
-        <div id="recentActivity">
+                    <div id="recentActivity">
 
-            <p class="empty-row">
-                No recent activity.
-            </p>
+                        <p class="empty-row">
+                            No recent activity.
+                        </p>
 
-        </div>
+                    </div>
 
-    </div>
+                </div>
 
-    <div class="dashboard-card">
+                <div class="dashboard-card">
 
-        <div class="table-header">
+                    <div class="table-header">
 
-            <h2>Department Summary</h2>
+                        <h2>
+                            Department Summary
+                        </h2>
 
-        </div>
+                    </div>
 
-        <div id="departmentSummary">
+                    <div id="departmentSummary">
 
-            <p class="empty-row">
-                No department data.
-            </p>
+                        <p class="empty-row">
+                            No department data.
+                        </p>
 
-        </div>
+                    </div>
 
-    </div>
+                </div>
 
-</section>
-            
+            </section>
+
             <section class="table-section">
 
-    <div class="table-header">
+                <div class="table-header">
 
-        <h2>Today's Attendance</h2>
+                    <h2>
+                        Today's Attendance
+                    </h2>
 
-        <button class="refresh-btn">
-            Refresh
-        </button>
+                    <button
+                        type="button"
+                        class="refresh-btn"
+                        id="refreshDashboardButton"
+                    >
+                        Refresh
+                    </button>
+
+                </div>
+
+                <table class="attendance-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Employee</th>
+                            <th>Employee No.</th>
+                            <th>Department</th>
+                            <th>Check In</th>
+                            <th>Status</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="attendanceTableBody">
+
+                        <tr>
+
+                            <td
+                                colspan="5"
+                                class="empty-row"
+                            >
+                                No attendance records yet.
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </section>
+
+        </main>
 
     </div>
 
-    <table class="attendance-table">
-
-        <thead>
-
-            <tr>
-
-                <th>Employee</th>
-                <th>Employee No.</th>
-                <th>Department</th>
-                <th>Check In</th>
-                <th>Status</th>
-
-            </tr>
-
-        </thead>
-
-        <tbody id="attendanceTableBody">
-
-            <tr>
-
-                <td colspan="5" class="empty-row">
-                    No attendance records yet.
-                </td>
-
-            </tr>
-
-        </tbody>
-
-    </table>
-
-</section>
-            
-</main>
-
-    </div>
-
-    <script type="module" src="js/admin-v2.js"></script>
+    <script
+        type="module"
+        src="js/admin-v2.js"
+    ></script>
 
 </body>
 
