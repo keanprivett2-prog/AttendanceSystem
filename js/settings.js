@@ -140,6 +140,32 @@ async function loadSettings() {
         lateThresholdInput.value =
             settings.lateThreshold ?? "08:15";
 
+        if (settings.companyLogo) {
+
+    selectedCompanyLogoData =
+        settings.companyLogo;
+
+    companyLogoPreview.src =
+        settings.companyLogo;
+
+    companyLogoPreview.hidden =
+        false;
+
+    noCompanyLogoMessage.style.display =
+        "none";
+
+} else {
+
+    companyLogoPreview.removeAttribute("src");
+
+    companyLogoPreview.hidden =
+        true;
+
+    noCompanyLogoMessage.style.display =
+        "block";
+
+}
+
         const workingDays =
             settings.workingDays ?? [];
 
@@ -271,18 +297,27 @@ async function saveSettings(event) {
         const settingsReference =
             doc(db, "systemSettings", "attendance");
 
-        await setDoc(
-            settingsReference,
-            {
-                companyName,
-                standardStartTime,
-                lateThreshold,
-                workingDays
-            },
-            {
-                merge: true
-            }
-        );
+        const settingsData = {
+    companyName,
+    standardStartTime,
+    lateThreshold,
+    workingDays
+};
+
+if (selectedCompanyLogoData !== "") {
+
+    settingsData.companyLogo =
+        selectedCompanyLogoData;
+
+}
+
+await setDoc(
+    settingsReference,
+    settingsData,
+    {
+        merge: true
+    }
+);
 
         showMessage(
             "Settings saved successfully.",
