@@ -86,9 +86,7 @@ logoutButton.addEventListener(
 
             await signOut(auth);
 
-             from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-
-            window.location.href = "index.html";
+                         window.location.href = "index.html";
 
         } catch (error) {
 
