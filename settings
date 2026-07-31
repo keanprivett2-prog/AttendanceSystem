@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>R-E-D Attendance | Settings</title>
+
+    <link
+        rel="stylesheet"
+        href="css/admin-v2.css"
+    >
+</head>
+
+<body>
+
+    <div class="app">
+
+        <aside class="sidebar">
+
+            <div class="sidebar-brand">
+
+                <div class="brand-logo">
+                    R
+                </div>
+
+                <div>
+                    <h2>R-E-D</h2>
+                    <span>Attendance</span>
+                </div>
+
+            </div>
+
+            <nav class="sidebar-menu">
+
+                <a href="admin-v2.html" class="menu-link">
+                    Dashboard
+                </a>
+
+                <a href="employees.html" class="menu-link">
+                    Employees
+                </a>
+
+                <a href="attendance-management.html" class="menu-link">
+                    Attendance Management
+                </a>
+
+                <a href="reports.html" class="menu-link">
+                    Reports
+                </a>
+
+                <a href="settings.html" class="menu-link active">
+                    Settings
+                </a>
+
+                <a href="#" class="menu-link">
+                    Administrators
+                </a>
+
+                <a href="audit-log.html" class="menu-link">
+                    Audit Log
+                </a>
+
+            </nav>
+
+            <div class="sidebar-footer">
+                <span>R-E-D Attendance</span>
+                <small>Enterprise Edition</small>
+            </div>
+
+        </aside>
+
+        <main class="content">
+
+            <header class="topbar">
+
+                <div>
+                    <h1>Settings</h1>
+                    <p>Configure company and attendance settings.</p>
+                </div>
+
+                <div class="topbar-right">
+
+                    <button
+                        type="button"
+                        class="logout-btn"
+                        id="logoutButton"
+                    >
+                        Logout
+                    </button>
+
+                </div>
+
+            </header>
+
+            <section class="employee-actions">
+
+                <div>
+                    <h2>System Settings</h2>
+                    <p>Manage your organisation and attendance rules.</p>
+                </div>
+
+            </section>
+
+            <section class="employee-table-section">
+
+                <form id="settingsForm">
+
+                    <div class="settings-section">
+
+                        <h3>Company Information</h3>
+
+                        <div class="form-group">
+
+                            <label for="companyName">
+                                Company Name
+                            </label>
+
+                            <input
+                                type="text"
+                                id="companyName"
+                                placeholder="Enter company name"
+                            >
+
+                        </div>
+
+                    </div>
+
+                    <div class="settings-section">
+
+                        <h3>Attendance Rules</h3>
+
+                        <div class="form-group">
+
+                            <label for="standardStartTime">
+                                Standard Start Time
+                            </label>
+
+                            <input
+                                type="time"
+                                id="standardStartTime"
+                                value="08:00"
+                            >
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label for="lateThreshold">
+                                Late After
+                            </label>
+
+                            <input
+                                type="time"
+                                id="lateThreshold"
+                                value="08:15"
+                            >
+
+                        </div>
+
+                    </div>
+
+                    <div class="settings-section">
+
+                        <h3>Working Week</h3>
+
+                        <label>
+                            <input
+                                type="checkbox"
+                                id="workMonday"
+                                checked
+                            >
+                            Monday
+                        </label>
+
+                        <label>
+                            <input
+                                type="checkbox"
+                                id="workTuesday"
+                                checked
+                            >
+                            Tuesday
+                        </label>
+
+                        <label>
+                            <input
+                                type="checkbox"
+                                id="workWednesday"
+                                checked
+                            >
+                            Wednesday
+                        </label>
+
+                        <label>
+                            <input
+                                type="checkbox"
+                                id="workThursday"
+                                checked
+                            >
+                            Thursday
+                        </label>
+
+                        <label>
+                            <input
+                                type="checkbox"
+                                id="workFriday"
+                                checked
+                            >
+                            Friday
+                        </label>
+
+                        <label>
+                            <input
+                                type="checkbox"
+                                id="workSaturday"
+                            >
+                            Saturday
+                        </label>
+
+                        <label>
+                            <input
+                                type="checkbox"
+                                id="workSunday"
+                            >
+                            Sunday
+                        </label>
+
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="refresh-btn"
+                        id="saveSettingsButton"
+                    >
+                        Save Settings
+                    </button>
+
+                    <p id="settingsMessage"></p>
+
+                </form>
+
+            </section>
+
+        </main>
+
+    </div>
+
+    <script
+        type="module"
+        src="js/settings.js"
+    ></script>
+
+</body>
+
+</html>
