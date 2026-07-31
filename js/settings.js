@@ -376,7 +376,7 @@ function previewCompanyLogo() {
     }
 
     const maxFileSize =
-        2 * 1024 * 1024;
+    500 * 1024;
 
     if (selectedFile.size > maxFileSize) {
 
@@ -390,7 +390,7 @@ function previewCompanyLogo() {
             "block";
 
         showMessage(
-            "The logo must be smaller than 2 MB.",
+            "The logo must be smaller than 500 KB.",
             "error"
         );
 
