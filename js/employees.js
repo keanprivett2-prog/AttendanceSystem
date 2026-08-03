@@ -5,6 +5,10 @@
 import { db, auth } from "../firebase/firebase.js";
 
 import {
+    signOut
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+
+import {
     collection,
     addDoc,
     getDocs,
