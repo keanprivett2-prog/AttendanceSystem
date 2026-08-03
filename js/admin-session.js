@@ -131,3 +131,30 @@ async function expireAdministratorSession() {
     }
 
 }
+
+// =====================================
+// Prevent Back Navigation After Logout
+// =====================================
+
+window.addEventListener(
+    "pageshow",
+    function (event) {
+
+        const adminLoggedIn =
+            sessionStorage.getItem(
+                "adminLoggedIn"
+            );
+
+        if (
+            event.persisted ||
+            adminLoggedIn !== "true"
+        ) {
+
+            window.location.replace(
+                "admin-login.html"
+            );
+
+        }
+
+    }
+);
