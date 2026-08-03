@@ -21,7 +21,8 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 import {
-    applySidebarPermissions
+    applySidebarPermissions,
+    protectPage
 } from "./role-permissions.js";
 
 const recentActivity =
@@ -291,9 +292,12 @@ if (logoutButton) {
 
 }
 
-protectPage("dashboard");
+if (protectPage("dashboard")) {
 
-applySidebarPermissions();
+    applySidebarPermissions();
 
-loadCompanyBranding();
-loadAttendance();
+    loadCompanyBranding();
+
+    loadAttendance();
+
+}
