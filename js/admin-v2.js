@@ -1,4 +1,10 @@
 // =====================================
+// R-E-D Attendance
+// Dashboard
+// =====================================
+
+
+// =====================================
 // Firebase
 // =====================================
 
@@ -25,11 +31,25 @@ import {
     protectPage
 } from "./role-permissions.js";
 
+
+// =====================================
+// Page Elements
+// =====================================
+
 const recentActivity =
-    document.getElementById("recentActivity");
+    document.getElementById(
+        "recentActivity"
+    );
 
 const departmentSummary =
-    document.getElementById("departmentSummary");
+    document.getElementById(
+        "departmentSummary"
+    );
+
+const attendanceTableBody =
+    document.getElementById(
+        "attendanceTableBody"
+    );
 
 const dashboardCompanyName =
     document.getElementById(
@@ -51,10 +71,61 @@ const sidebarLogoFallback =
         "sidebarLogoFallback"
     );
 
+const totalEmployeesElement =
+    document.getElementById(
+        "totalEmployees"
+    );
+
+const checkedInElement =
+    document.getElementById(
+        "checkedIn"
+    );
+
+const lateTodayElement =
+    document.getElementById(
+        "lateToday"
+    );
+
+const absentTodayElement =
+    document.getElementById(
+        "absentToday"
+    );
+
 const logoutButton =
     document.getElementById(
         "logoutButton"
     );
+
+
+// =====================================
+// Initialize Dashboard
+// =====================================
+
+initializeDashboard();
+
+function initializeDashboard() {
+
+    if (!protectPage("dashboard")) {
+        return;
+    }
+
+    applySidebarPermissions();
+
+    if (logoutButton) {
+
+        logoutButton.addEventListener(
+            "click",
+            logoutAdministrator
+        );
+
+    }
+
+    loadCompanyBranding();
+
+    loadAttendance();
+
+}
+
 
 // =====================================
 // Load Company Branding
@@ -65,10 +136,16 @@ async function loadCompanyBranding() {
     try {
 
         const settingsReference =
-            doc(db, "systemSettings", "attendance");
+            doc(
+                db,
+                "systemSettings",
+                "attendance"
+            );
 
         const settingsSnapshot =
-            await getDoc(settingsReference);
+            await getDoc(
+                settingsReference
+            );
 
         if (!settingsSnapshot.exists()) {
             return;
@@ -101,20 +178,24 @@ async function loadCompanyBranding() {
         }
 
         if (
-    sidebarCompanyLogo &&
-    settings.companyLogo
-) {
+            sidebarCompanyLogo &&
+            settings.companyLogo
+        ) {
 
-    sidebarCompanyLogo.src =
-        settings.companyLogo;
+            sidebarCompanyLogo.src =
+                settings.companyLogo;
 
-    sidebarCompanyLogo.hidden =
-        false;
+            sidebarCompanyLogo.hidden =
+                false;
 
-    sidebarLogoFallback.style.display =
-        "none";
+            if (sidebarLogoFallback) {
 
-}
+                sidebarLogoFallback.style.display =
+                    "none";
+
+            }
+
+        }
 
     } catch (error) {
 
@@ -127,130 +208,670 @@ async function loadCompanyBranding() {
 
 }
 
+
 // =====================================
-// Load Attendance
+// Load Dashboard Attendance
 // =====================================
 
 async function loadAttendance() {
 
-    const today =
-    new Date();
+    try {
 
-const year =
-    today.getFullYear();
+        showDashboardLoadingState();
 
-const month =
-    String(today.getMonth() + 1).padStart(2, "0");
+        const todayDateKey =
+            formatLocalDateKey(
+                new Date()
+            );
 
-const day =
-    String(today.getDate()).padStart(2, "0");
+        const attendanceQuery =
+            query(
+                collection(
+                    db,
+                    "attendance"
+                ),
+                where(
+                    "dateKey",
+                    "==",
+                    todayDateKey
+                )
+            );
 
-const todayDateKey =
-    `${year}-${month}-${day}`;
+        const [
+            attendanceSnapshot,
+            employeeSnapshot
+        ] =
+            await Promise.all([
+                getDocs(
+                    attendanceQuery
+                ),
+                getDocs(
+                    collection(
+                        db,
+                        "employees"
+                    )
+                )
+            ]);
 
-const attendanceQuery =
-    query(
-        collection(db, "attendance"),
-        where("dateKey", "==", todayDateKey)
-    );
+        const attendanceRecords =
+            attendanceSnapshot.docs.map(
+                (attendanceDocument) => ({
+                    id:
+                        attendanceDocument.id,
 
-const snapshot =
-    await getDocs(attendanceQuery);
+                    ...attendanceDocument.data()
+                })
+            );
 
-    const employeeSnapshot =
-    await getDocs(
-        collection(db, "employees")
-    );
+        const employeeRecords =
+            employeeSnapshot.docs.map(
+                (employeeDocument) => ({
+                    id:
+                        employeeDocument.id,
+
+                    ...employeeDocument.data()
+                })
+            );
+
+        displayDepartmentSummary(
+            employeeRecords
+        );
+
+        displayRecentActivity(
+            attendanceRecords
+        );
+
+        displayAttendanceTable(
+            attendanceRecords
+        );
+
+        updateDashboardStatistics(
+            attendanceRecords,
+            employeeRecords
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Load dashboard attendance error:",
+            error
+        );
+
+        showDashboardErrorState();
+
+    }
+
+}
+
+
+// =====================================
+// Format Local Date Key
+// =====================================
+
+function formatLocalDateKey(date) {
+
+    const year =
+        date.getFullYear();
+
+    const month =
+        String(
+            date.getMonth() + 1
+        ).padStart(2, "0");
+
+    const day =
+        String(
+            date.getDate()
+        ).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+
+}
+
+
+// =====================================
+// Display Department Summary
+// =====================================
+
+function displayDepartmentSummary(
+    employeeRecords
+) {
+
+    if (!departmentSummary) {
+        return;
+    }
 
     const departmentCounts = {};
 
-    employeeSnapshot.forEach((employeeDocument) => {
+    employeeRecords.forEach(
+        (employee) => {
 
-    const employeeData =
-        employeeDocument.data();
+            const department =
+                String(
+                    employee.department ??
+                    "Unassigned"
+                ).trim() ||
+                "Unassigned";
 
-    const department =
-        String(employeeData.department ?? "Unassigned").trim();
+            if (
+                !departmentCounts[
+                    department
+                ]
+            ) {
 
-    if (!departmentCounts[department]) {
-        departmentCounts[department] = 0;
-    }
+                departmentCounts[
+                    department
+                ] = 0;
 
-    departmentCounts[department]++;
+            }
 
-});
+            departmentCounts[
+                department
+            ]++;
 
-    departmentSummary.innerHTML = "";
+        }
+    );
 
-Object.entries(departmentCounts)
-    .sort((a, b) => a[0].localeCompare(b[0]))
-    .forEach(([department, total]) => {
+    departmentSummary.innerHTML =
+        "";
 
-        departmentSummary.innerHTML += `
-            <div class="department-item">
-                <span>${department}</span>
-                <strong>${total}</strong>
-            </div>
+    const departments =
+        Object.entries(
+            departmentCounts
+        ).sort(
+            (a, b) =>
+                a[0].localeCompare(
+                    b[0]
+                )
+        );
+
+    if (departments.length === 0) {
+
+        departmentSummary.innerHTML = `
+            <p class="empty-row">
+                No department data.
+            </p>
         `;
 
-    });
-    
-    const tableBody = document.getElementById("attendanceTableBody");
+        return;
 
-    tableBody.innerHTML = "";
+    }
 
-    // Statistics
-    let checkedIn = 0;
-    let lateToday = 0;
+    departments.forEach(
+        ([department, total]) => {
 
-recentActivity.innerHTML = "";
-    
-    snapshot.forEach((doc) => {  
+            const item =
+                document.createElement(
+                    "div"
+                );
 
-        const data = doc.data();
+            item.className =
+                "department-item";
 
-        recentActivity.innerHTML += `
-    <div class="activity-item">
-        <strong>${data.time ?? "--:--"}</strong><br>
-        ${data.name ?? "Unknown Employee"}
-    </div>
-`;
+            item.innerHTML = `
+                <span>
+                    ${escapeHtml(department)}
+                </span>
 
-        checkedIn++;
+                <strong>
+                    ${total}
+                </strong>
+            `;
 
-        if (
-    String(data.status ?? "")
-        .trim()
-        .toLowerCase() === "late"
+            departmentSummary.appendChild(
+                item
+            );
+
+        }
+    );
+
+}
+
+
+// =====================================
+// Display Recent Activity
+// =====================================
+
+function displayRecentActivity(
+    attendanceRecords
 ) {
-    lateToday++;
+
+    if (!recentActivity) {
+        return;
+    }
+
+    recentActivity.innerHTML =
+        "";
+
+    if (
+        attendanceRecords.length === 0
+    ) {
+
+        recentActivity.innerHTML = `
+            <p class="empty-row">
+                No recent activity.
+            </p>
+        `;
+
+        return;
+
+    }
+
+    const sortedRecords =
+        [...attendanceRecords].sort(
+            compareAttendanceTimesDescending
+        );
+
+    sortedRecords
+        .slice(0, 10)
+        .forEach(
+            (record) => {
+
+                const activityItem =
+                    document.createElement(
+                        "div"
+                    );
+
+                activityItem.className =
+                    "activity-item";
+
+                activityItem.innerHTML = `
+                    <strong>
+                        ${escapeHtml(
+                            record.time ??
+                            "--:--"
+                        )}
+                    </strong>
+
+                    <br>
+
+                    ${escapeHtml(
+                        record.name ??
+                        "Unknown Employee"
+                    )}
+                `;
+
+                recentActivity.appendChild(
+                    activityItem
+                );
+
+            }
+        );
+
 }
 
-        tableBody.innerHTML += `
-    <tr>
-        <td>${data.name ?? "-"}</td>
-        <td>${data.employeeNumber ?? "-"}</td>
-        <td>${data.department ?? "-"}</td>
-        <td>${data.time ?? "-"}</td>
-        <td>
-            <span class="status-badge status-${String(data.status ?? "checked-in")
-                .trim()
-                .toLowerCase()
-                .replaceAll(" ", "-")}">
-                ${data.status ?? "Checked In"}
-            </span>
-        </td>
-    </tr>
-`;
 
-    });
+// =====================================
+// Sort Attendance by Time
+// =====================================
 
-        document.getElementById("checkedIn").textContent = checkedIn;
-    document.getElementById("lateToday").textContent = lateToday;
-    document.getElementById("totalEmployees").textContent =
-    employeeSnapshot.size;
+function compareAttendanceTimesDescending(
+    firstRecord,
+    secondRecord
+) {
+
+    return String(
+        secondRecord.time ?? ""
+    ).localeCompare(
+        String(
+            firstRecord.time ?? ""
+        )
+    );
 
 }
+
+
+// =====================================
+// Display Attendance Table
+// =====================================
+
+function displayAttendanceTable(
+    attendanceRecords
+) {
+
+    if (!attendanceTableBody) {
+        return;
+    }
+
+    attendanceTableBody.innerHTML =
+        "";
+
+    if (
+        attendanceRecords.length === 0
+    ) {
+
+        attendanceTableBody.innerHTML = `
+            <tr>
+
+                <td
+                    colspan="5"
+                    class="empty-row"
+                >
+                    No attendance records yet.
+                </td>
+
+            </tr>
+        `;
+
+        return;
+
+    }
+
+    const sortedRecords =
+        [...attendanceRecords].sort(
+            compareAttendanceTimesDescending
+        );
+
+    sortedRecords.forEach(
+        (record) => {
+
+            const row =
+                document.createElement(
+                    "tr"
+                );
+
+            const statusClass =
+                createStatusClass(
+                    record.status
+                );
+
+            row.innerHTML = `
+                <td>
+                    ${escapeHtml(
+                        record.name ??
+                        "-"
+                    )}
+                </td>
+
+                <td>
+                    ${escapeHtml(
+                        record.employeeNumber ??
+                        "-"
+                    )}
+                </td>
+
+                <td>
+                    ${escapeHtml(
+                        record.department ??
+                        "-"
+                    )}
+                </td>
+
+                <td>
+                    ${escapeHtml(
+                        record.time ??
+                        "-"
+                    )}
+                </td>
+
+                <td>
+
+                    <span
+                        class="status-badge ${statusClass}"
+                    >
+                        ${escapeHtml(
+                            record.status ??
+                            "Checked In"
+                        )}
+                    </span>
+
+                </td>
+            `;
+
+            attendanceTableBody.appendChild(
+                row
+            );
+
+        }
+    );
+
+}
+
+
+// =====================================
+// Update Dashboard Statistics
+// =====================================
+
+function updateDashboardStatistics(
+    attendanceRecords,
+    employeeRecords
+) {
+
+    const checkedInCount =
+        attendanceRecords.filter(
+            (record) =>
+                isPresentStatus(
+                    record.status
+                )
+        ).length;
+
+    const lateCount =
+        attendanceRecords.filter(
+            (record) =>
+                normalizeStatus(
+                    record.status
+                ) === "late"
+        ).length;
+
+    const absentCount =
+        attendanceRecords.filter(
+            (record) =>
+                normalizeStatus(
+                    record.status
+                ) === "absent"
+        ).length;
+
+    if (totalEmployeesElement) {
+
+        totalEmployeesElement.textContent =
+            employeeRecords.length;
+
+    }
+
+    if (checkedInElement) {
+
+        checkedInElement.textContent =
+            checkedInCount;
+
+    }
+
+    if (lateTodayElement) {
+
+        lateTodayElement.textContent =
+            lateCount;
+
+    }
+
+    if (absentTodayElement) {
+
+        absentTodayElement.textContent =
+            absentCount;
+
+    }
+
+}
+
+
+// =====================================
+// Present Status Check
+// =====================================
+
+function isPresentStatus(status) {
+
+    const normalizedStatus =
+        normalizeStatus(status);
+
+    return (
+        normalizedStatus ===
+            "on time" ||
+        normalizedStatus ===
+            "late" ||
+        normalizedStatus ===
+            "checked in"
+    );
+
+}
+
+
+// =====================================
+// Normalize Status
+// =====================================
+
+function normalizeStatus(status) {
+
+    return String(
+        status ?? ""
+    )
+        .trim()
+        .toLowerCase();
+
+}
+
+
+// =====================================
+// Create Status CSS Class
+// =====================================
+
+function createStatusClass(status) {
+
+    return `status-${normalizeStatus(
+        status || "checked-in"
+    )
+        .replace(
+            /\s+/g,
+            "-"
+        )
+        .replace(
+            /[^a-z0-9-]/g,
+            ""
+        )}`;
+
+}
+
+
+// =====================================
+// Dashboard Loading State
+// =====================================
+
+function showDashboardLoadingState() {
+
+    if (recentActivity) {
+
+        recentActivity.innerHTML = `
+            <p class="empty-row">
+                Loading recent activity...
+            </p>
+        `;
+
+    }
+
+    if (departmentSummary) {
+
+        departmentSummary.innerHTML = `
+            <p class="empty-row">
+                Loading department data...
+            </p>
+        `;
+
+    }
+
+    if (attendanceTableBody) {
+
+        attendanceTableBody.innerHTML = `
+            <tr>
+
+                <td
+                    colspan="5"
+                    class="empty-row"
+                >
+                    Loading today's attendance...
+                </td>
+
+            </tr>
+        `;
+
+    }
+
+}
+
+
+// =====================================
+// Dashboard Error State
+// =====================================
+
+function showDashboardErrorState() {
+
+    if (recentActivity) {
+
+        recentActivity.innerHTML = `
+            <p class="empty-row">
+                Recent activity could not be loaded.
+            </p>
+        `;
+
+    }
+
+    if (departmentSummary) {
+
+        departmentSummary.innerHTML = `
+            <p class="empty-row">
+                Department data could not be loaded.
+            </p>
+        `;
+
+    }
+
+    if (attendanceTableBody) {
+
+        attendanceTableBody.innerHTML = `
+            <tr>
+
+                <td
+                    colspan="5"
+                    class="empty-row"
+                >
+                    Attendance data could not be loaded.
+                </td>
+
+            </tr>
+        `;
+
+    }
+
+}
+
+
+// =====================================
+// Escape HTML
+// =====================================
+
+function escapeHtml(value) {
+
+    return String(
+        value ?? ""
+    )
+        .replaceAll(
+            "&",
+            "&amp;"
+        )
+        .replaceAll(
+            "<",
+            "&lt;"
+        )
+        .replaceAll(
+            ">",
+            "&gt;"
+        )
+        .replaceAll(
+            '"',
+            "&quot;"
+        )
+        .replaceAll(
+            "'",
+            "&#039;"
+        );
+
+}
+
 
 // =====================================
 // Administrator Logout
@@ -260,12 +881,23 @@ async function logoutAdministrator() {
 
     try {
 
+        if (logoutButton) {
+
+            logoutButton.disabled =
+                true;
+
+            logoutButton.textContent =
+                "Logging out...";
+
+        }
+
         await signOut(auth);
 
         sessionStorage.clear();
 
-        window.location.href =
-            "admin-login.html";
+        window.location.replace(
+            "admin-login.html"
+        );
 
     } catch (error) {
 
@@ -274,30 +906,20 @@ async function logoutAdministrator() {
             error
         );
 
+        if (logoutButton) {
+
+            logoutButton.disabled =
+                false;
+
+            logoutButton.textContent =
+                "Logout";
+
+        }
+
+        alert(
+            "Unable to log out. Please try again."
+        );
+
     }
-
-}
-
-
-// =====================================
-// Logout Event
-// =====================================
-
-if (logoutButton) {
-
-    logoutButton.addEventListener(
-        "click",
-        logoutAdministrator
-    );
-
-}
-
-if (protectPage("dashboard")) {
-
-    applySidebarPermissions();
-
-    loadCompanyBranding();
-
-    loadAttendance();
 
 }
