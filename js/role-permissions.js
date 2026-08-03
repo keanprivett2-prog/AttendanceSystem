@@ -21,39 +21,67 @@ const currentAdministratorRole =
 const rolePermissions = {
 
     superAdministrator: {
-        settings: true,
-        administrators: true,
+
+        dashboard: true,
+
         employees: true,
+        manageEmployees: true,
+
         attendance: true,
         reports: true,
+
+        settings: true,
+        administrators: true,
         auditLog: true
+
     },
 
     administrator: {
-        settings: false,
-        administrators: true,
+
+        dashboard: true,
+
         employees: true,
+        manageEmployees: true,
+
         attendance: true,
         reports: true,
+
+        settings: false,
+        administrators: true,
         auditLog: true
+
     },
 
     manager: {
-        settings: false,
-        administrators: false,
+
+        dashboard: true,
+
         employees: false,
+        manageEmployees: false,
+
         attendance: true,
         reports: true,
+
+        settings: false,
+        administrators: false,
         auditLog: false
+
     },
 
     readOnly: {
-        settings: false,
-        administrators: false,
+
+        dashboard: true,
+
         employees: true,
+        manageEmployees: false,
+
         attendance: true,
         reports: true,
+
+        settings: false,
+        administrators: false,
         auditLog: false
+
     }
 
 };
@@ -63,7 +91,9 @@ const rolePermissions = {
 // Check Permission
 // =====================================
 
-function hasPermission(permissionName) {
+function hasPermission(
+    permissionName
+) {
 
     const permissions =
         rolePermissions[
@@ -74,9 +104,11 @@ function hasPermission(permissionName) {
         return false;
     }
 
-    return permissions[
-        permissionName
-    ] === true;
+    return (
+        permissions[
+            permissionName
+        ] === true
+    );
 
 }
 
@@ -105,6 +137,10 @@ function applySidebarPermissions() {
             ) {
 
                 link.hidden = true;
+
+            } else {
+
+                link.hidden = false;
 
             }
 
