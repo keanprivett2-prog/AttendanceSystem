@@ -727,32 +727,34 @@ async function createAdministrator() {
             userCredential.user;
 
         await setDoc(
-            doc(
-                db,
-                "administrators",
-                newAdministrator.uid
-            ),
-            {
-                uid:
-                    newAdministrator.uid,
+    doc(
+        db,
+        "administrators",
+        newAdministrator.uid
+    ),
+    {
+        uid:
+            newAdministrator.uid,
 
-                fullName:
-                    fullName,
+        fullName:
+            fullName,
 
-                email:
-                    email,
+        email:
+            email,
 
-                role:
-                    role,
+        role:
+            role,
 
-                status:
-                    "Active",
+        status:
+            "Active",
 
-                createdAt:
-                    serverTimestamp()
-            }
-        );
+        mustChangePassword:
+            true,
 
+        createdAt:
+            serverTimestamp()
+    }
+);
         await signOut(
             administratorCreatorAuth
         );
