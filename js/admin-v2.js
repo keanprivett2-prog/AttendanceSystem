@@ -2,7 +2,14 @@
 // Firebase
 // =====================================
 
-import { db } from "../firebase/firebase.js";
+import {
+    db,
+    auth
+} from "../firebase/firebase.js";
+
+import {
+    signOut
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 import {
     collection,
@@ -37,6 +44,11 @@ const sidebarCompanyLogo =
 const sidebarLogoFallback =
     document.getElementById(
         "sidebarLogoFallback"
+    );
+
+const logoutButton =
+    document.getElementById(
+        "logoutButton"
     );
 
 // =====================================
@@ -232,6 +244,46 @@ recentActivity.innerHTML = "";
     document.getElementById("lateToday").textContent = lateToday;
     document.getElementById("totalEmployees").textContent =
     employeeSnapshot.size;
+
+}
+
+// =====================================
+// Administrator Logout
+// =====================================
+
+async function logoutAdministrator() {
+
+    try {
+
+        await signOut(auth);
+
+        sessionStorage.clear();
+
+        window.location.href =
+            "admin-login.html";
+
+    } catch (error) {
+
+        console.error(
+            "Logout error:",
+            error
+        );
+
+    }
+
+}
+
+
+// =====================================
+// Logout Event
+// =====================================
+
+if (logoutButton) {
+
+    logoutButton.addEventListener(
+        "click",
+        logoutAdministrator
+    );
 
 }
 
