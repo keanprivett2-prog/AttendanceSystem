@@ -29,6 +29,16 @@ const dashboardCompanyLogo =
         "dashboardCompanyLogo"
     );
 
+const sidebarCompanyLogo =
+    document.getElementById(
+        "sidebarCompanyLogo"
+    );
+
+const sidebarLogoFallback =
+    document.getElementById(
+        "sidebarLogoFallback"
+    );
+
 // =====================================
 // Load Company Branding
 // =====================================
@@ -72,6 +82,22 @@ async function loadCompanyBranding() {
                 false;
 
         }
+
+        if (
+    sidebarCompanyLogo &&
+    settings.companyLogo
+) {
+
+    sidebarCompanyLogo.src =
+        settings.companyLogo;
+
+    sidebarCompanyLogo.hidden =
+        false;
+
+    sidebarLogoFallback.style.display =
+        "none";
+
+}
 
     } catch (error) {
 
