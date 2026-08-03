@@ -117,6 +117,18 @@ const administratorTableBody =
         "administratorTableBody"
     );
 
+const administratorModalTitle =
+    document.getElementById(
+        "administratorModalTitle"
+    );
+
+const saveAdministratorButton =
+    document.getElementById(
+        "saveAdministratorButton"
+    );
+
+let editingAdministratorId = null;
+
 
 // =====================================
 // Start Page
@@ -148,6 +160,11 @@ function initializeAdministratorsPage() {
         "submit",
         createAdministrator
     );
+
+    administratorTableBody.addEventListener(
+    "click",
+    handleAdministratorActions
+);
 
     logoutButton.addEventListener(
         "click",
@@ -375,6 +392,30 @@ function formatAdministratorDate(timestamp) {
             year: "numeric"
         }
     );
+
+}
+
+// =====================================
+// Administrator Actions
+// =====================================
+
+function handleAdministratorActions(event) {
+
+    const editButton =
+        event.target.closest(
+            ".edit-admin-btn"
+        );
+
+    if (editButton) {
+
+        const administratorId =
+            editButton.dataset.id;
+
+        openEditAdministrator(
+            administratorId
+        );
+
+    }
 
 }
 
