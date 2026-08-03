@@ -1,4 +1,11 @@
-import { db } from "../firebase/firebase.js";
+import {
+    db,
+    auth
+} from "../firebase/firebase.js";
+
+import {
+    signOut
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 import {
     collection,
@@ -65,6 +72,11 @@ const previousMonthButton =
 
 const nextMonthButton =
     document.getElementById("nextMonthButton");
+
+const logoutButton =
+    document.getElementById(
+        "logoutButton"
+    );
 
 let calendarMonth =
     new Date().getMonth();
@@ -1140,12 +1152,62 @@ nextMonthButton.addEventListener(
     showNextMonth
 );
 
+
+// =====================================================
+// Administrator Logout
+// =====================================================
+
+async function logoutAdministrator() {
+
+    try {
+
+        await signOut(auth);
+
+        sessionStorage.clear();
+
+        window.location.href =
+            "admin-login.html";
+
+    } catch (error) {
+
+        console.error(
+            "Logout error:",
+            error
+        );
+
+        showMessage(
+            "Unable to log out. Please try again.",
+            "red"
+        );
+
+    }
+
+}
+
+
+// =====================================================
+// Logout Event
+// =====================================================
+
+if (logoutButton) {
+
+    logoutButton.addEventListener(
+        "click",
+        logoutAdministrator
+    );
+
+}
+
+
 // =====================================================
 // Page Initialization
 // =====================================================
 
 attendanceDate.value =
-    formatLocalDate(new Date());
+    formatLocalDate(
+        new Date()
+    );
 
 loadEmployees();
+
 buildCalendar();
