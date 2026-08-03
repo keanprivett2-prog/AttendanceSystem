@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
 
     <meta
@@ -9,17 +10,24 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>R-E-D Attendance | Settings</title>
+    <title>
+        R-E-D Attendance | Settings
+    </title>
 
     <link
         rel="stylesheet"
         href="css/admin-v2.css"
     >
+
 </head>
 
 <body>
 
     <div class="app">
+
+        <!-- =====================================
+             Sidebar
+        ====================================== -->
 
         <aside class="sidebar">
 
@@ -30,8 +38,15 @@
                 </div>
 
                 <div>
-                    <h2>R-E-D</h2>
-                    <span>Attendance</span>
+
+                    <h2>
+                        R-E-D
+                    </h2>
+
+                    <span>
+                        Attendance
+                    </span>
+
                 </div>
 
             </div>
@@ -48,6 +63,7 @@
                 <a
                     href="employees.html"
                     class="menu-link"
+                    data-permission="employees"
                 >
                     Employees
                 </a>
@@ -55,6 +71,7 @@
                 <a
                     href="attendance-management.html"
                     class="menu-link"
+                    data-permission="attendance"
                 >
                     Attendance Management
                 </a>
@@ -62,6 +79,7 @@
                 <a
                     href="reports.html"
                     class="menu-link"
+                    data-permission="reports"
                 >
                     Reports
                 </a>
@@ -69,17 +87,23 @@
                 <a
                     href="settings.html"
                     class="menu-link active"
+                    data-permission="settings"
                 >
                     Settings
                 </a>
 
-                <a href="administrators.html" class="menu-link">
-    Administrators
-</a>
+                <a
+                    href="administrators.html"
+                    class="menu-link"
+                    data-permission="administrators"
+                >
+                    Administrators
+                </a>
 
                 <a
                     href="audit-log.html"
                     class="menu-link"
+                    data-permission="auditLog"
                 >
                     Audit Log
                 </a>
@@ -87,11 +111,23 @@
             </nav>
 
             <div class="sidebar-footer">
-                <span>R-E-D Attendance</span>
-                <small>Enterprise Edition</small>
+
+                <span>
+                    R-E-D Attendance
+                </span>
+
+                <small>
+                    Enterprise Edition
+                </small>
+
             </div>
 
         </aside>
+
+
+        <!-- =====================================
+             Main Content
+        ====================================== -->
 
         <main class="content">
 
@@ -99,7 +135,9 @@
 
                 <div>
 
-                    <h1>Settings</h1>
+                    <h1>
+                        Settings
+                    </h1>
 
                     <p>
                         Configure company and attendance settings.
@@ -121,11 +159,18 @@
 
             </header>
 
+
+            <!-- =====================================
+                 Page Heading
+            ====================================== -->
+
             <section class="employee-actions">
 
                 <div>
 
-                    <h2>System Settings</h2>
+                    <h2>
+                        System Settings
+                    </h2>
 
                     <p>
                         Manage your organisation and attendance rules.
@@ -135,14 +180,22 @@
 
             </section>
 
+
+            <!-- =====================================
+                 Settings Form
+            ====================================== -->
+
             <section class="employee-table-section">
 
                 <form id="settingsForm">
 
                     <!-- Company Information -->
+
                     <div class="settings-section">
 
-                        <h3>Company Information</h3>
+                        <h3>
+                            Company Information
+                        </h3>
 
                         <div class="form-group">
 
@@ -154,6 +207,7 @@
                                 type="text"
                                 id="companyName"
                                 placeholder="Enter company name"
+                                autocomplete="organization"
                                 required
                             >
 
@@ -183,7 +237,9 @@
                             id="companyLogoPreviewContainer"
                         >
 
-                            <p>Current Logo</p>
+                            <p>
+                                Current Logo
+                            </p>
 
                             <img
                                 id="companyLogoPreview"
@@ -196,21 +252,26 @@
                             </p>
 
                             <button
-    type="button"
-    class="refresh-btn"
-    id="removeCompanyLogoButton"
->
-    Remove Logo
-</button>
-                            
+                                type="button"
+                                class="refresh-btn"
+                                id="removeCompanyLogoButton"
+                                hidden
+                            >
+                                Remove Logo
+                            </button>
+
                         </div>
 
                     </div>
 
+
                     <!-- Attendance Rules -->
+
                     <div class="settings-section">
 
-                        <h3>Attendance Rules</h3>
+                        <h3>
+                            Attendance Rules
+                        </h3>
 
                         <div class="form-group">
 
@@ -244,10 +305,14 @@
 
                     </div>
 
+
                     <!-- Working Week -->
+
                     <div class="settings-section">
 
-                        <h3>Working Week</h3>
+                        <h3>
+                            Working Week
+                        </h3>
 
                         <div class="working-days">
 
@@ -337,15 +402,25 @@
 
                     </div>
 
-                    <button
-                        type="submit"
-                        class="refresh-btn"
-                        id="saveSettingsButton"
-                    >
-                        Save Settings
-                    </button>
 
-                    <p id="settingsMessage"></p>
+                    <!-- Save Settings -->
+
+                    <div class="form-actions">
+
+                        <button
+                            type="submit"
+                            class="refresh-btn"
+                            id="saveSettingsButton"
+                        >
+                            Save Settings
+                        </button>
+
+                    </div>
+
+                    <p
+                        id="settingsMessage"
+                        aria-live="polite"
+                    ></p>
 
                 </form>
 
@@ -354,6 +429,7 @@
         </main>
 
     </div>
+
 
     <script
         type="module"
