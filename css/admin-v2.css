@@ -2424,3 +2424,12 @@ line-height: 1.5;
 .disable-admin-btn {
     color: #dc3545;
 }
+
+.administrator-status-disabled {
+    background: #fdeaea;
+    color: #dc3545;
+}
+
+.toggle-admin-btn {
+    color: #dc3545;
+}
