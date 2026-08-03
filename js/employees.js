@@ -44,7 +44,7 @@ const addEmployeeButton =
 const saveEmployeeButton =
     document.getElementById("saveEmployeeButton");
 
-const closeEmployeeModal =
+const closeEmployeeModalButton =
     document.getElementById("closeEmployeeModal");
 
 const cancelEmployeeButton =
@@ -56,6 +56,22 @@ const employeeForm =
 const employeeTableBody =
     document.getElementById("employeeTableBody");
 
+const employeeSearch =
+    document.getElementById("employeeSearch");
+
+
+const employeeNumberInput =
+    document.getElementById("employeeNumber");
+
+const employeeNameInput =
+    document.getElementById("employeeName");
+
+const employeeDepartmentInput =
+    document.getElementById("employeeDepartment");
+
+const employeePinInput =
+    document.getElementById("employeePin");
+
 
 const deleteModal =
     document.getElementById("deleteModal");
@@ -66,7 +82,7 @@ const deleteMessage =
 const cancelDeleteButton =
     document.getElementById("cancelDeleteButton");
 
-const closeDeleteModal =
+const closeDeleteModalButton =
     document.getElementById("closeDeleteModal");
 
 const confirmDeleteButton =
@@ -85,7 +101,7 @@ const newEmployeePin =
 const confirmEmployeePin =
     document.getElementById("confirmEmployeePin");
 
-const closeResetPinModal =
+const closeResetPinModalButton =
     document.getElementById("closeResetPinModal");
 
 const cancelResetPinButton =
@@ -104,7 +120,7 @@ const statusModalTitle =
 const statusModalMessage =
     document.getElementById("statusModalMessage");
 
-const closeStatusModal =
+const closeStatusModalButton =
     document.getElementById("closeStatusModal");
 
 const cancelStatusButton =
@@ -114,13 +130,22 @@ const confirmStatusButton =
     document.getElementById("confirmStatusButton");
 
 
+const notification =
+    document.getElementById("notification");
+
+const notificationMessage =
+    document.getElementById("notificationMessage");
+
+
 const logoutButton =
     document.getElementById("logoutButton");
 
 
 // =====================================
-// State
+// Page State
 // =====================================
+
+let employees = [];
 
 let editingEmployeeId = null;
 
@@ -134,40 +159,204 @@ let newEmployeeStatus = null;
 
 
 // =====================================
+// Initialize Page
+// =====================================
+
+initializeEmployeePage();
+
+function initializeEmployeePage() {
+
+    if (addEmployeeButton) {
+
+        addEmployeeButton.addEventListener(
+            "click",
+            openAddEmployeeModal
+        );
+
+    }
+
+    if (closeEmployeeModalButton) {
+
+        closeEmployeeModalButton.addEventListener(
+            "click",
+            closeEmployeeModal
+        );
+
+    }
+
+    if (cancelEmployeeButton) {
+
+        cancelEmployeeButton.addEventListener(
+            "click",
+            closeEmployeeModal
+        );
+
+    }
+
+    if (modal) {
+
+        modal.addEventListener(
+            "click",
+            function (event) {
+
+                if (event.target === modal) {
+                    closeEmployeeModal();
+                }
+
+            }
+        );
+
+    }
+
+    if (employeeForm) {
+
+        employeeForm.addEventListener(
+            "submit",
+            saveEmployee
+        );
+
+    }
+
+    if (employeeTableBody) {
+
+        employeeTableBody.addEventListener(
+            "click",
+            handleEmployeeAction
+        );
+
+    }
+
+    if (employeeSearch) {
+
+        employeeSearch.addEventListener(
+            "input",
+            displayFilteredEmployees
+        );
+
+    }
+
+    if (cancelDeleteButton) {
+
+        cancelDeleteButton.addEventListener(
+            "click",
+            closeDeleteConfirmation
+        );
+
+    }
+
+    if (closeDeleteModalButton) {
+
+        closeDeleteModalButton.addEventListener(
+            "click",
+            closeDeleteConfirmation
+        );
+
+    }
+
+    if (confirmDeleteButton) {
+
+        confirmDeleteButton.addEventListener(
+            "click",
+            deleteSelectedEmployee
+        );
+
+    }
+
+    if (cancelResetPinButton) {
+
+        cancelResetPinButton.addEventListener(
+            "click",
+            closeResetPinConfirmation
+        );
+
+    }
+
+    if (closeResetPinModalButton) {
+
+        closeResetPinModalButton.addEventListener(
+            "click",
+            closeResetPinConfirmation
+        );
+
+    }
+
+    if (saveResetPinButton) {
+
+        saveResetPinButton.addEventListener(
+            "click",
+            saveEmployeePin
+        );
+
+    }
+
+    if (cancelStatusButton) {
+
+        cancelStatusButton.addEventListener(
+            "click",
+            closeStatusConfirmation
+        );
+
+    }
+
+    if (closeStatusModalButton) {
+
+        closeStatusModalButton.addEventListener(
+            "click",
+            closeStatusConfirmation
+        );
+
+    }
+
+    if (confirmStatusButton) {
+
+        confirmStatusButton.addEventListener(
+            "click",
+            saveEmployeeStatus
+        );
+
+    }
+
+    if (logoutButton) {
+
+        logoutButton.addEventListener(
+            "click",
+            logoutAdministrator
+        );
+
+    } else {
+
+        console.error(
+            'Logout button not found. Check that employees.html contains id="logoutButton".'
+        );
+
+    }
+
+    loadEmployees();
+
+}
+
+
+// =====================================
 // Notification
 // =====================================
 
 function showNotification(
-    messageText,
+    message,
     type = "success"
 ) {
-
-    const notification =
-        document.getElementById(
-            "notification"
-        );
-
-    const notificationMessage =
-        document.getElementById(
-            "notificationMessage"
-        );
 
     if (
         !notification ||
         !notificationMessage
     ) {
 
-        console.log(
-            "Notification:",
-            messageText
-        );
-
+        console.log(message);
         return;
 
     }
 
     notificationMessage.textContent =
-        messageText;
+        message;
 
     notification.classList.remove(
         "error",
@@ -195,7 +384,7 @@ function showNotification(
     );
 
     setTimeout(
-        () => {
+        function () {
 
             notification.classList.remove(
                 "show"
@@ -220,11 +409,12 @@ async function writeAuditLog(
 
     try {
 
-        let administratorName =
-            "Unknown Administrator";
-
         const currentUser =
             auth.currentUser;
+
+        let administratorName =
+            currentUser?.email ??
+            "Unknown Administrator";
 
         if (currentUser) {
 
@@ -252,12 +442,6 @@ async function writeAuditLog(
                     currentUser.email ||
                     "Unknown Administrator";
 
-            } else {
-
-                administratorName =
-                    currentUser.email ||
-                    "Unknown Administrator";
-
             }
 
         }
@@ -271,6 +455,7 @@ async function writeAuditLog(
                 action,
                 employee,
                 details,
+
                 administrator:
                     administratorName,
 
@@ -282,14 +467,10 @@ async function writeAuditLog(
             }
         );
 
-        console.log(
-            "Audit log written successfully."
-        );
-
     } catch (error) {
 
         console.error(
-            "Audit log failed:",
+            "Audit log error:",
             error
         );
 
@@ -299,55 +480,31 @@ async function writeAuditLog(
 
 
 // =====================================
-// Employee Modal Controls
+// Open Add Employee Modal
 // =====================================
 
-addEmployeeButton.addEventListener(
-    "click",
-    () => {
+function openAddEmployeeModal() {
 
-        editingEmployeeId = null;
+    editingEmployeeId =
+        null;
 
-        employeeForm.reset();
+    employeeForm.reset();
 
-        saveEmployeeButton.textContent =
-            "Save Employee";
+    saveEmployeeButton.textContent =
+        "Save Employee";
 
-        modal.classList.add(
-            "active"
-        );
+    modal.classList.add(
+        "active"
+    );
 
-    }
-);
+}
 
 
-closeEmployeeModal.addEventListener(
-    "click",
-    closeEmployeeForm
-);
+// =====================================
+// Close Employee Modal
+// =====================================
 
-
-cancelEmployeeButton.addEventListener(
-    "click",
-    closeEmployeeForm
-);
-
-
-modal.addEventListener(
-    "click",
-    (event) => {
-
-        if (event.target === modal) {
-
-            closeEmployeeForm();
-
-        }
-
-    }
-);
-
-
-function closeEmployeeForm() {
+function closeEmployeeModal() {
 
     modal.classList.remove(
         "active"
@@ -355,7 +512,8 @@ function closeEmployeeForm() {
 
     employeeForm.reset();
 
-    editingEmployeeId = null;
+    editingEmployeeId =
+        null;
 
     saveEmployeeButton.textContent =
         "Save Employee";
@@ -367,50 +525,67 @@ function closeEmployeeForm() {
 // Save Employee
 // =====================================
 
-employeeForm.addEventListener(
-    "submit",
-    async (event) => {
+async function saveEmployee(event) {
 
-        event.preventDefault();
+    event.preventDefault();
 
-        const employeeNumber =
-            document
-                .getElementById(
-                    "employeeNumber"
-                )
-                .value
-                .trim();
+    const employeeNumber =
+        employeeNumberInput.value.trim();
 
-        const employeeName =
-            document
-                .getElementById(
-                    "employeeName"
-                )
-                .value
-                .trim();
+    const employeeName =
+        employeeNameInput.value.trim();
 
-        const employeeDepartment =
-            document
-                .getElementById(
-                    "employeeDepartment"
-                )
-                .value
-                .trim();
+    const employeeDepartment =
+        employeeDepartmentInput.value.trim();
 
-        const employeePin =
-            document
-                .getElementById(
-                    "employeePin"
-                )
-                .value
-                .trim();
+    const employeePin =
+        employeePinInput.value.trim();
 
 
-        // =====================================
-        // Duplicate Employee Number Check
-        // =====================================
+    if (
+        employeeNumber === "" ||
+        employeeName === "" ||
+        employeeDepartment === "" ||
+        employeePin === ""
+    ) {
 
-        const employeeQuery =
+        showNotification(
+            "⚠️ Please complete all employee fields.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+    if (
+        !/^\d{4,6}$/.test(
+            employeePin
+        )
+    ) {
+
+        showNotification(
+            "⚠️ PIN must contain 4 to 6 numbers.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+
+    try {
+
+        saveEmployeeButton.disabled =
+            true;
+
+        saveEmployeeButton.textContent =
+            editingEmployeeId
+                ? "Updating..."
+                : "Saving...";
+
+
+        const duplicateQuery =
             query(
                 collection(
                     db,
@@ -423,16 +598,21 @@ employeeForm.addEventListener(
                 )
             );
 
-        const existingEmployees =
+        const duplicateSnapshot =
             await getDocs(
-                employeeQuery
+                duplicateQuery
             );
 
         const duplicateEmployee =
-            existingEmployees.docs.find(
-                (employeeDocument) =>
-                    employeeDocument.id !==
-                    editingEmployeeId
+            duplicateSnapshot.docs.find(
+                function (employeeDocument) {
+
+                    return (
+                        employeeDocument.id !==
+                        editingEmployeeId
+                    );
+
+                }
             );
 
         if (duplicateEmployee) {
@@ -447,145 +627,169 @@ employeeForm.addEventListener(
         }
 
 
-        try {
+        if (editingEmployeeId) {
 
-            const wasEditing =
-                editingEmployeeId !== null;
-
-
-            // =====================================
-            // Update Existing Employee
-            // =====================================
-
-            if (editingEmployeeId) {
-
-                const employeeReference =
-                    doc(
-                        db,
-                        "employees",
-                        editingEmployeeId
-                    );
-
-                const previousEmployeeSnapshot =
-                    await getDoc(
-                        employeeReference
-                    );
-
-                if (
-                    !previousEmployeeSnapshot.exists()
-                ) {
-
-                    showNotification(
-                        "❌ Employee could not be found.",
-                        "error"
-                    );
-
-                    return;
-
-                }
-
-                const previousEmployee =
-                    previousEmployeeSnapshot.data();
-
-                await updateDoc(
-                    employeeReference,
-                    {
-                        employeeNumber,
-                        name:
-                            employeeName,
-
-                        department:
-                            employeeDepartment,
-
-                        pin:
-                            employeePin
-                    }
-                );
-
-                await writeAuditLog(
-                    "Updated Employee",
-                    employeeName,
-                    `Previous: Employee Number: ${previousEmployee.employeeNumber}, Name: ${previousEmployee.name}, Department: ${previousEmployee.department} | Updated: Employee Number: ${employeeNumber}, Name: ${employeeName}, Department: ${employeeDepartment}`
-                );
-
-            }
-
-
-            // =====================================
-            // Add New Employee
-            // =====================================
-
-            else {
-
-                await addDoc(
-                    collection(
-                        db,
-                        "employees"
-                    ),
-                    {
-                        employeeNumber,
-                        name:
-                            employeeName,
-
-                        department:
-                            employeeDepartment,
-
-                        pin:
-                            employeePin,
-
-                        active:
-                            true,
-
-                        createdAt:
-                            serverTimestamp()
-                    }
-                );
-
-                await writeAuditLog(
-                    "Added Employee",
-                    employeeName,
-                    `Employee Number: ${employeeNumber}`
-                );
-
-            }
-
-
-            closeEmployeeForm();
-
-            await loadEmployees();
-
-
-            if (wasEditing) {
-
-                showNotification(
-                    "✅ Employee updated successfully."
-                );
-
-            } else {
-
-                showNotification(
-                    "✅ Employee added successfully."
-                );
-
-            }
-
-
-        } catch (error) {
-
-            console.error(
-                "Error saving employee:",
-                error
+            await updateExistingEmployee(
+                employeeNumber,
+                employeeName,
+                employeeDepartment,
+                employeePin
             );
 
-            showNotification(
-                "❌ Employee could not be saved.",
-                "error"
+        } else {
+
+            await createNewEmployee(
+                employeeNumber,
+                employeeName,
+                employeeDepartment,
+                employeePin
             );
 
         }
 
+        closeEmployeeModal();
+
+        await loadEmployees();
+
+    } catch (error) {
+
+        console.error(
+            "Save employee error:",
+            error
+        );
+
+        showNotification(
+            "❌ Employee could not be saved.",
+            "error"
+        );
+
+    } finally {
+
+        saveEmployeeButton.disabled =
+            false;
+
+        saveEmployeeButton.textContent =
+            editingEmployeeId
+                ? "Update Employee"
+                : "Save Employee";
+
     }
-);
+
+}
+
+
+// =====================================
+// Create Employee
+// =====================================
+
+async function createNewEmployee(
+    employeeNumber,
+    employeeName,
+    employeeDepartment,
+    employeePin
+) {
+
+    await addDoc(
+        collection(
+            db,
+            "employees"
+        ),
+        {
+            employeeNumber,
+
+            name:
+                employeeName,
+
+            department:
+                employeeDepartment,
+
+            pin:
+                employeePin,
+
+            active:
+                true,
+
+            createdAt:
+                serverTimestamp()
+        }
+    );
+
+    await writeAuditLog(
+        "Added Employee",
+        employeeName,
+        `Employee Number: ${employeeNumber}`
+    );
+
+    showNotification(
+        "✅ Employee added successfully."
+    );
+
+}
+
+
+// =====================================
+// Update Employee
+// =====================================
+
+async function updateExistingEmployee(
+    employeeNumber,
+    employeeName,
+    employeeDepartment,
+    employeePin
+) {
+
+    const employeeReference =
+        doc(
+            db,
+            "employees",
+            editingEmployeeId
+        );
+
+    const previousEmployeeSnapshot =
+        await getDoc(
+            employeeReference
+        );
+
+    if (
+        !previousEmployeeSnapshot.exists()
+    ) {
+
+        throw new Error(
+            "Employee could not be found."
+        );
+
+    }
+
+    const previousEmployee =
+        previousEmployeeSnapshot.data();
+
+    await updateDoc(
+        employeeReference,
+        {
+            employeeNumber,
+
+            name:
+                employeeName,
+
+            department:
+                employeeDepartment,
+
+            pin:
+                employeePin
+        }
+    );
+
+    await writeAuditLog(
+        "Updated Employee",
+        employeeName,
+        `Previous: Employee Number: ${previousEmployee.employeeNumber}, Name: ${previousEmployee.name}, Department: ${previousEmployee.department} | Updated: Employee Number: ${employeeNumber}, Name: ${employeeName}, Department: ${employeeDepartment}`
+    );
+
+    showNotification(
+        "✅ Employee updated successfully."
+    );
+
+}
 
 
 // =====================================
@@ -593,6 +797,21 @@ employeeForm.addEventListener(
 // =====================================
 
 async function loadEmployees() {
+
+    if (!employeeTableBody) {
+        return;
+    }
+
+    employeeTableBody.innerHTML = `
+        <tr>
+            <td
+                colspan="5"
+                class="empty-row"
+            >
+                Loading employees...
+            </td>
+        </tr>
+    `;
 
     try {
 
@@ -604,109 +823,35 @@ async function loadEmployees() {
                 )
             );
 
-        employeeTableBody.innerHTML =
-            "";
+        employees =
+            snapshot.docs.map(
+                function (employeeDocument) {
 
-        if (snapshot.empty) {
+                    return {
+                        id:
+                            employeeDocument.id,
 
-            employeeTableBody.innerHTML = `
-                <tr>
+                        ...employeeDocument.data()
+                    };
 
-                    <td
-                        colspan="5"
-                        class="empty-row"
-                    >
-                        No employees have been added yet.
-                    </td>
+                }
+            );
 
-                </tr>
-            `;
+        employees.sort(
+            function (a, b) {
 
-            return;
-
-        }
-
-
-        snapshot.forEach(
-            (employeeDocument) => {
-
-                const employee =
-                    employeeDocument.data();
-
-                const isActive =
-                    employee.active !== false;
-
-                employeeTableBody.innerHTML += `
-                    <tr>
-
-                        <td>
-                            ${employee.employeeNumber ?? "-"}
-                        </td>
-
-                        <td>
-                            ${employee.name ?? "-"}
-                        </td>
-
-                        <td>
-                            ${employee.department ?? "-"}
-                        </td>
-
-                        <td>
-                            ${isActive ? "Active" : "Inactive"}
-                        </td>
-
-                        <td>
-
-                            <button
-                                type="button"
-                                class="employee-action-btn edit-btn"
-                                data-id="${employeeDocument.id}"
-                            >
-                                Edit
-                            </button>
-
-                            <button
-                                type="button"
-                                class="employee-action-btn reset-pin-btn"
-                                data-id="${employeeDocument.id}"
-                            >
-                                Reset PIN
-                            </button>
-
-                            <button
-                                type="button"
-                                class="employee-action-btn ${
-                                    isActive
-                                        ? "disable-btn"
-                                        : "enable-btn"
-                                }"
-                                data-id="${employeeDocument.id}"
-                            >
-                                ${
-                                    isActive
-                                        ? "Disable"
-                                        : "Enable"
-                                }
-                            </button>
-
-                            <button
-                                type="button"
-                                class="employee-action-btn delete-btn"
-                                data-id="${employeeDocument.id}"
-                            >
-                                Delete
-                            </button>
-
-                        </td>
-
-                    </tr>
-                `;
+                return String(
+                    a.name ?? ""
+                ).localeCompare(
+                    String(
+                        b.name ?? ""
+                    )
+                );
 
             }
         );
 
-
-        attachEmployeeActionEvents();
+        displayFilteredEmployees();
 
     } catch (error) {
 
@@ -717,14 +862,12 @@ async function loadEmployees() {
 
         employeeTableBody.innerHTML = `
             <tr>
-
                 <td
                     colspan="5"
                     class="empty-row"
                 >
                     Employees could not be loaded.
                 </td>
-
             </tr>
         `;
 
@@ -734,110 +877,177 @@ async function loadEmployees() {
 
 
 // =====================================
-// Attach Employee Action Events
+// Search Employees
 // =====================================
 
-function attachEmployeeActionEvents() {
+function displayFilteredEmployees() {
 
-    attachEditEvents();
+    const searchText =
+        employeeSearch
+            ? employeeSearch.value
+                .trim()
+                .toLowerCase()
+            : "";
 
-    attachResetPinEvents();
+    const filteredEmployees =
+        employees.filter(
+            function (employee) {
 
-    attachDeleteEvents();
+                const employeeNumber =
+                    String(
+                        employee.employeeNumber ?? ""
+                    ).toLowerCase();
 
-    attachStatusEvents();
+                const employeeName =
+                    String(
+                        employee.name ?? ""
+                    ).toLowerCase();
+
+                const department =
+                    String(
+                        employee.department ?? ""
+                    ).toLowerCase();
+
+                return (
+                    employeeNumber.includes(
+                        searchText
+                    ) ||
+                    employeeName.includes(
+                        searchText
+                    ) ||
+                    department.includes(
+                        searchText
+                    )
+                );
+
+            }
+        );
+
+    displayEmployees(
+        filteredEmployees
+    );
 
 }
 
 
 // =====================================
-// Edit Employee
+// Display Employees
 // =====================================
 
-function attachEditEvents() {
+function displayEmployees(employeeList) {
 
-    const editButtons =
-        document.querySelectorAll(
-            ".edit-btn"
-        );
+    employeeTableBody.innerHTML =
+        "";
 
-    editButtons.forEach(
-        (button) => {
+    if (employeeList.length === 0) {
 
-            button.addEventListener(
-                "click",
-                async () => {
+        employeeTableBody.innerHTML = `
+            <tr>
+                <td
+                    colspan="5"
+                    class="empty-row"
+                >
+                    No employees found.
+                </td>
+            </tr>
+        `;
 
-                    const employeeId =
-                        button.dataset.id;
+        return;
 
-                    editingEmployeeId =
-                        employeeId;
+    }
 
-                    const employeeReference =
-                        doc(
-                            db,
-                            "employees",
-                            employeeId
-                        );
+    employeeList.forEach(
+        function (employee) {
 
-                    const employeeSnapshot =
-                        await getDoc(
-                            employeeReference
-                        );
+            const isActive =
+                employee.active !== false;
 
-                    if (
-                        !employeeSnapshot.exists()
-                    ) {
+            const row =
+                document.createElement(
+                    "tr"
+                );
 
-                        showNotification(
-                            "❌ Employee could not be found.",
-                            "error"
-                        );
+            row.innerHTML = `
+                <td>
+                    ${escapeHtml(
+                        employee.employeeNumber ??
+                        "-"
+                    )}
+                </td>
 
-                        return;
+                <td>
+                    ${escapeHtml(
+                        employee.name ??
+                        "-"
+                    )}
+                </td>
 
-                    }
+                <td>
+                    ${escapeHtml(
+                        employee.department ??
+                        "-"
+                    )}
+                </td>
 
-                    const employee =
-                        employeeSnapshot.data();
+                <td>
+                    <span
+                        class="administrator-status ${
+                            isActive
+                                ? "administrator-status-active"
+                                : "administrator-status-disabled"
+                        }"
+                    >
+                        ${
+                            isActive
+                                ? "Active"
+                                : "Inactive"
+                        }
+                    </span>
+                </td>
 
-                    document
-                        .getElementById(
-                            "employeeNumber"
-                        )
-                        .value =
-                        employee.employeeNumber ?? "";
+                <td>
 
-                    document
-                        .getElementById(
-                            "employeeName"
-                        )
-                        .value =
-                        employee.name ?? "";
+                    <button
+                        type="button"
+                        class="employee-action-btn edit-btn"
+                        data-id="${employee.id}"
+                    >
+                        Edit
+                    </button>
 
-                    document
-                        .getElementById(
-                            "employeeDepartment"
-                        )
-                        .value =
-                        employee.department ?? "";
+                    <button
+                        type="button"
+                        class="employee-action-btn reset-pin-btn"
+                        data-id="${employee.id}"
+                    >
+                        Reset PIN
+                    </button>
 
-                    document
-                        .getElementById(
-                            "employeePin"
-                        )
-                        .value =
-                        employee.pin ?? "";
+                    <button
+                        type="button"
+                        class="employee-action-btn status-btn"
+                        data-id="${employee.id}"
+                    >
+                        ${
+                            isActive
+                                ? "Disable"
+                                : "Enable"
+                        }
+                    </button>
 
-                    saveEmployeeButton.textContent =
-                        "Update Employee";
+                    <button
+                        type="button"
+                        class="employee-action-btn delete-btn"
+                        data-id="${employee.id}"
+                    >
+                        Delete
+                    </button>
 
-                    modal.classList.add(
-                        "active"
-                    );
+                </td>
+            `;
 
-                }
+            employeeTableBody.appendChild(
+                row
             );
 
         }
@@ -847,74 +1057,142 @@ function attachEditEvents() {
 
 
 // =====================================
-// Reset PIN
+// Handle Employee Actions
 // =====================================
 
-function attachResetPinEvents() {
+function handleEmployeeAction(event) {
 
-    const resetPinButtons =
-        document.querySelectorAll(
-            ".reset-pin-btn"
+    const button =
+        event.target.closest(
+            "button[data-id]"
         );
 
-    resetPinButtons.forEach(
-        (button) => {
+    if (!button) {
+        return;
+    }
 
-            button.addEventListener(
-                "click",
-                async () => {
+    const employeeId =
+        button.dataset.id;
 
-                    const employeeId =
-                        button.dataset.id;
+    if (
+        button.classList.contains(
+            "edit-btn"
+        )
+    ) {
 
-                    const employeeReference =
-                        doc(
-                            db,
-                            "employees",
-                            employeeId
-                        );
+        openEditEmployee(
+            employeeId
+        );
 
-                    const employeeSnapshot =
-                        await getDoc(
-                            employeeReference
-                        );
+        return;
 
-                    if (
-                        !employeeSnapshot.exists()
-                    ) {
+    }
 
-                        showNotification(
-                            "❌ Employee could not be found.",
-                            "error"
-                        );
+    if (
+        button.classList.contains(
+            "reset-pin-btn"
+        )
+    ) {
 
-                        return;
+        openResetPinModal(
+            employeeId
+        );
 
-                    }
+        return;
 
-                    const employee =
-                        employeeSnapshot.data();
+    }
 
-                    employeeToResetPin =
-                        employeeId;
+    if (
+        button.classList.contains(
+            "status-btn"
+        )
+    ) {
 
-                    resetPinEmployeeName.textContent =
-                        `Reset PIN for ${employee.name}`;
+        openStatusModal(
+            employeeId
+        );
 
-                    newEmployeePin.value =
-                        "";
+        return;
 
-                    confirmEmployeePin.value =
-                        "";
+    }
 
-                    resetPinModal.classList.add(
-                        "active"
-                    );
+    if (
+        button.classList.contains(
+            "delete-btn"
+        )
+    ) {
 
-                }
+        openDeleteModal(
+            employeeId
+        );
+
+    }
+
+}
+
+
+// =====================================
+// Find Employee
+// =====================================
+
+function findEmployee(employeeId) {
+
+    return employees.find(
+        function (employee) {
+
+            return (
+                employee.id ===
+                employeeId
             );
 
         }
+    );
+
+}
+
+
+// =====================================
+// Edit Employee
+// =====================================
+
+function openEditEmployee(employeeId) {
+
+    const employee =
+        findEmployee(
+            employeeId
+        );
+
+    if (!employee) {
+
+        showNotification(
+            "❌ Employee could not be found.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    editingEmployeeId =
+        employeeId;
+
+    employeeNumberInput.value =
+        employee.employeeNumber ?? "";
+
+    employeeNameInput.value =
+        employee.name ?? "";
+
+    employeeDepartmentInput.value =
+        employee.department ?? "";
+
+    employeePinInput.value =
+        employee.pin ?? "";
+
+    saveEmployeeButton.textContent =
+        "Update Employee";
+
+    modal.classList.add(
+        "active"
     );
 
 }
@@ -924,169 +1202,29 @@ function attachResetPinEvents() {
 // Delete Employee
 // =====================================
 
-function attachDeleteEvents() {
+function openDeleteModal(employeeId) {
 
-    const deleteButtons =
-        document.querySelectorAll(
-            ".delete-btn"
+    const employee =
+        findEmployee(
+            employeeId
         );
 
-    deleteButtons.forEach(
-        (button) => {
+    if (!employee) {
+        return;
+    }
 
-            button.addEventListener(
-                "click",
-                async () => {
+    employeeToDelete =
+        employeeId;
 
-                    const employeeId =
-                        button.dataset.id;
+    deleteMessage.textContent =
+        `Are you sure you want to delete ${employee.name}?`;
 
-                    const employeeReference =
-                        doc(
-                            db,
-                            "employees",
-                            employeeId
-                        );
-
-                    const employeeSnapshot =
-                        await getDoc(
-                            employeeReference
-                        );
-
-                    if (
-                        !employeeSnapshot.exists()
-                    ) {
-
-                        showNotification(
-                            "❌ Employee could not be found.",
-                            "error"
-                        );
-
-                        return;
-
-                    }
-
-                    const employee =
-                        employeeSnapshot.data();
-
-                    employeeToDelete =
-                        employeeId;
-
-                    deleteMessage.textContent =
-                        `Are you sure you want to delete ${employee.name}?`;
-
-                    deleteModal.classList.add(
-                        "active"
-                    );
-
-                }
-            );
-
-        }
+    deleteModal.classList.add(
+        "active"
     );
 
 }
 
-
-// =====================================
-// Disable / Enable Employee
-// =====================================
-
-function attachStatusEvents() {
-
-    const statusButtons =
-        document.querySelectorAll(
-            ".disable-btn, .enable-btn"
-        );
-
-    statusButtons.forEach(
-        (button) => {
-
-            button.addEventListener(
-                "click",
-                async () => {
-
-                    const employeeId =
-                        button.dataset.id;
-
-                    const employeeReference =
-                        doc(
-                            db,
-                            "employees",
-                            employeeId
-                        );
-
-                    const employeeSnapshot =
-                        await getDoc(
-                            employeeReference
-                        );
-
-                    if (
-                        !employeeSnapshot.exists()
-                    ) {
-
-                        showNotification(
-                            "❌ Employee could not be found.",
-                            "error"
-                        );
-
-                        return;
-
-                    }
-
-                    const employee =
-                        employeeSnapshot.data();
-
-                    const isCurrentlyActive =
-                        employee.active !== false;
-
-                    employeeToChangeStatus =
-                        employeeId;
-
-                    newEmployeeStatus =
-                        !isCurrentlyActive;
-
-
-                    if (isCurrentlyActive) {
-
-                        statusModalTitle.textContent =
-                            "Disable Employee";
-
-                        statusModalMessage.textContent =
-                            `Are you sure you want to disable ${employee.name}?`;
-
-                        confirmStatusButton.textContent =
-                            "Disable Employee";
-
-                    } else {
-
-                        statusModalTitle.textContent =
-                            "Enable Employee";
-
-                        statusModalMessage.textContent =
-                            `Are you sure you want to enable ${employee.name}?`;
-
-                        confirmStatusButton.textContent =
-                            "Enable Employee";
-
-                    }
-
-                    statusModal.classList.add(
-                        "active"
-                    );
-
-                }
-            );
-
-        }
-    );
-
-}
-
-
-// =====================================
-// Delete Confirmation
-// =====================================
 
 function closeDeleteConfirmation() {
 
@@ -1094,100 +1232,108 @@ function closeDeleteConfirmation() {
         "active"
     );
 
-    employeeToDelete = null;
+    employeeToDelete =
+        null;
 
 }
 
 
-cancelDeleteButton.addEventListener(
-    "click",
-    closeDeleteConfirmation
-);
+async function deleteSelectedEmployee() {
 
+    if (!employeeToDelete) {
+        return;
+    }
 
-closeDeleteModal.addEventListener(
-    "click",
-    closeDeleteConfirmation
-);
+    try {
 
-
-confirmDeleteButton.addEventListener(
-    "click",
-    async () => {
-
-        if (!employeeToDelete) {
-            return;
-        }
-
-        try {
-
-            const employeeReference =
-                doc(
-                    db,
-                    "employees",
-                    employeeToDelete
-                );
-
-            const employeeSnapshot =
-                await getDoc(
-                    employeeReference
-                );
-
-            if (
-                !employeeSnapshot.exists()
-            ) {
-
-                showNotification(
-                    "❌ Employee could not be found.",
-                    "error"
-                );
-
-                return;
-
-            }
-
-            const employee =
-                employeeSnapshot.data();
-
-            await writeAuditLog(
-                "Deleted Employee",
-                employee.name,
-                `Employee Number: ${employee.employeeNumber}`
+        const employee =
+            findEmployee(
+                employeeToDelete
             );
 
-            await deleteDoc(
-                employeeReference
-            );
+        if (!employee) {
 
-            closeDeleteConfirmation();
-
-            await loadEmployees();
-
-            showNotification(
-                "✅ Employee deleted successfully."
-            );
-
-        } catch (error) {
-
-            console.error(
-                "Error deleting employee:",
-                error
-            );
-
-            showNotification(
-                "❌ Employee could not be deleted.",
-                "error"
+            throw new Error(
+                "Employee could not be found."
             );
 
         }
+
+        const employeeReference =
+            doc(
+                db,
+                "employees",
+                employeeToDelete
+            );
+
+        await writeAuditLog(
+            "Deleted Employee",
+            employee.name,
+            `Employee Number: ${employee.employeeNumber}`
+        );
+
+        await deleteDoc(
+            employeeReference
+        );
+
+        closeDeleteConfirmation();
+
+        await loadEmployees();
+
+        showNotification(
+            "✅ Employee deleted successfully."
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Delete employee error:",
+            error
+        );
+
+        showNotification(
+            "❌ Employee could not be deleted.",
+            "error"
+        );
 
     }
-);
+
+}
 
 
 // =====================================
-// Reset PIN Confirmation
+// Reset Employee PIN
 // =====================================
+
+function openResetPinModal(employeeId) {
+
+    const employee =
+        findEmployee(
+            employeeId
+        );
+
+    if (!employee) {
+        return;
+    }
+
+    employeeToResetPin =
+        employeeId;
+
+    resetPinEmployeeName.textContent =
+        `Reset PIN for ${employee.name}`;
+
+    newEmployeePin.value =
+        "";
+
+    confirmEmployeePin.value =
+        "";
+
+    resetPinModal.classList.add(
+        "active"
+    );
+
+}
+
 
 function closeResetPinConfirmation() {
 
@@ -1195,159 +1341,174 @@ function closeResetPinConfirmation() {
         "active"
     );
 
-    employeeToResetPin = null;
+    employeeToResetPin =
+        null;
 
-    newEmployeePin.value = "";
+    newEmployeePin.value =
+        "";
 
-    confirmEmployeePin.value = "";
+    confirmEmployeePin.value =
+        "";
 
 }
 
 
-cancelResetPinButton.addEventListener(
-    "click",
-    closeResetPinConfirmation
-);
+async function saveEmployeePin() {
 
+    if (!employeeToResetPin) {
+        return;
+    }
 
-closeResetPinModal.addEventListener(
-    "click",
-    closeResetPinConfirmation
-);
+    const pin =
+        newEmployeePin.value.trim();
 
+    const confirmedPin =
+        confirmEmployeePin.value.trim();
 
-saveResetPinButton.addEventListener(
-    "click",
-    async () => {
+    if (
+        !pin ||
+        !confirmedPin
+    ) {
 
-        const newPin =
-            newEmployeePin.value.trim();
+        showNotification(
+            "⚠️ Please enter and confirm the new PIN.",
+            "warning"
+        );
 
-        const confirmPin =
-            confirmEmployeePin.value.trim();
-
-
-        if (!employeeToResetPin) {
-            return;
-        }
-
-
-        if (
-            !newPin ||
-            !confirmPin
-        ) {
-
-            showNotification(
-                "⚠️ Please enter and confirm the new PIN.",
-                "warning"
-            );
-
-            return;
-
-        }
-
-
-        if (
-            !/^\d{4,6}$/.test(
-                newPin
-            )
-        ) {
-
-            showNotification(
-                "⚠️ PIN must contain 4 to 6 numbers.",
-                "warning"
-            );
-
-            return;
-
-        }
-
-
-        if (
-            newPin !== confirmPin
-        ) {
-
-            showNotification(
-                "⚠️ The PINs do not match.",
-                "warning"
-            );
-
-            return;
-
-        }
-
-
-        try {
-
-            const employeeReference =
-                doc(
-                    db,
-                    "employees",
-                    employeeToResetPin
-                );
-
-            const employeeSnapshot =
-                await getDoc(
-                    employeeReference
-                );
-
-            if (
-                !employeeSnapshot.exists()
-            ) {
-
-                showNotification(
-                    "❌ Employee could not be found.",
-                    "error"
-                );
-
-                return;
-
-            }
-
-            const employee =
-                employeeSnapshot.data();
-
-            await updateDoc(
-                employeeReference,
-                {
-                    pin:
-                        newPin
-                }
-            );
-
-            await writeAuditLog(
-                "Reset PIN",
-                employee.name,
-                "Employee PIN was reset."
-            );
-
-            closeResetPinConfirmation();
-
-            showNotification(
-                "✅ Employee PIN reset successfully."
-            );
-
-        } catch (error) {
-
-            console.error(
-                "Error resetting employee PIN:",
-                error
-            );
-
-            showNotification(
-                "❌ Employee PIN could not be reset.",
-                "error"
-            );
-
-        }
+        return;
 
     }
-);
+
+    if (
+        !/^\d{4,6}$/.test(pin)
+    ) {
+
+        showNotification(
+            "⚠️ PIN must contain 4 to 6 numbers.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+    if (pin !== confirmedPin) {
+
+        showNotification(
+            "⚠️ The PINs do not match.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+
+    try {
+
+        const employee =
+            findEmployee(
+                employeeToResetPin
+            );
+
+        if (!employee) {
+
+            throw new Error(
+                "Employee could not be found."
+            );
+
+        }
+
+        const employeeReference =
+            doc(
+                db,
+                "employees",
+                employeeToResetPin
+            );
+
+        await updateDoc(
+            employeeReference,
+            {
+                pin
+            }
+        );
+
+        await writeAuditLog(
+            "Reset PIN",
+            employee.name,
+            "Employee PIN was reset."
+        );
+
+        closeResetPinConfirmation();
+
+        showNotification(
+            "✅ Employee PIN reset successfully."
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Reset PIN error:",
+            error
+        );
+
+        showNotification(
+            "❌ Employee PIN could not be reset.",
+            "error"
+        );
+
+    }
+
+}
 
 
 // =====================================
-// Status Confirmation
+// Employee Status
 // =====================================
+
+function openStatusModal(employeeId) {
+
+    const employee =
+        findEmployee(
+            employeeId
+        );
+
+    if (!employee) {
+        return;
+    }
+
+    const isActive =
+        employee.active !== false;
+
+    employeeToChangeStatus =
+        employeeId;
+
+    newEmployeeStatus =
+        !isActive;
+
+    statusModalTitle.textContent =
+        isActive
+            ? "Disable Employee"
+            : "Enable Employee";
+
+    statusModalMessage.textContent =
+        `Are you sure you want to ${
+            isActive
+                ? "disable"
+                : "enable"
+        } ${employee.name}?`;
+
+    confirmStatusButton.textContent =
+        isActive
+            ? "Disable Employee"
+            : "Enable Employee";
+
+    statusModal.classList.add(
+        "active"
+    );
+
+}
+
 
 function closeStatusConfirmation() {
 
@@ -1364,102 +1525,113 @@ function closeStatusConfirmation() {
 }
 
 
-cancelStatusButton.addEventListener(
-    "click",
-    closeStatusConfirmation
-);
+async function saveEmployeeStatus() {
 
+    if (!employeeToChangeStatus) {
+        return;
+    }
 
-closeStatusModal.addEventListener(
-    "click",
-    closeStatusConfirmation
-);
+    try {
 
+        const employee =
+            findEmployee(
+                employeeToChangeStatus
+            );
 
-confirmStatusButton.addEventListener(
-    "click",
-    async () => {
+        if (!employee) {
 
-        if (!employeeToChangeStatus) {
-            return;
+            throw new Error(
+                "Employee could not be found."
+            );
+
         }
 
-        try {
-
-            const employeeReference =
-                doc(
-                    db,
-                    "employees",
-                    employeeToChangeStatus
-                );
-
-            const employeeSnapshot =
-                await getDoc(
-                    employeeReference
-                );
-
-            if (
-                !employeeSnapshot.exists()
-            ) {
-
-                showNotification(
-                    "❌ Employee could not be found.",
-                    "error"
-                );
-
-                return;
-
-            }
-
-            const employee =
-                employeeSnapshot.data();
-
-            await updateDoc(
-                employeeReference,
-                {
-                    active:
-                        newEmployeeStatus
-                }
+        const employeeReference =
+            doc(
+                db,
+                "employees",
+                employeeToChangeStatus
             );
 
-            await writeAuditLog(
-                newEmployeeStatus
-                    ? "Enabled Employee"
-                    : "Disabled Employee",
-
-                employee.name,
-
-                `Employee Number: ${employee.employeeNumber}`
-            );
-
-            closeStatusConfirmation();
-
-            await loadEmployees();
-
-            showNotification(
-                `✅ Employee ${
+        await updateDoc(
+            employeeReference,
+            {
+                active:
                     newEmployeeStatus
-                        ? "enabled"
-                        : "disabled"
-                } successfully.`
-            );
+            }
+        );
 
-        } catch (error) {
+        await writeAuditLog(
+            newEmployeeStatus
+                ? "Enabled Employee"
+                : "Disabled Employee",
 
-            console.error(
-                "Error updating employee status:",
-                error
-            );
+            employee.name,
 
-            showNotification(
-                "❌ Unable to update employee status.",
-                "error"
-            );
+            `Employee Number: ${employee.employeeNumber}`
+        );
 
-        }
+        const resultText =
+            newEmployeeStatus
+                ? "enabled"
+                : "disabled";
+
+        closeStatusConfirmation();
+
+        await loadEmployees();
+
+        showNotification(
+            `✅ Employee ${resultText} successfully.`
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Employee status error:",
+            error
+        );
+
+        showNotification(
+            "❌ Unable to update employee status.",
+            "error"
+        );
 
     }
-);
+
+}
+
+
+// =====================================
+// Escape HTML
+// =====================================
+
+function escapeHtml(value) {
+
+    return String(
+        value ?? ""
+    )
+        .replaceAll(
+            "&",
+            "&amp;"
+        )
+        .replaceAll(
+            "<",
+            "&lt;"
+        )
+        .replaceAll(
+            ">",
+            "&gt;"
+        )
+        .replaceAll(
+            '"',
+            "&quot;"
+        )
+        .replaceAll(
+            "'",
+            "&#039;"
+        );
+
+}
 
 
 // =====================================
@@ -1470,12 +1642,19 @@ async function logoutAdministrator() {
 
     try {
 
+        logoutButton.disabled =
+            true;
+
+        logoutButton.textContent =
+            "Logging out...";
+
         await signOut(auth);
 
         sessionStorage.clear();
 
-        window.location.href =
-            "admin-login.html";
+        window.location.replace(
+            "admin-login.html"
+        );
 
     } catch (error) {
 
@@ -1484,27 +1663,16 @@ async function logoutAdministrator() {
             error
         );
 
+        logoutButton.disabled =
+            false;
+
+        logoutButton.textContent =
+            "Logout";
+
+        alert(
+            "Unable to log out. Please try again."
+        );
+
     }
 
 }
-
-
-// =====================================
-// Logout Event
-// =====================================
-
-if (logoutButton) {
-
-    logoutButton.addEventListener(
-        "click",
-        logoutAdministrator
-    );
-
-}
-
-
-// =====================================
-// Start Employee Management
-// =====================================
-
-loadEmployees();
