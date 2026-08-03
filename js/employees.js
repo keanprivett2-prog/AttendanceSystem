@@ -18,6 +18,12 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 import {
+    applySidebarPermissions,
+    protectPage,
+    hasPermission
+} from "./role-permissions.js";
+
+import {
     collection,
     addDoc,
     getDocs,
@@ -165,6 +171,12 @@ let newEmployeeStatus = null;
 initializeEmployeePage();
 
 function initializeEmployeePage() {
+
+    if (!protectPage("employees")) {
+    return;
+}
+
+applySidebarPermissions();
 
     if (addEmployeeButton) {
 
