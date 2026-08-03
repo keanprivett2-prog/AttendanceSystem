@@ -36,14 +36,19 @@ import {
     orderBy
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
+import {
+    applySidebarPermissions,
+    protectPage
+} from "./role-permissions.js";
+
 
 // =====================================
 // Secondary Firebase Application
 // =====================================
 
-// This secondary Firebase application creates a new
-// administrator without replacing the administrator
-// currently signed into the main application.
+// This secondary Firebase application creates
+// a new administrator without replacing the
+// administrator currently signed into the system.
 
 const administratorCreatorApp =
     initializeApp(
@@ -141,39 +146,67 @@ let editingAdministratorId =
 
 
 // =====================================
-// Start Administrators Page
+// Initialize Administrators Page
 // =====================================
 
 initializeAdministratorsPage();
 
 function initializeAdministratorsPage() {
 
-    loadAdministrators();
+    if (
+        !protectPage(
+            "administrators"
+        )
+    ) {
+        return;
+    }
 
-    addAdministratorButton.addEventListener(
-        "click",
-        openAdministratorModal
-    );
+    applySidebarPermissions();
 
-    closeAdministratorModalButton.addEventListener(
-        "click",
-        closeAdministratorModal
-    );
+    if (addAdministratorButton) {
 
-    cancelAdministratorButton.addEventListener(
-        "click",
-        closeAdministratorModal
-    );
+        addAdministratorButton.addEventListener(
+            "click",
+            openAdministratorModal
+        );
 
-    administratorForm.addEventListener(
-        "submit",
-        handleAdministratorSubmit
-    );
+    }
 
-    administratorTableBody.addEventListener(
-        "click",
-        handleAdministratorActions
-    );
+    if (closeAdministratorModalButton) {
+
+        closeAdministratorModalButton.addEventListener(
+            "click",
+            closeAdministratorModal
+        );
+
+    }
+
+    if (cancelAdministratorButton) {
+
+        cancelAdministratorButton.addEventListener(
+            "click",
+            closeAdministratorModal
+        );
+
+    }
+
+    if (administratorForm) {
+
+        administratorForm.addEventListener(
+            "submit",
+            handleAdministratorSubmit
+        );
+
+    }
+
+    if (administratorTableBody) {
+
+        administratorTableBody.addEventListener(
+            "click",
+            handleAdministratorActions
+        );
+
+    }
 
     if (logoutButton) {
 
@@ -183,6 +216,8 @@ function initializeAdministratorsPage() {
         );
 
     }
+
+    loadAdministrators();
 
 }
 
@@ -256,6 +291,12 @@ function closeAdministratorModal() {
     administratorPasswordInput.placeholder =
         "";
 
+    saveAdministratorButton.disabled =
+        false;
+
+    saveAdministratorButton.textContent =
+        "Create Administrator";
+
 }
 
 
@@ -290,12 +331,14 @@ async function loadAdministrators() {
                 )
             );
 
-        const snapshot =
+        const administratorSnapshot =
             await getDocs(
                 administratorsQuery
             );
 
-        if (snapshot.empty) {
+        if (
+            administratorSnapshot.empty
+        ) {
 
             administratorTableBody.innerHTML = `
                 <tr>
@@ -315,7 +358,7 @@ async function loadAdministrators() {
         administratorTableBody.innerHTML =
             "";
 
-        snapshot.forEach(
+        administratorSnapshot.forEach(
             (administratorDocument) => {
 
                 const administrator =
@@ -436,7 +479,7 @@ async function loadAdministrators() {
 
 
 // =====================================
-// Handle Administrator Table Actions
+// Handle Administrator Actions
 // =====================================
 
 function handleAdministratorActions(event) {
@@ -448,11 +491,8 @@ function handleAdministratorActions(event) {
 
     if (editButton) {
 
-        const administratorId =
-            editButton.dataset.id;
-
         openEditAdministrator(
-            administratorId
+            editButton.dataset.id
         );
 
         return;
@@ -466,15 +506,9 @@ function handleAdministratorActions(event) {
 
     if (toggleButton) {
 
-        const administratorId =
-            toggleButton.dataset.id;
-
-        const currentStatus =
-            toggleButton.dataset.status;
-
         toggleAdministratorStatus(
-            administratorId,
-            currentStatus
+            toggleButton.dataset.id,
+            toggleButton.dataset.status
         );
 
     }
@@ -579,7 +613,7 @@ async function openEditAdministrator(
 
 
 // =====================================
-// Handle Form Submission
+// Handle Administrator Form
 // =====================================
 
 async function handleAdministratorSubmit(
@@ -754,11 +788,11 @@ async function createAdministrator() {
 
             }
 
-        } catch (signOutError) {
+        } catch (secondarySignOutError) {
 
             console.error(
                 "Secondary sign-out error:",
-                signOutError
+                secondarySignOutError
             );
 
         }
@@ -902,13 +936,26 @@ async function updateAdministrator() {
 
 
 // =====================================
-// Toggle Administrator Status
+// Enable / Disable Administrator
 // =====================================
 
 async function toggleAdministratorStatus(
     administratorId,
     currentStatus
 ) {
+
+    if (
+        administratorId ===
+        auth.currentUser?.uid
+    ) {
+
+        alert(
+            "You cannot disable your own administrator account."
+        );
+
+        return;
+
+    }
 
     const newStatus =
         currentStatus === "Active"
@@ -966,7 +1013,7 @@ async function toggleAdministratorStatus(
 
 
 // =====================================
-// Friendly Account-Creation Errors
+// Account Creation Errors
 // =====================================
 
 function showCreateAdministratorError(
@@ -1033,36 +1080,28 @@ function formatAdministratorRole(role) {
         role ===
         "superAdministrator"
     ) {
-
         return "Super Administrator";
-
     }
 
     if (
         role ===
         "administrator"
     ) {
-
         return "Administrator";
-
     }
 
     if (
         role ===
         "manager"
     ) {
-
         return "Manager";
-
     }
 
     if (
         role ===
         "readOnly"
     ) {
-
         return "Read Only";
-
     }
 
     return role ??
@@ -1172,8 +1211,7 @@ function setSaveButtonState(
 function escapeHtml(value) {
 
     return String(
-        value ??
-        ""
+        value ?? ""
     )
         .replaceAll(
             "&",
@@ -1207,12 +1245,23 @@ async function logoutAdministrator() {
 
     try {
 
+        if (logoutButton) {
+
+            logoutButton.disabled =
+                true;
+
+            logoutButton.textContent =
+                "Logging out...";
+
+        }
+
         await signOut(auth);
 
         sessionStorage.clear();
 
-        window.location.href =
-            "admin-login.html";
+        window.location.replace(
+            "admin-login.html"
+        );
 
     } catch (error) {
 
@@ -1220,6 +1269,16 @@ async function logoutAdministrator() {
             "Logout error:",
             error
         );
+
+        if (logoutButton) {
+
+            logoutButton.disabled =
+                false;
+
+            logoutButton.textContent =
+                "Logout";
+
+        }
 
         alert(
             "Unable to log out. Please try again."
