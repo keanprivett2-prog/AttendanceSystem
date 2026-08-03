@@ -24,6 +24,11 @@ import {
     signOut
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
+import {
+    applySidebarPermissions,
+    protectPage
+} from "./role-permissions.js";
+
 
 // =====================================
 // Page Elements
@@ -41,14 +46,22 @@ const logoutButton =
 
 
 // =====================================
-// Start Audit Log Page
+// Initialize Audit Log Page
 // =====================================
 
 initializeAuditLogPage();
 
 function initializeAuditLogPage() {
 
-    loadAuditLog();
+    if (
+        !protectPage(
+            "auditLog"
+        )
+    ) {
+        return;
+    }
+
+    applySidebarPermissions();
 
     if (logoutButton) {
 
@@ -59,6 +72,8 @@ function initializeAuditLogPage() {
 
     }
 
+    loadAuditLog();
+
 }
 
 
@@ -68,16 +83,22 @@ function initializeAuditLogPage() {
 
 async function loadAuditLog() {
 
+    if (!auditTableBody) {
+        return;
+    }
+
     try {
 
         auditTableBody.innerHTML = `
             <tr>
+
                 <td
                     colspan="5"
                     class="empty-row"
                 >
                     Loading audit records...
                 </td>
+
             </tr>
         `;
 
@@ -105,12 +126,14 @@ async function loadAuditLog() {
 
             auditTableBody.innerHTML = `
                 <tr>
+
                     <td
                         colspan="5"
                         class="empty-row"
                     >
                         No audit records have been created yet.
                     </td>
+
                 </tr>
             `;
 
@@ -136,24 +159,29 @@ async function loadAuditLog() {
 
                 row.innerHTML = `
                     <td>
-                        ${escapeHtml(formattedDate)}
-                    </td>
-
-                    <td>
                         ${escapeHtml(
-                            record.administrator ?? "-"
+                            formattedDate
                         )}
                     </td>
 
                     <td>
                         ${escapeHtml(
-                            record.action ?? "-"
+                            record.administrator ??
+                            "-"
                         )}
                     </td>
 
                     <td>
                         ${escapeHtml(
-                            record.employee ?? "-"
+                            record.action ??
+                            "-"
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(
+                            record.employee ??
+                            "-"
                         )}
                     </td>
 
@@ -180,12 +208,14 @@ async function loadAuditLog() {
 
         auditTableBody.innerHTML = `
             <tr>
+
                 <td
                     colspan="5"
                     class="empty-row"
                 >
                     Unable to load audit records.
                 </td>
+
             </tr>
         `;
 
@@ -323,7 +353,9 @@ function formatAuditDetails(details) {
 
     return `
         <div class="audit-single-detail">
-            ${escapeHtml(safeDetails)}
+            ${escapeHtml(
+                safeDetails
+            )}
         </div>
     `;
 
@@ -371,12 +403,23 @@ async function logoutAdministrator() {
 
     try {
 
+        if (logoutButton) {
+
+            logoutButton.disabled =
+                true;
+
+            logoutButton.textContent =
+                "Logging out...";
+
+        }
+
         await signOut(auth);
 
         sessionStorage.clear();
 
-        window.location.href =
-            "admin-login.html";
+        window.location.replace(
+            "admin-login.html"
+        );
 
     } catch (error) {
 
@@ -384,6 +427,16 @@ async function logoutAdministrator() {
             "Logout error:",
             error
         );
+
+        if (logoutButton) {
+
+            logoutButton.disabled =
+                false;
+
+            logoutButton.textContent =
+                "Logout";
+
+        }
 
         alert(
             "Unable to log out. Please try again."
