@@ -60,7 +60,9 @@ adminPasswordInput.addEventListener(
     function (event) {
 
         if (event.key === "Enter") {
+
             adminLogin();
+
         }
 
     }
@@ -68,7 +70,7 @@ adminPasswordInput.addEventListener(
 
 
 // =====================================
-// Admin Login
+// Administrator Login
 // =====================================
 
 async function adminLogin() {
@@ -102,9 +104,8 @@ async function adminLogin() {
                 password
             );
 
-
         // =====================================
-        // Check Administrator Record
+        // Administrator Record
         // =====================================
 
         const administratorReference =
@@ -118,11 +119,6 @@ async function adminLogin() {
             await getDoc(
                 administratorReference
             );
-
-
-        // =====================================
-        // Administrator Not Registered
-        // =====================================
 
         if (
             !administratorSnapshot.exists()
@@ -143,13 +139,11 @@ async function adminLogin() {
 
         }
 
-
         const administrator =
             administratorSnapshot.data();
 
-
         // =====================================
-        // Disabled Administrator
+        // Administrator Disabled
         // =====================================
 
         if (
@@ -174,9 +168,8 @@ async function adminLogin() {
 
         }
 
-
         // =====================================
-        // Successful Login
+        // Store Administrator Session
         // =====================================
 
         sessionStorage.setItem(
@@ -185,13 +178,13 @@ async function adminLogin() {
         );
 
         sessionStorage.setItem(
-            "adminEmail",
-            user.email
+            "adminUID",
+            user.uid
         );
 
         sessionStorage.setItem(
-            "adminUID",
-            user.uid
+            "adminEmail",
+            user.email
         );
 
         sessionStorage.setItem(
@@ -204,9 +197,36 @@ async function adminLogin() {
             administrator.role ?? ""
         );
 
-        window.location.href =
-            "admin-v2.html";
+        sessionStorage.setItem(
+            "mustChangePassword",
+            String(
+                administrator.mustChangePassword === true
+            )
+        );
 
+        // =====================================
+        // Force Password Change
+        // =====================================
+
+        if (
+            administrator.mustChangePassword === true
+        ) {
+
+            window.location.replace(
+                "change-password.html"
+            );
+
+            return;
+
+        }
+
+        // =====================================
+        // Normal Login
+        // =====================================
+
+        window.location.replace(
+            "admin-v2.html"
+        );
 
     } catch (error) {
 
