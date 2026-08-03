@@ -1,3 +1,13 @@
+// =====================================
+// R-E-D Attendance
+// Attendance Management
+// =====================================
+
+
+// =====================================
+// Firebase
+// =====================================
+
 import {
     db,
     auth
@@ -20,63 +30,105 @@ import {
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
+import {
+    applySidebarPermissions,
+    protectPage
+} from "./role-permissions.js";
 
-// =====================================================
-// DOM Elements
-// =====================================================
+
+// =====================================
+// Page Elements
+// =====================================
 
 const employeeSelect =
-    document.getElementById("employeeSelect");
+    document.getElementById(
+        "employeeSelect"
+    );
 
 const attendanceManagementForm =
-    document.getElementById("attendanceManagementForm");
+    document.getElementById(
+        "attendanceManagementForm"
+    );
 
 const attendanceDate =
-    document.getElementById("attendanceDate");
+    document.getElementById(
+        "attendanceDate"
+    );
 
 const attendanceStatus =
-    document.getElementById("attendanceStatus");
+    document.getElementById(
+        "attendanceStatus"
+    );
 
 const attendanceNotes =
-    document.getElementById("attendanceNotes");
+    document.getElementById(
+        "attendanceNotes"
+    );
 
 const attendanceMessage =
-    document.getElementById("attendanceMessage");
+    document.getElementById(
+        "attendanceMessage"
+    );
 
 const attendanceHistory =
-    document.getElementById("attendanceHistory");
+    document.getElementById(
+        "attendanceHistory"
+    );
 
 const summaryOnTime =
-    document.getElementById("summaryOnTime");
+    document.getElementById(
+        "summaryOnTime"
+    );
 
 const summaryLate =
-    document.getElementById("summaryLate");
+    document.getElementById(
+        "summaryLate"
+    );
 
 const summaryAbsent =
-    document.getElementById("summaryAbsent");
+    document.getElementById(
+        "summaryAbsent"
+    );
 
 const summaryLeave =
-    document.getElementById("summaryLeave");
+    document.getElementById(
+        "summaryLeave"
+    );
 
 const saveAttendanceButton =
-    document.getElementById("saveAttendanceButton");
+    document.getElementById(
+        "saveAttendanceButton"
+    );
 
 const calendarTitle =
-    document.getElementById("calendarMonthTitle");
+    document.getElementById(
+        "calendarMonthTitle"
+    );
 
 const calendarGrid =
-    document.getElementById("attendanceCalendarGrid");
+    document.getElementById(
+        "attendanceCalendarGrid"
+    );
 
 const previousMonthButton =
-    document.getElementById("previousMonthButton");
+    document.getElementById(
+        "previousMonthButton"
+    );
 
 const nextMonthButton =
-    document.getElementById("nextMonthButton");
+    document.getElementById(
+        "nextMonthButton"
+    );
 
 const logoutButton =
     document.getElementById(
         "logoutButton"
     );
+
+
+// =====================================
+// Calendar State
+// =====================================
 
 let calendarMonth =
     new Date().getMonth();
@@ -85,19 +137,108 @@ let calendarYear =
     new Date().getFullYear();
 
 
-// =====================================================
-// Message Helper
-// =====================================================
+// =====================================
+// Initialize Page
+// =====================================
 
-function showMessage(message, color) {
+initializeAttendanceManagementPage();
 
-    attendanceMessage.textContent = message;
-    attendanceMessage.style.color = color;
+function initializeAttendanceManagementPage() {
+
+    if (!protectPage("attendance")) {
+        return;
+    }
+
+    applySidebarPermissions();
+
+    attendanceDate.value =
+        formatLocalDate(
+            new Date()
+        );
+
+    attendanceManagementForm.addEventListener(
+        "submit",
+        saveAttendance
+    );
+
+    employeeSelect.addEventListener(
+        "change",
+        handleEmployeeSelection
+    );
+
+    attendanceDate.addEventListener(
+        "change",
+        loadExistingAttendance
+    );
+
+    previousMonthButton.addEventListener(
+        "click",
+        showPreviousMonth
+    );
+
+    nextMonthButton.addEventListener(
+        "click",
+        showNextMonth
+    );
+
+    if (logoutButton) {
+
+        logoutButton.addEventListener(
+            "click",
+            logoutAdministrator
+        );
+
+    }
+
+    loadEmployees();
+
+    buildCalendar();
 
 }
-// =====================================================
-// Format Local Date Key
-// =====================================================
+
+
+// =====================================
+// Employee Selection
+// =====================================
+
+async function handleEmployeeSelection() {
+
+    await loadExistingAttendance();
+
+    await loadAttendanceHistory();
+
+    await loadAttendanceSummary();
+
+    await buildCalendar();
+
+}
+
+
+// =====================================
+// Message Helper
+// =====================================
+
+function showMessage(
+    message,
+    color
+) {
+
+    if (!attendanceMessage) {
+        return;
+    }
+
+    attendanceMessage.textContent =
+        message;
+
+    attendanceMessage.style.color =
+        color;
+
+}
+
+
+// =====================================
+// Format Local Date
+// =====================================
 
 function formatLocalDate(date) {
 
@@ -105,19 +246,23 @@ function formatLocalDate(date) {
         date.getFullYear();
 
     const month =
-        String(date.getMonth() + 1)
-            .padStart(2, "0");
+        String(
+            date.getMonth() + 1
+        ).padStart(2, "0");
 
     const day =
-        String(date.getDate())
-            .padStart(2, "0");
+        String(
+            date.getDate()
+        ).padStart(2, "0");
 
     return `${year}-${month}-${day}`;
+
 }
 
-// =====================================================
+
+// =====================================
 // Load Active Employees
-// =====================================================
+// =====================================
 
 async function loadEmployees() {
 
@@ -129,28 +274,43 @@ async function loadEmployees() {
 
     try {
 
-        const employeesQuery = query(
-            collection(db, "employees"),
-            where("active", "==", true)
-        );
+        const employeesQuery =
+            query(
+                collection(
+                    db,
+                    "employees"
+                ),
+                where(
+                    "active",
+                    "==",
+                    true
+                )
+            );
 
         const employeeSnapshot =
-            await getDocs(employeesQuery);
+            await getDocs(
+                employeesQuery
+            );
 
-        const employees = [];
+        const employees =
+            employeeSnapshot.docs.map(
+                (employeeDocument) => ({
+                    id:
+                        employeeDocument.id,
 
-        employeeSnapshot.forEach((employeeDocument) => {
+                    ...employeeDocument.data()
+                })
+            );
 
-            employees.push({
-                id: employeeDocument.id,
-                ...employeeDocument.data()
-            });
-
-        });
-
-        employees.sort((a, b) =>
-            String(a.name ?? "")
-                .localeCompare(String(b.name ?? ""))
+        employees.sort(
+            (firstEmployee, secondEmployee) =>
+                String(
+                    firstEmployee.name ?? ""
+                ).localeCompare(
+                    String(
+                        secondEmployee.name ?? ""
+                    )
+                )
         );
 
         employeeSelect.innerHTML = `
@@ -159,29 +319,35 @@ async function loadEmployees() {
             </option>
         `;
 
-        employees.forEach((employee) => {
+        employees.forEach(
+            (employee) => {
 
-            const option =
-                document.createElement("option");
+                const option =
+                    document.createElement(
+                        "option"
+                    );
 
-            option.value =
-                employee.id;
+                option.value =
+                    employee.id;
 
-            option.textContent =
-                `${employee.name} (${employee.employeeNumber})`;
+                option.textContent =
+                    `${employee.name ?? "Unnamed Employee"} (${employee.employeeNumber ?? "-"})`;
 
-            option.dataset.employeeNumber =
-                employee.employeeNumber ?? "";
+                option.dataset.employeeNumber =
+                    employee.employeeNumber ?? "";
 
-            option.dataset.name =
-                employee.name ?? "";
+                option.dataset.name =
+                    employee.name ?? "";
 
-            option.dataset.department =
-                employee.department ?? "";
+                option.dataset.department =
+                    employee.department ?? "";
 
-            employeeSelect.appendChild(option);
+                employeeSelect.appendChild(
+                    option
+                );
 
-        });
+            }
+        );
 
     } catch (error) {
 
@@ -206,9 +372,9 @@ async function loadEmployees() {
 }
 
 
-// =====================================================
+// =====================================
 // Get Selected Employee
-// =====================================================
+// =====================================
 
 async function getSelectedEmployee() {
 
@@ -220,38 +386,55 @@ async function getSelectedEmployee() {
     }
 
     const employeeReference =
-        doc(db, "employees", employeeId);
+        doc(
+            db,
+            "employees",
+            employeeId
+        );
 
     const employeeSnapshot =
-        await getDoc(employeeReference);
+        await getDoc(
+            employeeReference
+        );
 
     if (!employeeSnapshot.exists()) {
         return null;
     }
 
     return {
-        id: employeeSnapshot.id,
+        id:
+            employeeSnapshot.id,
+
         ...employeeSnapshot.data()
     };
 
 }
 
 
-// =====================================================
+// =====================================
 // Load Existing Attendance Record
-// =====================================================
+// =====================================
 
 async function loadExistingAttendance() {
 
     const selectedDate =
         attendanceDate.value;
 
-    if (!employeeSelect.value || !selectedDate) {
+    if (
+        !employeeSelect.value ||
+        !selectedDate
+    ) {
 
-        attendanceStatus.value = "";
-        attendanceNotes.value = "";
+        attendanceStatus.value =
+            "";
 
-        showMessage("", "");
+        attendanceNotes.value =
+            "";
+
+        showMessage(
+            "",
+            ""
+        );
 
         return;
 
@@ -284,9 +467,13 @@ async function loadExistingAttendance() {
             );
 
         const attendanceSnapshot =
-            await getDoc(attendanceReference);
+            await getDoc(
+                attendanceReference
+            );
 
-        if (attendanceSnapshot.exists()) {
+        if (
+            attendanceSnapshot.exists()
+        ) {
 
             const attendance =
                 attendanceSnapshot.data();
@@ -304,8 +491,11 @@ async function loadExistingAttendance() {
 
         } else {
 
-            attendanceStatus.value = "";
-            attendanceNotes.value = "";
+            attendanceStatus.value =
+                "";
+
+            attendanceNotes.value =
+                "";
 
             showMessage(
                 "No attendance record exists for this employee and date.",
@@ -331,9 +521,9 @@ async function loadExistingAttendance() {
 }
 
 
-// =====================================================
+// =====================================
 // Load Attendance History
-// =====================================================
+// =====================================
 
 async function loadAttendanceHistory() {
 
@@ -372,19 +562,28 @@ async function loadAttendanceHistory() {
 
         }
 
-        const historyQuery = query(
-            collection(db, "attendance"),
-            where(
-                "employeeNumber",
-                "==",
-                employee.employeeNumber
-            ),
-            orderBy("dateKey", "desc"),
-            limit(10)
-        );
+        const historyQuery =
+            query(
+                collection(
+                    db,
+                    "attendance"
+                ),
+                where(
+                    "employeeNumber",
+                    "==",
+                    employee.employeeNumber
+                ),
+                orderBy(
+                    "dateKey",
+                    "desc"
+                ),
+                limit(10)
+            );
 
         const historySnapshot =
-            await getDocs(historyQuery);
+            await getDocs(
+                historyQuery
+            );
 
         if (historySnapshot.empty) {
 
@@ -398,80 +597,106 @@ async function loadAttendanceHistory() {
 
         }
 
-        attendanceHistory.innerHTML = "";
+        attendanceHistory.innerHTML =
+            "";
 
-        historySnapshot.forEach((attendanceDocument) => {
+        historySnapshot.forEach(
+            (attendanceDocument) => {
 
-    const attendance =
-        attendanceDocument.data();
+                const attendance =
+                    attendanceDocument.data();
 
-    const dateDisplay =
-        formatAttendanceDate(
-            attendance.dateKey
-        );
+                const dateDisplay =
+                    formatAttendanceDate(
+                        attendance.dateKey
+                    );
 
-    const statusClass =
-        createStatusClass(
-            attendance.status
-        );
+                const statusClass =
+                    createStatusClass(
+                        attendance.status
+                    );
 
-    const method =
-        attendance.checkInMethod ?? "Unknown";
+                const method =
+                    attendance.checkInMethod ??
+                    "Unknown";
 
-    const notes =
-        attendance.notes?.trim() || "No additional notes.";
+                const notes =
+                    String(
+                        attendance.notes ?? ""
+                    ).trim() ||
+                    "No additional notes.";
 
-    attendanceHistory.innerHTML += `
-        <details class="attendance-history-card">
+                const historyCard =
+                    document.createElement(
+                        "details"
+                    );
 
-            <summary class="history-summary">
+                historyCard.className =
+                    "attendance-history-card";
 
-                <div class="history-summary-main">
+                historyCard.innerHTML = `
+                    <summary class="history-summary">
 
-                    <span class="status-badge ${statusClass}">
-                        ${attendance.status ?? "Unknown"}
-                    </span>
+                        <div class="history-summary-main">
 
-                    <div class="history-summary-date">
+                            <span
+                                class="status-badge ${statusClass}"
+                            >
+                                ${escapeHtml(
+                                    attendance.status ??
+                                    "Unknown"
+                                )}
+                            </span>
 
-                        <strong>
-                            ${dateDisplay}
-                        </strong>
+                            <div class="history-summary-date">
 
-                        <span>
-                            ${attendance.time ?? "Time not recorded"}
-                        </span>
+                                <strong>
+                                    ${escapeHtml(
+                                        dateDisplay
+                                    )}
+                                </strong>
+
+                                <span>
+                                    ${escapeHtml(
+                                        attendance.time ??
+                                        "Time not recorded"
+                                    )}
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                        <div class="history-summary-method">
+                            ${escapeHtml(method)}
+                        </div>
+
+                    </summary>
+
+                    <div class="history-expanded">
+
+                        <div class="history-detail-row">
+
+                            <span class="history-label">
+                                Notes
+                            </span>
+
+                            <p>
+                                ${escapeHtml(notes)}
+                            </p>
+
+                        </div>
 
                     </div>
+                `;
 
-                </div>
+                attendanceHistory.appendChild(
+                    historyCard
+                );
 
-                <div class="history-summary-method">
-                    ${method}
-                </div>
+            }
+        );
 
-            </summary>
-
-            <div class="history-expanded">
-
-                <div class="history-detail-row">
-
-                    <span class="history-label">
-                        Notes
-                    </span>
-
-                    <p>
-                        ${notes}
-                    </p>
-
-                </div>
-
-            </div>
-
-        </details>
-    `;
-
-});
     } catch (error) {
 
         console.error(
@@ -489,21 +714,17 @@ async function loadAttendanceHistory() {
 
 }
 
-// =====================================================
+
+// =====================================
 // Load Attendance Summary
-// =====================================================
+// =====================================
 
 async function loadAttendanceSummary() {
 
+    resetAttendanceSummary();
+
     if (!employeeSelect.value) {
-
-        summaryOnTime.textContent = "0";
-        summaryLate.textContent = "0";
-        summaryAbsent.textContent = "0";
-        summaryLeave.textContent = "0";
-
         return;
-
     }
 
     try {
@@ -515,59 +736,76 @@ async function loadAttendanceSummary() {
             return;
         }
 
-        const attendanceQuery = query(
-            collection(db, "attendance"),
-            where(
-                "employeeNumber",
-                "==",
-                employee.employeeNumber
-            )
-        );
+        const attendanceQuery =
+            query(
+                collection(
+                    db,
+                    "attendance"
+                ),
+                where(
+                    "employeeNumber",
+                    "==",
+                    employee.employeeNumber
+                )
+            );
 
         const attendanceSnapshot =
-            await getDocs(attendanceQuery);
+            await getDocs(
+                attendanceQuery
+            );
 
         let onTime = 0;
         let late = 0;
         let absent = 0;
         let leave = 0;
 
-        attendanceSnapshot.forEach((attendanceDocument) => {
+        attendanceSnapshot.forEach(
+            (attendanceDocument) => {
 
-            const attendance =
-                attendanceDocument.data();
+                const attendance =
+                    attendanceDocument.data();
 
-            switch (attendance.status) {
+                switch (
+                    attendance.status
+                ) {
 
-                case "On Time":
-                    onTime++;
-                    break;
+                    case "On Time":
+                        onTime++;
+                        break;
 
-                case "Late":
-                    late++;
-                    break;
+                    case "Late":
+                        late++;
+                        break;
 
-                case "Absent":
-                    absent++;
-                    break;
+                    case "Absent":
+                        absent++;
+                        break;
 
-                case "Annual Leave":
-                case "Sick Leave":
-                case "Family Responsibility Leave":
-                case "Maternity Leave":
-                case "Unpaid Leave":
-                case "Public Holiday":
-                    leave++;
-                    break;
+                    case "Annual Leave":
+                    case "Sick Leave":
+                    case "Family Responsibility Leave":
+                    case "Maternity Leave":
+                    case "Unpaid Leave":
+                    case "Public Holiday":
+                        leave++;
+                        break;
+
+                }
 
             }
+        );
 
-        });
+        summaryOnTime.textContent =
+            onTime;
 
-        summaryOnTime.textContent = onTime;
-        summaryLate.textContent = late;
-        summaryAbsent.textContent = absent;
-        summaryLeave.textContent = leave;
+        summaryLate.textContent =
+            late;
+
+        summaryAbsent.textContent =
+            absent;
+
+        summaryLeave.textContent =
+            leave;
 
     } catch (error) {
 
@@ -579,48 +817,90 @@ async function loadAttendanceSummary() {
     }
 
 }
-// =====================================================
-// Format Attendance Date
-// =====================================================
 
-function formatAttendanceDate(dateKey) {
+
+// =====================================
+// Reset Attendance Summary
+// =====================================
+
+function resetAttendanceSummary() {
+
+    summaryOnTime.textContent =
+        "0";
+
+    summaryLate.textContent =
+        "0";
+
+    summaryAbsent.textContent =
+        "0";
+
+    summaryLeave.textContent =
+        "0";
+
+}
+
+
+// =====================================
+// Format Attendance Date
+// =====================================
+
+function formatAttendanceDate(
+    dateKey
+) {
 
     if (!dateKey) {
         return "Unknown date";
     }
 
     const date =
-        new Date(`${dateKey}T00:00:00`);
+        new Date(
+            `${dateKey}T00:00:00`
+        );
 
     return date.toLocaleDateString(
         "en-ZA",
         {
-            day: "2-digit",
-            month: "short",
-            year: "numeric"
+            day:
+                "2-digit",
+
+            month:
+                "short",
+
+            year:
+                "numeric"
         }
     );
 
 }
 
 
-// =====================================================
+// =====================================
 // Create Status CSS Class
-// =====================================================
+// =====================================
 
 function createStatusClass(status) {
 
-    return `status-${String(status ?? "unknown")
+    return `status-${String(
+        status ?? "unknown"
+    )
+        .normalize("NFKC")
+        .trim()
         .toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/[^a-z0-9-]/g, "")}`;
+        .replace(
+            /[^a-z0-9]+/g,
+            "-"
+        )
+        .replace(
+            /^-+|-+$/g,
+            ""
+        )}`;
 
 }
 
 
-// =====================================================
+// =====================================
 // Save Attendance
-// =====================================================
+// =====================================
 
 async function saveAttendance(event) {
 
@@ -668,7 +948,9 @@ async function saveAttendance(event) {
 
     }
 
-    saveAttendanceButton.disabled = true;
+    saveAttendanceButton.disabled =
+        true;
+
     saveAttendanceButton.textContent =
         "Saving...";
 
@@ -704,7 +986,9 @@ async function saveAttendance(event) {
             );
 
         const existingSnapshot =
-            await getDoc(attendanceReference);
+            await getDoc(
+                attendanceReference
+            );
 
         const recordAlreadyExists =
             existingSnapshot.exists();
@@ -713,64 +997,77 @@ async function saveAttendance(event) {
             new Date().toLocaleTimeString(
                 "en-ZA",
                 {
-                    hour: "2-digit",
-                    minute: "2-digit"
+                    hour:
+                        "2-digit",
+
+                    minute:
+                        "2-digit"
                 }
             );
 
-        await setDoc(
-            attendanceReference,
-            {
-                employeeNumber:
-                    employee.employeeNumber,
+        const attendanceData = {
+            employeeNumber:
+                employee.employeeNumber,
 
-                name:
-                    employee.name,
+            name:
+                employee.name,
 
-                department:
-                    employee.department ?? "Unassigned",
+            department:
+                employee.department ??
+                "Unassigned",
 
-                date:
-                    selectedDate,
+            date:
+                selectedDate,
 
-                dateKey:
-                    selectedDate,
+            dateKey:
+                selectedDate,
 
-                status:
-                    selectedStatus,
+            status:
+                selectedStatus,
 
-                notes:
-                    notes,
+            notes:
+                notes,
 
-                checkInMethod:
-                    "Manual",
+            checkInMethod:
+                "Manual",
 
-                time:
-                    currentTime,
+            time:
+                currentTime,
 
-                createdAt:
-                    serverTimestamp()
-            }
-        );
+            updatedAt:
+                serverTimestamp()
+        };
 
-        if (recordAlreadyExists) {
+        if (!recordAlreadyExists) {
 
-            showMessage(
-                "Attendance record updated.",
-                "var(--orange-primary)"
-            );
-
-        } else {
-
-            showMessage(
-                "Attendance record created.",
-                "var(--green-primary)"
-            );
+            attendanceData.createdAt =
+                serverTimestamp();
 
         }
 
+        await setDoc(
+            attendanceReference,
+            attendanceData,
+            {
+                merge: true
+            }
+        );
+
+        showMessage(
+            recordAlreadyExists
+                ? "Attendance record updated."
+                : "Attendance record created.",
+
+            recordAlreadyExists
+                ? "var(--orange-primary)"
+                : "var(--green-primary)"
+        );
+
         await loadAttendanceHistory();
+
         await loadAttendanceSummary();
+
+        await buildCalendar();
 
     } catch (error) {
 
@@ -786,7 +1083,9 @@ async function saveAttendance(event) {
 
     } finally {
 
-        saveAttendanceButton.disabled = false;
+        saveAttendanceButton.disabled =
+            false;
+
         saveAttendanceButton.textContent =
             "Save Attendance";
 
@@ -794,108 +1093,141 @@ async function saveAttendance(event) {
 
 }
 
-// =====================================================
-// Build Calendar
-// =====================================================
+
+// =====================================
+// Build Attendance Calendar
+// =====================================
 
 async function buildCalendar() {
 
-    calendarGrid.innerHTML = "";
+    calendarGrid.innerHTML =
+        "";
 
     if (!employeeSelect.value) {
 
-    calendarGrid.innerHTML = `
-        <p class="empty-state">
-            Select an employee to view the attendance calendar.
-        </p>
-    `;
+        calendarGrid.innerHTML = `
+            <p class="empty-state">
+                Select an employee to view the attendance calendar.
+            </p>
+        `;
 
-    calendarTitle.textContent =
-        "Calendar";
+        calendarTitle.textContent =
+            "Calendar";
 
-    return;
+        return;
+
+    }
+
+    try {
+
+        const selectedOption =
+            employeeSelect.options[
+                employeeSelect.selectedIndex
+            ];
+
+        const selectedEmployeeNumber =
+            selectedOption.dataset.employeeNumber;
+
+        const monthStart =
+            new Date(
+                calendarYear,
+                calendarMonth,
+                1
+            );
+
+        const monthEnd =
+            new Date(
+                calendarYear,
+                calendarMonth + 1,
+                0
+            );
+
+        const monthStartKey =
+            formatLocalDate(
+                monthStart
+            );
+
+        const monthEndKey =
+            formatLocalDate(
+                monthEnd
+            );
+
+        const attendanceQuery =
+            query(
+                collection(
+                    db,
+                    "attendance"
+                ),
+                where(
+                    "employeeNumber",
+                    "==",
+                    selectedEmployeeNumber
+                ),
+                where(
+                    "date",
+                    ">=",
+                    monthStartKey
+                ),
+                where(
+                    "date",
+                    "<=",
+                    monthEndKey
+                )
+            );
+
+        const attendanceSnapshot =
+            await getDocs(
+                attendanceQuery
+            );
+
+        const attendanceByDate = {};
+
+        attendanceSnapshot.forEach(
+            (attendanceDocument) => {
+
+                const record =
+                    attendanceDocument.data();
+
+                attendanceByDate[
+                    record.date ??
+                    record.dateKey
+                ] = record;
+
+            }
+        );
+
+        displayCalendar(
+            attendanceByDate
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Unable to build attendance calendar:",
+            error
+        );
+
+        calendarGrid.innerHTML = `
+            <p class="empty-state">
+                Unable to load the attendance calendar.
+            </p>
+        `;
+
+    }
 
 }
 
-    const selectedOption =
-    employeeSelect.options[
-        employeeSelect.selectedIndex
-    ];
 
-const selectedEmployeeNumber =
-    selectedOption.dataset.employeeNumber;
+// =====================================
+// Display Calendar
+// =====================================
 
-    console.log(
-    "Selected employee number:",
-    selectedEmployeeNumber
-);
+function displayCalendar(
+    attendanceByDate
+) {
 
-    const monthStart =
-    new Date(
-        calendarYear,
-        calendarMonth,
-        1
-    );
-
-const monthEnd =
-    new Date(
-        calendarYear,
-        calendarMonth + 1,
-        0
-    );
-
-    const monthStartKey =
-    formatLocalDate(monthStart);
-
-const monthEndKey =
-    formatLocalDate(monthEnd);
-
-    const attendanceQuery =
-    query(
-        collection(db, "attendance"),
-        where(
-            "employeeNumber",
-            "==",
-            selectedEmployeeNumber
-        ),
-        where(
-            "date",
-            ">=",
-            monthStartKey
-        ),
-        where(
-            "date",
-            "<=",
-            monthEndKey
-        )
-    );
-
-    const attendanceSnapshot =
-    await getDocs(attendanceQuery);
-
-    const monthlyAttendance =
-    attendanceSnapshot.docs.map(
-        (document) => ({
-            id: document.id,
-            ...document.data()
-        })
-    );
-
-    console.log(
-    "Monthly attendance records:",
-    monthlyAttendance
-);
-
-    const attendanceByDate = {};
-
-monthlyAttendance.forEach(
-    (record) => {
-
-        attendanceByDate[record.date] =
-            record;
-
-    }
-);
+    calendarGrid.innerHTML =
+        "";
 
     const monthNames = [
         "January",
@@ -912,9 +1244,6 @@ monthlyAttendance.forEach(
         "December"
     ];
 
-    calendarTitle.textContent =
-        `${monthNames[calendarMonth]} ${calendarYear}`;
-
     const dayNames = [
         "Sun",
         "Mon",
@@ -925,20 +1254,29 @@ monthlyAttendance.forEach(
         "Sat"
     ];
 
-    dayNames.forEach((dayName) => {
+    calendarTitle.textContent =
+        `${monthNames[calendarMonth]} ${calendarYear}`;
 
-        const dayHeading =
-            document.createElement("div");
+    dayNames.forEach(
+        (dayName) => {
 
-        dayHeading.className =
-            "calendar-day-header";
+            const dayHeading =
+                document.createElement(
+                    "div"
+                );
 
-        dayHeading.textContent =
-            dayName;
+            dayHeading.className =
+                "calendar-day-header";
 
-        calendarGrid.appendChild(dayHeading);
+            dayHeading.textContent =
+                dayName;
 
-    });
+            calendarGrid.appendChild(
+                dayHeading
+            );
+
+        }
+    );
 
     const firstDayOfMonth =
         new Date(
@@ -955,18 +1293,22 @@ monthlyAttendance.forEach(
         ).getDate();
 
     for (
-        let emptyCell = 0;
-        emptyCell < firstDayOfMonth;
-        emptyCell++
+        let blankIndex = 0;
+        blankIndex < firstDayOfMonth;
+        blankIndex++
     ) {
 
         const blankDay =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
 
         blankDay.className =
             "calendar-empty";
 
-        calendarGrid.appendChild(blankDay);
+        calendarGrid.appendChild(
+            blankDay
+        );
 
     }
 
@@ -976,111 +1318,118 @@ monthlyAttendance.forEach(
         day++
     ) {
 
-        const dayCell =
-            document.createElement("div");
+        createCalendarDay(
+            day,
+            attendanceByDate
+        );
 
-        const currentDate =
-    new Date(
-        calendarYear,
-        calendarMonth,
-        day
-    );
-
-const currentDateKey =
-    formatLocalDate(currentDate);
-
-        const attendanceRecord =
-    attendanceByDate[currentDateKey];
-
-        dayCell.classList.add("calendar-day");
-
-if (attendanceRecord) {
-
-   const rawStatus =
-    String(attendanceRecord.status ?? "");
-
-const statusClass =
-    rawStatus
-        .normalize("NFKC")
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "");
-
-    dayCell.classList.add(
-        `calendar-${statusClass}`
-    );
-
-    console.log(
-    "Status check:",
-    JSON.stringify(rawStatus),
-    `calendar-${statusClass}`
-);
-
-    console.log(
-        "Final calendar classes:",
-        currentDateKey,
-        dayCell.className
-    );
+    }
 
 }
 
 
-        const today =
-    new Date();
+// =====================================
+// Create Calendar Day
+// =====================================
 
-const isToday =
-    day === today.getDate() &&
-    calendarMonth === today.getMonth() &&
-    calendarYear === today.getFullYear();
+function createCalendarDay(
+    day,
+    attendanceByDate
+) {
 
-if (isToday) {
+    const dayCell =
+        document.createElement(
+            "div"
+        );
+
+    const currentDate =
+        new Date(
+            calendarYear,
+            calendarMonth,
+            day
+        );
+
+    const currentDateKey =
+        formatLocalDate(
+            currentDate
+        );
+
+    const attendanceRecord =
+        attendanceByDate[
+            currentDateKey
+        ];
 
     dayCell.classList.add(
-        "calendar-today"
+        "calendar-day"
     );
 
-}
+    if (attendanceRecord) {
 
-        dayCell.innerHTML = `
-            <strong>${day}</strong>
-        `;
-
-        dayCell.dataset.day = day;
-
-dayCell.style.cursor = "pointer";
-
-        dayCell.addEventListener(
-    "click",
-    () => {
-
-        const selectedCalendarDate =
-            new Date(
-                calendarYear,
-                calendarMonth,
-                day
+        const statusClass =
+            createStatusClass(
+                attendanceRecord.status
+            ).replace(
+                "status-",
+                ""
             );
 
-        const dateKey =
-    formatLocalDate(selectedCalendarDate);
+        dayCell.classList.add(
+            `calendar-${statusClass}`
+        );
 
-attendanceDate.value =
-    dateKey;
-
-        loadExistingAttendance();
-
-    }
-);
-
-        calendarGrid.appendChild(dayCell);
+        dayCell.title =
+            attendanceRecord.status ??
+            "Attendance recorded";
 
     }
+
+    const today =
+        new Date();
+
+    const isToday =
+        day === today.getDate() &&
+        calendarMonth === today.getMonth() &&
+        calendarYear === today.getFullYear();
+
+    if (isToday) {
+
+        dayCell.classList.add(
+            "calendar-today"
+        );
+
+    }
+
+    dayCell.innerHTML = `
+        <strong>
+            ${day}
+        </strong>
+    `;
+
+    dayCell.style.cursor =
+        "pointer";
+
+    dayCell.addEventListener(
+        "click",
+        async () => {
+
+            attendanceDate.value =
+                currentDateKey;
+
+            await loadExistingAttendance();
+
+        }
+    );
+
+    calendarGrid.appendChild(
+        dayCell
+    );
 
 }
 
-// =====================================================
-// Show Previous Calendar Month
-// =====================================================
+
+// =====================================
+// Previous Calendar Month
+// =====================================
 
 function showPreviousMonth() {
 
@@ -1089,17 +1438,19 @@ function showPreviousMonth() {
     if (calendarMonth < 0) {
 
         calendarMonth = 11;
+
         calendarYear--;
 
     }
 
     buildCalendar();
-    
+
 }
 
-// =====================================================
-// Show Next Calendar Month
-// =====================================================
+
+// =====================================
+// Next Calendar Month
+// =====================================
 
 function showNextMonth() {
 
@@ -1108,6 +1459,7 @@ function showNextMonth() {
     if (calendarMonth > 11) {
 
         calendarMonth = 0;
+
         calendarYear++;
 
     }
@@ -1116,57 +1468,65 @@ function showNextMonth() {
 
 }
 
-// =====================================================
-// Event Listeners
-// =====================================================
 
-attendanceManagementForm.addEventListener(
-    "submit",
-    saveAttendance
-);
+// =====================================
+// Escape HTML
+// =====================================
 
-employeeSelect.addEventListener(
-    "change",
-    async () => {
+function escapeHtml(value) {
 
-        await loadExistingAttendance();
-        await loadAttendanceHistory();
-        await loadAttendanceSummary();
+    return String(
+        value ?? ""
+    )
+        .replaceAll(
+            "&",
+            "&amp;"
+        )
+        .replaceAll(
+            "<",
+            "&lt;"
+        )
+        .replaceAll(
+            ">",
+            "&gt;"
+        )
+        .replaceAll(
+            '"',
+            "&quot;"
+        )
+        .replaceAll(
+            "'",
+            "&#039;"
+        );
 
-        buildCalendar();
-
-    }
-);
-attendanceDate.addEventListener(
-    "change",
-    loadExistingAttendance
-);
-
-previousMonthButton.addEventListener(
-    "click",
-    showPreviousMonth
-);
-
-nextMonthButton.addEventListener(
-    "click",
-    showNextMonth
-);
+}
 
 
-// =====================================================
+// =====================================
 // Administrator Logout
-// =====================================================
+// =====================================
 
 async function logoutAdministrator() {
 
     try {
 
+        if (logoutButton) {
+
+            logoutButton.disabled =
+                true;
+
+            logoutButton.textContent =
+                "Logging out...";
+
+        }
+
         await signOut(auth);
 
         sessionStorage.clear();
 
-        window.location.href =
-            "admin-login.html";
+        window.location.replace(
+            "admin-login.html"
+        );
 
     } catch (error) {
 
@@ -1174,6 +1534,16 @@ async function logoutAdministrator() {
             "Logout error:",
             error
         );
+
+        if (logoutButton) {
+
+            logoutButton.disabled =
+                false;
+
+            logoutButton.textContent =
+                "Logout";
+
+        }
 
         showMessage(
             "Unable to log out. Please try again.",
@@ -1183,31 +1553,3 @@ async function logoutAdministrator() {
     }
 
 }
-
-
-// =====================================================
-// Logout Event
-// =====================================================
-
-if (logoutButton) {
-
-    logoutButton.addEventListener(
-        "click",
-        logoutAdministrator
-    );
-
-}
-
-
-// =====================================================
-// Page Initialization
-// =====================================================
-
-attendanceDate.value =
-    formatLocalDate(
-        new Date()
-    );
-
-loadEmployees();
-
-buildCalendar();
