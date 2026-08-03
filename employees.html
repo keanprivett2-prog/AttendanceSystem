@@ -2,17 +2,32 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>R-E-D Attendance | Employees</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <link rel="stylesheet" href="css/admin-v2.css">
+    <title>
+        R-E-D Attendance | Employees
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="css/admin-v2.css"
+    >
+
 </head>
 
 <body>
 
     <div class="app">
+
+        <!-- =====================================
+             Sidebar
+        ====================================== -->
 
         <aside class="sidebar">
 
@@ -23,61 +38,105 @@
                 </div>
 
                 <div>
-                    <h2>R-E-D</h2>
-                    <span>Attendance</span>
+
+                    <h2>
+                        R-E-D
+                    </h2>
+
+                    <span>
+                        Attendance
+                    </span>
+
                 </div>
 
             </div>
 
             <nav class="sidebar-menu">
 
-                <a href="admin-v2.html" class="menu-link">
-                   
-                   Dashboard
+                <a
+                    href="admin-v2.html"
+                    class="menu-link"
+                >
+                    Dashboard
                 </a>
 
-                <a href="employees.html" class="menu-link active">
-                    
+                <a
+                    href="employees.html"
+                    class="menu-link active"
+                >
                     Employees
                 </a>
 
-               <a href="attendance-management.html" class="menu-link">
-                      Attendance Management
-</a>
+                <a
+                    href="attendance-management.html"
+                    class="menu-link"
+                >
+                    Attendance Management
+                </a>
 
-                <a href="reports.html" class="menu-link">
-                       Reports
-</a>
+                <a
+                    href="reports.html"
+                    class="menu-link"
+                >
+                    Reports
+                </a>
 
-                <a href="settings.html" class="menu-link">
-    Settings
-</a>
+                <a
+                    href="settings.html"
+                    class="menu-link"
+                >
+                    Settings
+                </a>
 
-                <a href="administrators.html" class="menu-link">
-    Administrators
-</a>
+                <a
+                    href="administrators.html"
+                    class="menu-link"
+                >
+                    Administrators
+                </a>
 
-                <a href="audit-log.html" class="menu-link">
-                    
+                <a
+                    href="audit-log.html"
+                    class="menu-link"
+                >
                     Audit Log
                 </a>
 
             </nav>
 
             <div class="sidebar-footer">
-                <span>R-E-D Attendance</span>
-                <small>Enterprise Edition</small>
+
+                <span>
+                    R-E-D Attendance
+                </span>
+
+                <small>
+                    Enterprise Edition
+                </small>
+
             </div>
 
         </aside>
+
+
+        <!-- =====================================
+             Main Content
+        ====================================== -->
 
         <main class="content">
 
             <header class="topbar">
 
                 <div>
-                    <h1>Employees</h1>
-                    <p>Manage employee profiles and access details.</p>
+
+                    <h1>
+                        Employees
+                    </h1>
+
+                    <p>
+                        Manage employee profiles and access details.
+                    </p>
+
                 </div>
 
                 <div class="topbar-right">
@@ -85,6 +144,7 @@
                     <button
                         type="button"
                         class="logout-btn"
+                        id="logoutButton"
                     >
                         Logout
                     </button>
@@ -93,11 +153,23 @@
 
             </header>
 
+
+            <!-- =====================================
+                 Employee Actions
+            ====================================== -->
+
             <section class="employee-actions">
 
                 <div>
-                    <h2>Employee Directory</h2>
-                    <p>Add, search and manage employees.</p>
+
+                    <h2>
+                        Employee Directory
+                    </h2>
+
+                    <p>
+                        Add, search and manage employees.
+                    </p>
+
                 </div>
 
                 <button
@@ -110,12 +182,17 @@
 
             </section>
 
+
+            <!-- =====================================
+                 Employee Table
+            ====================================== -->
+
             <section class="employee-table-section">
 
                 <div class="employee-toolbar">
 
                     <input
-                        type="text"
+                        type="search"
                         id="employeeSearch"
                         class="employee-search"
                         placeholder="Search employees..."
@@ -124,36 +201,56 @@
 
                 </div>
 
-                <table class="attendance-table">
+                <div class="employee-table-container">
 
-                    <thead>
+                    <table class="attendance-table">
 
-                        <tr>
-                            <th>Employee No.</th>
-                            <th>Name</th>
-                            <th>Department</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
+                        <thead>
 
-                    </thead>
+                            <tr>
 
-                    <tbody id="employeeTableBody">
+                                <th>
+                                    Employee No.
+                                </th>
 
-                        <tr>
+                                <th>
+                                    Name
+                                </th>
 
-                            <td
-                                colspan="5"
-                                class="empty-row"
-                            >
-                                No employees have been added yet.
-                            </td>
+                                <th>
+                                    Department
+                                </th>
 
-                        </tr>
+                                <th>
+                                    Status
+                                </th>
 
-                    </tbody>
+                                <th>
+                                    Actions
+                                </th>
 
-                </table>
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="employeeTableBody">
+
+                            <tr>
+
+                                <td
+                                    colspan="5"
+                                    class="empty-row"
+                                >
+                                    No employees have been added yet.
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
 
             </section>
 
@@ -161,7 +258,10 @@
 
     </div>
 
-    <!-- Add / Edit Employee Modal -->
+
+    <!-- =====================================
+         Add / Edit Employee Modal
+    ====================================== -->
 
     <div
         class="modal-overlay"
@@ -173,14 +273,22 @@
             <div class="modal-header">
 
                 <div>
-                    <h2>Add Employee</h2>
-                    <p>Create a new employee profile.</p>
+
+                    <h2>
+                        Add Employee
+                    </h2>
+
+                    <p>
+                        Create or update an employee profile.
+                    </p>
+
                 </div>
 
                 <button
                     type="button"
                     class="modal-close"
                     id="closeEmployeeModal"
+                    aria-label="Close employee form"
                 >
                     ×
                 </button>
@@ -188,12 +296,12 @@
             </div>
 
             <form
-    id="employeeForm"
-    name="employeeManagement"
-    autocomplete="off"
-    data-lpignore="true"
-    data-form-type="other"
->
+                id="employeeForm"
+                name="employeeManagement"
+                autocomplete="off"
+                data-lpignore="true"
+                data-form-type="other"
+            >
 
                 <div class="form-grid">
 
@@ -204,14 +312,14 @@
                         </label>
 
                         <input
-    type="text"
-    id="employeeNumber"
-    autocomplete="off"
-    autocorrect="off"
-    autocapitalize="off"
-    spellcheck="false"
-    required
->
+                            type="text"
+                            id="employeeNumber"
+                            autocomplete="off"
+                            autocorrect="off"
+                            autocapitalize="off"
+                            spellcheck="false"
+                            required
+                        >
 
                     </div>
 
@@ -252,19 +360,24 @@
                         </label>
 
                         <input
-                          type="text"
-                          id="employeePin"
-                          name="employeeAccessPin"
-                          maxlength="6"
-                          inputmode="numeric"
-                          autocomplete="one-time-code"
-                          autocorrect="off"
-                          autocapitalize="off"
-                          spellcheck="false"
-                          data-lpignore="true"
-                          pattern="[0-9]{4,6}"
-                          required
-                      >
+                            type="text"
+                            id="employeePin"
+                            name="employeeAccessPin"
+                            maxlength="6"
+                            inputmode="numeric"
+                            autocomplete="one-time-code"
+                            autocorrect="off"
+                            autocapitalize="off"
+                            spellcheck="false"
+                            data-lpignore="true"
+                            pattern="[0-9]{4,6}"
+                            required
+                        >
+
+                        <small>
+                            Enter a numeric PIN containing 4 to 6 digits.
+                        </small>
+
                     </div>
 
                 </div>
@@ -295,7 +408,10 @@
 
     </div>
 
-    <!-- Delete Employee Modal -->
+
+    <!-- =====================================
+         Delete Employee Modal
+    ====================================== -->
 
     <div
         class="modal-overlay"
@@ -308,7 +424,9 @@
 
                 <div>
 
-                    <h2>Delete Employee</h2>
+                    <h2>
+                        Delete Employee
+                    </h2>
 
                     <p id="deleteMessage">
                         Are you sure you want to delete this employee?
@@ -320,6 +438,7 @@
                     type="button"
                     class="modal-close"
                     id="closeDeleteModal"
+                    aria-label="Close delete confirmation"
                 >
                     ×
                 </button>
@@ -350,7 +469,10 @@
 
     </div>
 
-    <!-- Reset PIN Modal -->
+
+    <!-- =====================================
+         Reset PIN Modal
+    ====================================== -->
 
     <div
         class="modal-overlay"
@@ -363,7 +485,9 @@
 
                 <div>
 
-                    <h2>Reset Employee PIN</h2>
+                    <h2>
+                        Reset Employee PIN
+                    </h2>
 
                     <p id="resetPinEmployeeName">
                         Reset the employee's PIN.
@@ -375,6 +499,7 @@
                     type="button"
                     class="modal-close"
                     id="closeResetPinModal"
+                    aria-label="Close PIN reset form"
                 >
                     ×
                 </button>
@@ -401,6 +526,7 @@
                     pattern="[0-9]{4,6}"
                     required
                 >
+
             </div>
 
             <div class="form-group">
@@ -409,7 +535,7 @@
                     Confirm PIN
                 </label>
 
-                 <input
+                <input
                     type="text"
                     id="confirmEmployeePin"
                     name="confirmEmployeeAccessPin"
@@ -450,7 +576,10 @@
 
     </div>
 
-    <!-- Employee Status Modal -->
+
+    <!-- =====================================
+         Employee Status Modal
+    ====================================== -->
 
     <div
         class="modal-overlay"
@@ -477,6 +606,7 @@
                     type="button"
                     class="modal-close"
                     id="closeStatusModal"
+                    aria-label="Close status confirmation"
                 >
                     ×
                 </button>
@@ -507,9 +637,15 @@
 
     </div>
 
+
+    <!-- =====================================
+         Notification
+    ====================================== -->
+
     <div
         id="notification"
         class="notification"
+        aria-live="polite"
     >
 
         <span id="notificationMessage"></span>
@@ -517,6 +653,7 @@
         <div class="notification-progress"></div>
 
     </div>
+
 
     <script
         type="module"
