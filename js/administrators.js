@@ -159,9 +159,9 @@ function initializeAdministratorsPage() {
     );
 
     administratorForm.addEventListener(
-        "submit",
-        createAdministrator
-    );
+    "submit",
+    handleAdministratorSubmit
+);
 
     administratorTableBody.addEventListener(
     "click",
@@ -530,6 +530,125 @@ async function openEditAdministrator(
 
 }
 
+// =====================================
+// Handle Administrator Submit
+// =====================================
+
+async function handleAdministratorSubmit(event) {
+
+    event.preventDefault();
+
+    if (editingAdministratorId) {
+
+        await updateAdministrator();
+
+        return;
+
+    }
+
+    await createAdministrator(event);
+
+}
+
+// =====================================
+// Update Administrator
+// =====================================
+
+async function updateAdministrator() {
+
+    const fullName =
+        administratorNameInput.value.trim();
+
+    const email =
+        administratorEmailInput.value
+            .trim()
+            .toLowerCase();
+
+    const role =
+        administratorRoleInput.value;
+
+    if (fullName === "") {
+
+        showAdministratorMessage(
+            "Please enter the administrator's full name.",
+            "error"
+        );
+
+        return;
+    }
+
+    if (email === "") {
+
+        showAdministratorMessage(
+            "Please enter an email address.",
+            "error"
+        );
+
+        return;
+    }
+
+    if (role === "") {
+
+        showAdministratorMessage(
+            "Please select an administrator role.",
+            "error"
+        );
+
+        return;
+    }
+
+    try {
+
+        showAdministratorMessage(
+            "Saving changes...",
+            "info"
+        );
+
+        const administratorReference =
+            doc(
+                db,
+                "administrators",
+                editingAdministratorId
+            );
+
+        await updateDoc(
+            administratorReference,
+            {
+                fullName,
+                email,
+                role
+            }
+        );
+
+        showAdministratorMessage(
+            "Administrator updated successfully.",
+            "success"
+        );
+
+        await loadAdministrators();
+
+        setTimeout(
+            () => {
+                closeAdministratorModal();
+            },
+            1000
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Update administrator error:",
+            error
+        );
+
+        showAdministratorMessage(
+            "The administrator could not be updated.",
+            "error"
+        );
+
+    }
+
+}
 
 // =====================================
 // Create Administrator
