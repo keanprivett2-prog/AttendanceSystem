@@ -5,13 +5,83 @@
 
 
 // =====================================
+// Normalize Administrator Role
+// =====================================
+
+function normalizeAdministratorRole(role) {
+
+    const normalizedRole =
+        String(role ?? "")
+            .trim()
+            .toLowerCase()
+            .replace(
+                /[^a-z0-9]/g,
+                ""
+            );
+
+    if (
+        normalizedRole ===
+        "superadministrator"
+    ) {
+
+        return "superAdministrator";
+
+    }
+
+    if (
+        normalizedRole ===
+        "superadmin"
+    ) {
+
+        return "superAdministrator";
+
+    }
+
+    if (
+        normalizedRole ===
+        "administrator"
+    ) {
+
+        return "administrator";
+
+    }
+
+    if (
+        normalizedRole ===
+        "manager"
+    ) {
+
+        return "manager";
+
+    }
+
+    if (
+        normalizedRole ===
+        "readonly"
+    ) {
+
+        return "readOnly";
+
+    }
+
+    return "";
+
+}
+
+
+// =====================================
 // Current Administrator Role
 // =====================================
 
-const currentAdministratorRole =
+const storedAdministratorRole =
     sessionStorage.getItem(
         "adminRole"
-    ) ?? "";
+    );
+
+const currentAdministratorRole =
+    normalizeAdministratorRole(
+        storedAdministratorRole
+    );
 
 
 // =====================================
@@ -101,7 +171,14 @@ function hasPermission(
         ];
 
     if (!permissions) {
+
+        console.error(
+            "Administrator role not recognised:",
+            storedAdministratorRole
+        );
+
         return false;
+
     }
 
     return (
@@ -114,35 +191,26 @@ function hasPermission(
 
 
 // =====================================
-// Hide Restricted Sidebar Links
+// Apply Sidebar Permissions
 // =====================================
 
 function applySidebarPermissions() {
 
-    const restrictedLinks =
+    const permissionLinks =
         document.querySelectorAll(
             "[data-permission]"
         );
 
-    restrictedLinks.forEach(
+    permissionLinks.forEach(
         (link) => {
 
             const requiredPermission =
                 link.dataset.permission;
 
-            if (
+            link.hidden =
                 !hasPermission(
                     requiredPermission
-                )
-            ) {
-
-                link.hidden = true;
-
-            } else {
-
-                link.hidden = false;
-
-            }
+                );
 
         }
     );
@@ -157,6 +225,23 @@ function applySidebarPermissions() {
 function protectPage(
     requiredPermission
 ) {
+
+    const adminLoggedIn =
+        sessionStorage.getItem(
+            "adminLoggedIn"
+        );
+
+    if (
+        adminLoggedIn !== "true"
+    ) {
+
+        window.location.replace(
+            "admin-login.html"
+        );
+
+        return false;
+
+    }
 
     if (
         hasPermission(
