@@ -20,6 +20,10 @@ import {
     getDoc
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
+import {
+    applySidebarPermissions
+} from "./role-permissions.js";
+
 const recentActivity =
     document.getElementById("recentActivity");
 
@@ -286,6 +290,10 @@ if (logoutButton) {
     );
 
 }
+
+protectPage("dashboard");
+
+applySidebarPermissions();
 
 loadCompanyBranding();
 loadAttendance();
