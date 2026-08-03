@@ -3,6 +3,11 @@
 // Settings
 // =====================================
 
+
+// =====================================
+// Firebase
+// =====================================
+
 import {
     db,
     auth
@@ -18,56 +23,84 @@ import {
     signOut
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
+import {
+    applySidebarPermissions,
+    protectPage
+} from "./role-permissions.js";
+
 
 // =====================================
 // Page Elements
 // =====================================
 
 const settingsForm =
-    document.getElementById("settingsForm");
+    document.getElementById(
+        "settingsForm"
+    );
 
 const companyNameInput =
-    document.getElementById("companyName");
+    document.getElementById(
+        "companyName"
+    );
 
 const standardStartTimeInput =
-    document.getElementById("standardStartTime");
+    document.getElementById(
+        "standardStartTime"
+    );
 
 const lateThresholdInput =
-    document.getElementById("lateThreshold");
+    document.getElementById(
+        "lateThreshold"
+    );
 
 const workMonday =
-    document.getElementById("workMonday");
+    document.getElementById(
+        "workMonday"
+    );
 
 const workTuesday =
-    document.getElementById("workTuesday");
+    document.getElementById(
+        "workTuesday"
+    );
 
 const workWednesday =
-    document.getElementById("workWednesday");
+    document.getElementById(
+        "workWednesday"
+    );
 
 const workThursday =
-    document.getElementById("workThursday");
+    document.getElementById(
+        "workThursday"
+    );
 
 const workFriday =
-    document.getElementById("workFriday");
+    document.getElementById(
+        "workFriday"
+    );
 
 const workSaturday =
-    document.getElementById("workSaturday");
+    document.getElementById(
+        "workSaturday"
+    );
 
 const workSunday =
-    document.getElementById("workSunday");
+    document.getElementById(
+        "workSunday"
+    );
 
 const settingsMessage =
-    document.getElementById("settingsMessage");
+    document.getElementById(
+        "settingsMessage"
+    );
 
 const logoutButton =
-    document.getElementById("logoutButton");
+    document.getElementById(
+        "logoutButton"
+    );
 
 const companyLogoInput =
-    document.getElementById("companyLogo");
-
-const companyLogoPreviewContainer =
     document.getElementById(
-        "companyLogoPreviewContainer"
+        "companyLogo"
     );
 
 const companyLogoPreview =
@@ -85,40 +118,74 @@ const removeCompanyLogoButton =
         "removeCompanyLogoButton"
     );
 
-let selectedCompanyLogoData = "";
+const saveSettingsButton =
+    document.getElementById(
+        "saveSettingsButton"
+    );
 
 
 // =====================================
-// Start Settings Page
+// Page State
+// =====================================
+
+let selectedCompanyLogoData =
+    "";
+
+
+// =====================================
+// Initialize Settings Page
 // =====================================
 
 initializeSettingsPage();
 
 function initializeSettingsPage() {
 
+    if (!protectPage("settings")) {
+        return;
+    }
+
+    applySidebarPermissions();
+
+    if (settingsForm) {
+
+        settingsForm.addEventListener(
+            "submit",
+            saveSettings
+        );
+
+    }
+
+    if (logoutButton) {
+
+        logoutButton.addEventListener(
+            "click",
+            logoutAdministrator
+        );
+
+    }
+
+    if (companyLogoInput) {
+
+        companyLogoInput.addEventListener(
+            "change",
+            previewCompanyLogo
+        );
+
+    }
+
+    if (removeCompanyLogoButton) {
+
+        removeCompanyLogoButton.addEventListener(
+            "click",
+            removeCompanyLogo
+        );
+
+    }
+
     loadSettings();
 
-    settingsForm.addEventListener(
-        "submit",
-        saveSettings
-    );
-
-    logoutButton.addEventListener(
-        "click",
-        logoutAdministrator
-    );
-
-    companyLogoInput.addEventListener(
-        "change",
-        previewCompanyLogo
-    );
-
-    removeCompanyLogoButton.addEventListener(
-    "click",
-    removeCompanyLogo
-);
-    
 }
+
 
 // =====================================
 // Load Settings
@@ -128,77 +195,65 @@ async function loadSettings() {
 
     try {
 
+        showMessage(
+            "Loading settings...",
+            "info"
+        );
+
         const settingsReference =
-            doc(db, "systemSettings", "attendance");
+            doc(
+                db,
+                "systemSettings",
+                "attendance"
+            );
 
         const settingsSnapshot =
-            await getDoc(settingsReference);
+            await getDoc(
+                settingsReference
+            );
 
-        if (!settingsSnapshot.exists()) {
+        if (
+            !settingsSnapshot.exists()
+        ) {
+
+            setDefaultWorkingDays();
+
+            showMessage(
+                "",
+                "info"
+            );
+
             return;
+
         }
 
         const settings =
             settingsSnapshot.data();
 
         companyNameInput.value =
-            settings.companyName ?? "";
+            settings.companyName ??
+            "";
 
         standardStartTimeInput.value =
-            settings.standardStartTime ?? "08:00";
+            settings.standardStartTime ??
+            "08:00";
 
         lateThresholdInput.value =
-            settings.lateThreshold ?? "08:15";
+            settings.lateThreshold ??
+            "08:15";
 
-        if (settings.companyLogo) {
+        loadCompanyLogo(
+            settings.companyLogo
+        );
 
-    selectedCompanyLogoData =
-        settings.companyLogo;
+        loadWorkingDays(
+            settings.workingDays
+        );
 
-    companyLogoPreview.src =
-        settings.companyLogo;
-
-    companyLogoPreview.hidden =
-        false;
-
-    noCompanyLogoMessage.style.display =
-        "none";
-
-} else {
-
-    companyLogoPreview.removeAttribute("src");
-
-    companyLogoPreview.hidden =
-        true;
-
-    noCompanyLogoMessage.style.display =
-        "block";
-
-}
-
-        const workingDays =
-            settings.workingDays ?? [];
-
-        workMonday.checked =
-            workingDays.includes("Monday");
-
-        workTuesday.checked =
-            workingDays.includes("Tuesday");
-
-        workWednesday.checked =
-            workingDays.includes("Wednesday");
-
-        workThursday.checked =
-            workingDays.includes("Thursday");
-
-        workFriday.checked =
-            workingDays.includes("Friday");
-
-        workSaturday.checked =
-            workingDays.includes("Saturday");
-
-        workSunday.checked =
-            workingDays.includes("Sunday");
+        showMessage(
+            "",
+            "info"
+        );
 
     } catch (error) {
 
@@ -218,21 +273,142 @@ async function loadSettings() {
 
 
 // =====================================
-// Save Settings
+// Load Company Logo
 // =====================================
 
-async function saveSettings(event) {
+function loadCompanyLogo(
+    companyLogo
+) {
 
-    event.preventDefault();
+    if (companyLogo) {
 
-    const companyName =
-        companyNameInput.value.trim();
+        selectedCompanyLogoData =
+            companyLogo;
 
-    const standardStartTime =
-        standardStartTimeInput.value;
+        companyLogoPreview.src =
+            companyLogo;
 
-    const lateThreshold =
-        lateThresholdInput.value;
+        companyLogoPreview.hidden =
+            false;
+
+        noCompanyLogoMessage.style.display =
+            "none";
+
+        if (removeCompanyLogoButton) {
+
+            removeCompanyLogoButton.hidden =
+                false;
+
+        }
+
+        return;
+
+    }
+
+    selectedCompanyLogoData =
+        "";
+
+    companyLogoPreview.removeAttribute(
+        "src"
+    );
+
+    companyLogoPreview.hidden =
+        true;
+
+    noCompanyLogoMessage.style.display =
+        "block";
+
+    if (removeCompanyLogoButton) {
+
+        removeCompanyLogoButton.hidden =
+            true;
+
+    }
+
+}
+
+
+// =====================================
+// Load Working Days
+// =====================================
+
+function loadWorkingDays(
+    workingDays
+) {
+
+    const selectedDays =
+        Array.isArray(
+            workingDays
+        )
+            ? workingDays
+            : [
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday"
+            ];
+
+    workMonday.checked =
+        selectedDays.includes(
+            "Monday"
+        );
+
+    workTuesday.checked =
+        selectedDays.includes(
+            "Tuesday"
+        );
+
+    workWednesday.checked =
+        selectedDays.includes(
+            "Wednesday"
+        );
+
+    workThursday.checked =
+        selectedDays.includes(
+            "Thursday"
+        );
+
+    workFriday.checked =
+        selectedDays.includes(
+            "Friday"
+        );
+
+    workSaturday.checked =
+        selectedDays.includes(
+            "Saturday"
+        );
+
+    workSunday.checked =
+        selectedDays.includes(
+            "Sunday"
+        );
+
+}
+
+
+// =====================================
+// Default Working Days
+// =====================================
+
+function setDefaultWorkingDays() {
+
+    loadWorkingDays([
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday"
+    ]);
+
+}
+
+
+// =====================================
+// Get Selected Working Days
+// =====================================
+
+function getSelectedWorkingDays() {
 
     const workingDays = [];
 
@@ -264,6 +440,33 @@ async function saveSettings(event) {
         workingDays.push("Sunday");
     }
 
+    return workingDays;
+
+}
+
+
+// =====================================
+// Save Settings
+// =====================================
+
+async function saveSettings(event) {
+
+    event.preventDefault();
+
+    const companyName =
+        companyNameInput.value
+            .trim();
+
+    const standardStartTime =
+        standardStartTimeInput.value;
+
+    const lateThreshold =
+        lateThresholdInput.value;
+
+    const workingDays =
+        getSelectedWorkingDays();
+
+
     if (companyName === "") {
 
         showMessage(
@@ -275,7 +478,11 @@ async function saveSettings(event) {
 
     }
 
-    if (!standardStartTime || !lateThreshold) {
+
+    if (
+        !standardStartTime ||
+        !lateThreshold
+    ) {
 
         showMessage(
             "Please select both attendance times.",
@@ -286,7 +493,25 @@ async function saveSettings(event) {
 
     }
 
-    if (workingDays.length === 0) {
+
+    if (
+        lateThreshold <
+        standardStartTime
+    ) {
+
+        showMessage(
+            "Late After cannot be earlier than the standard start time.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    if (
+        workingDays.length === 0
+    ) {
 
         showMessage(
             "Please select at least one working day.",
@@ -297,7 +522,12 @@ async function saveSettings(event) {
 
     }
 
+
     try {
+
+        setSaveButtonState(
+            true
+        );
 
         showMessage(
             "Saving settings...",
@@ -305,29 +535,28 @@ async function saveSettings(event) {
         );
 
         const settingsReference =
-            doc(db, "systemSettings", "attendance");
+            doc(
+                db,
+                "systemSettings",
+                "attendance"
+            );
 
         const settingsData = {
-    companyName,
-    standardStartTime,
-    lateThreshold,
-    workingDays
-};
+            companyName,
+            standardStartTime,
+            lateThreshold,
+            workingDays,
+            companyLogo:
+                selectedCompanyLogoData
+        };
 
-if (selectedCompanyLogoData !== "") {
-
-    settingsData.companyLogo =
-        selectedCompanyLogoData;
-
-}
-
-await setDoc(
-    settingsReference,
-    settingsData,
-    {
-        merge: true
-    }
-);
+        await setDoc(
+            settingsReference,
+            settingsData,
+            {
+                merge: true
+            }
+        );
 
         showMessage(
             "Settings saved successfully.",
@@ -346,33 +575,39 @@ await setDoc(
             "error"
         );
 
+    } finally {
+
+        setSaveButtonState(
+            false
+        );
+
     }
 
 }
 
 
 // =====================================
-// Message
+// Save Button State
 // =====================================
 
-function showMessage(message, type) {
+function setSaveButtonState(
+    isSaving
+) {
 
-    settingsMessage.textContent =
-        message;
-
-    if (type === "success") {
-        settingsMessage.style.color = "green";
+    if (!saveSettingsButton) {
+        return;
     }
 
-    if (type === "error") {
-        settingsMessage.style.color = "red";
-    }
+    saveSettingsButton.disabled =
+        isSaving;
 
-    if (type === "info") {
-        settingsMessage.style.color = "#0b5ed7";
-    }
+    saveSettingsButton.textContent =
+        isSaving
+            ? "Saving..."
+            : "Save Settings";
 
 }
+
 
 // =====================================
 // Preview Company Logo
@@ -384,17 +619,7 @@ function previewCompanyLogo() {
         companyLogoInput.files[0];
 
     if (!selectedFile) {
-
-        selectedCompanyLogoData = "";
-
-        companyLogoPreview.removeAttribute("src");
-        companyLogoPreview.hidden = true;
-
-        noCompanyLogoMessage.style.display =
-            "block";
-
         return;
-
     }
 
     const allowedTypes = [
@@ -403,16 +628,14 @@ function previewCompanyLogo() {
         "image/webp"
     ];
 
-    if (!allowedTypes.includes(selectedFile.type)) {
+    if (
+        !allowedTypes.includes(
+            selectedFile.type
+        )
+    ) {
 
-        companyLogoInput.value = "";
-        selectedCompanyLogoData = "";
-
-        companyLogoPreview.removeAttribute("src");
-        companyLogoPreview.hidden = true;
-
-        noCompanyLogoMessage.style.display =
-            "block";
+        companyLogoInput.value =
+            "";
 
         showMessage(
             "Please select a PNG, JPG or WEBP image.",
@@ -423,19 +646,16 @@ function previewCompanyLogo() {
 
     }
 
-    const maxFileSize =
+    const maximumFileSize =
         500 * 1024;
 
-    if (selectedFile.size > maxFileSize) {
+    if (
+        selectedFile.size >
+        maximumFileSize
+    ) {
 
-        companyLogoInput.value = "";
-        selectedCompanyLogoData = "";
-
-        companyLogoPreview.removeAttribute("src");
-        companyLogoPreview.hidden = true;
-
-        noCompanyLogoMessage.style.display =
-            "block";
+        companyLogoInput.value =
+            "";
 
         showMessage(
             "The logo must be smaller than 500 KB.",
@@ -449,41 +669,53 @@ function previewCompanyLogo() {
     const fileReader =
         new FileReader();
 
-    fileReader.onload = function (event) {
+    fileReader.onload =
+        function (event) {
 
-        selectedCompanyLogoData =
-            event.target.result;
+            selectedCompanyLogoData =
+                event.target.result;
 
-        companyLogoPreview.src =
-            selectedCompanyLogoData;
+            companyLogoPreview.src =
+                selectedCompanyLogoData;
 
-        companyLogoPreview.hidden =
-            false;
+            companyLogoPreview.hidden =
+                false;
 
-        noCompanyLogoMessage.style.display =
-            "none";
+            noCompanyLogoMessage.style.display =
+                "none";
 
-        showMessage(
-            "Logo selected. Click Save Settings to store it.",
-            "info"
-        );
+            if (
+                removeCompanyLogoButton
+            ) {
 
-    };
+                removeCompanyLogoButton.hidden =
+                    false;
 
-    fileReader.onerror = function () {
+            }
 
-        selectedCompanyLogoData = "";
+            showMessage(
+                "Logo selected. Click Save Settings to store it.",
+                "info"
+            );
 
-        showMessage(
-            "The logo could not be read.",
-            "error"
-        );
+        };
 
-    };
+    fileReader.onerror =
+        function () {
 
-    fileReader.readAsDataURL(selectedFile);
+            showMessage(
+                "The logo could not be read.",
+                "error"
+            );
+
+        };
+
+    fileReader.readAsDataURL(
+        selectedFile
+    );
 
 }
+
 
 // =====================================
 // Remove Company Logo
@@ -502,23 +734,36 @@ async function removeCompanyLogo() {
 
     try {
 
+        removeCompanyLogoButton.disabled =
+            true;
+
         showMessage(
             "Removing logo...",
             "info"
         );
 
-        selectedCompanyLogoData = "";
+        selectedCompanyLogoData =
+            "";
 
-        companyLogoInput.value = "";
+        companyLogoInput.value =
+            "";
 
-        companyLogoPreview.removeAttribute("src");
-        companyLogoPreview.hidden = true;
+        companyLogoPreview.removeAttribute(
+            "src"
+        );
+
+        companyLogoPreview.hidden =
+            true;
 
         noCompanyLogoMessage.style.display =
             "block";
 
         const settingsReference =
-            doc(db, "systemSettings", "attendance");
+            doc(
+                db,
+                "systemSettings",
+                "attendance"
+            );
 
         await setDoc(
             settingsReference,
@@ -529,6 +774,9 @@ async function removeCompanyLogo() {
                 merge: true
             }
         );
+
+        removeCompanyLogoButton.hidden =
+            true;
 
         showMessage(
             "Company logo removed successfully.",
@@ -547,9 +795,51 @@ async function removeCompanyLogo() {
             "error"
         );
 
+    } finally {
+
+        removeCompanyLogoButton.disabled =
+            false;
+
     }
 
 }
+
+
+// =====================================
+// Message
+// =====================================
+
+function showMessage(
+    message,
+    type
+) {
+
+    if (!settingsMessage) {
+        return;
+    }
+
+    settingsMessage.textContent =
+        message;
+
+    if (type === "success") {
+
+        settingsMessage.style.color =
+            "green";
+
+    } else if (type === "error") {
+
+        settingsMessage.style.color =
+            "red";
+
+    } else {
+
+        settingsMessage.style.color =
+            "#0b5ed7";
+
+    }
+
+}
+
 
 // =====================================
 // Administrator Logout
@@ -559,14 +849,23 @@ async function logoutAdministrator() {
 
     try {
 
+        if (logoutButton) {
+
+            logoutButton.disabled =
+                true;
+
+            logoutButton.textContent =
+                "Logging out...";
+
+        }
+
         await signOut(auth);
 
-        // Clear administrator session data
         sessionStorage.clear();
 
-        // Return to Admin Login
-        window.location.href =
-            "admin-login.html";
+        window.location.replace(
+            "admin-login.html"
+        );
 
     } catch (error) {
 
@@ -574,6 +873,16 @@ async function logoutAdministrator() {
             "Logout error:",
             error
         );
+
+        if (logoutButton) {
+
+            logoutButton.disabled =
+                false;
+
+            logoutButton.textContent =
+                "Logout";
+
+        }
 
         showMessage(
             "Unable to log out. Please try again.",
