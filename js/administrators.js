@@ -68,6 +68,10 @@ function openAdministratorModal() {
 
     administratorModal.hidden = false;
 
+    administratorModal.classList.add(
+        "modal-open"
+    );
+
 }
 
 
@@ -76,6 +80,10 @@ function openAdministratorModal() {
 // =====================================
 
 function closeAdministratorModal() {
+
+    administratorModal.classList.remove(
+        "modal-open"
+    );
 
     administratorModal.hidden = true;
 
