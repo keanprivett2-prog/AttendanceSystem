@@ -427,29 +427,7 @@ function formatAdministratorDate(timestamp) {
 
 }
 
-// =====================================
-// Administrator Actions
-// =====================================
 
-function handleAdministratorActions(event) {
-
-    const editButton =
-        event.target.closest(
-            ".edit-admin-btn"
-        );
-
-    if (editButton) {
-
-        const administratorId =
-            editButton.dataset.id;
-
-        openEditAdministrator(
-            administratorId
-        );
-
-    }
-
-}
 
 // =====================================
 // Open Edit Administrator
