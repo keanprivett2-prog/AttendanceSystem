@@ -304,9 +304,15 @@ async function loadAdministrators() {
                     </td>
 
                     <td>
-    <span class="administrator-status administrator-status-active">
-        ${administrator.status ?? "Active"}
-    </span>
+    <span
+    class="administrator-status ${
+        (administrator.status ?? "Active") === "Active"
+            ? "administrator-status-active"
+            : "administrator-status-disabled"
+    }"
+>
+    ${administrator.status ?? "Active"}
+</span>
 </td>
 
 <td>
@@ -328,10 +334,15 @@ async function loadAdministrators() {
 
         <button
             type="button"
-            class="admin-action-btn disable-admin-btn"
+            class="admin-action-btn toggle-admin-btn"
             data-id="${administratorDocument.id}"
+            data-status="${administrator.status ?? "Active"}"
         >
-            Disable
+            ${
+                (administrator.status ?? "Active") === "Active"
+                    ? "Disable"
+                    : "Enable"
+            }
         </button>
 
     </div>
@@ -531,25 +542,50 @@ async function openEditAdministrator(
 }
 
 // =====================================
-// Handle Administrator Submit
+// Administrator Actions
 // =====================================
 
-async function handleAdministratorSubmit(event) {
+function handleAdministratorActions(event) {
 
-    event.preventDefault();
+    const editButton =
+        event.target.closest(
+            ".edit-admin-btn"
+        );
 
-    if (editingAdministratorId) {
+    if (editButton) {
 
-        await updateAdministrator();
+        const administratorId =
+            editButton.dataset.id;
+
+        openEditAdministrator(
+            administratorId
+        );
 
         return;
 
     }
 
-    await createAdministrator(event);
+    const toggleButton =
+        event.target.closest(
+            ".toggle-admin-btn"
+        );
+
+    if (toggleButton) {
+
+        const administratorId =
+            toggleButton.dataset.id;
+
+        const currentStatus =
+            toggleButton.dataset.status;
+
+        toggleAdministratorStatus(
+            administratorId,
+            currentStatus
+        );
+
+    }
 
 }
-
 // =====================================
 // Update Administrator
 // =====================================
@@ -644,6 +680,67 @@ async function updateAdministrator() {
         showAdministratorMessage(
             "The administrator could not be updated.",
             "error"
+        );
+
+    }
+
+}
+
+// =====================================
+// Toggle Administrator Status
+// =====================================
+
+async function toggleAdministratorStatus(
+    administratorId,
+    currentStatus
+) {
+
+    const newStatus =
+        currentStatus === "Active"
+            ? "Disabled"
+            : "Active";
+
+    const actionWord =
+        newStatus === "Disabled"
+            ? "disable"
+            : "enable";
+
+    const confirmed =
+        confirm(
+            `Are you sure you want to ${actionWord} this administrator?`
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+
+        const administratorReference =
+            doc(
+                db,
+                "administrators",
+                administratorId
+            );
+
+        await updateDoc(
+            administratorReference,
+            {
+                status: newStatus
+            }
+        );
+
+        await loadAdministrators();
+
+    } catch (error) {
+
+        console.error(
+            "Toggle administrator status error:",
+            error
+        );
+
+        alert(
+            "The administrator status could not be changed."
         );
 
     }
