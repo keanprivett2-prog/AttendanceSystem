@@ -552,7 +552,7 @@ async function removeCompanyLogo() {
 }
 
 // =====================================
-// Logout
+// Administrator Logout
 // =====================================
 
 async function logoutAdministrator() {
@@ -561,14 +561,23 @@ async function logoutAdministrator() {
 
         await signOut(auth);
 
+        // Clear administrator session data
+        sessionStorage.clear();
+
+        // Return to Admin Login
         window.location.href =
-            "index.html";
+            "admin-login.html";
 
     } catch (error) {
 
         console.error(
             "Logout error:",
             error
+        );
+
+        showMessage(
+            "Unable to log out. Please try again.",
+            "error"
         );
 
     }
