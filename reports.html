@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
 
     <meta
@@ -9,17 +10,24 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>R-E-D Attendance | Reports</title>
+    <title>
+        R-E-D Attendance | Reports
+    </title>
 
     <link
         rel="stylesheet"
         href="css/admin-v2.css"
     >
+
 </head>
 
 <body>
 
     <div class="app">
+
+        <!-- =====================================
+             Sidebar
+        ====================================== -->
 
         <aside class="sidebar">
 
@@ -30,59 +38,111 @@
                 </div>
 
                 <div>
-                    <h2>R-E-D</h2>
-                    <span>Attendance</span>
+
+                    <h2>
+                        R-E-D
+                    </h2>
+
+                    <span>
+                        Attendance
+                    </span>
+
                 </div>
 
             </div>
 
             <nav class="sidebar-menu">
 
-                <a href="admin-v2.html" class="menu-link">
+                <a
+                    href="admin-v2.html"
+                    class="menu-link"
+                >
                     Dashboard
                 </a>
 
-                <a href="employees.html" class="menu-link">
-                            Employees
+                <a
+                    href="employees.html"
+                    class="menu-link"
+                    data-permission="employees"
+                >
+                    Employees
                 </a>
 
-                <a href="attendance-management.html" class="menu-link">
-       Attendance Management
-</a>
+                <a
+                    href="attendance-management.html"
+                    class="menu-link"
+                    data-permission="attendance"
+                >
+                    Attendance Management
+                </a>
 
-                <a href="reports.html" class="menu-link active">
-        Reports
-</a>
+                <a
+                    href="reports.html"
+                    class="menu-link active"
+                    data-permission="reports"
+                >
+                    Reports
+                </a>
 
-                <a href="settings.html" class="menu-link">
-    Settings
-</a>
+                <a
+                    href="settings.html"
+                    class="menu-link"
+                    data-permission="settings"
+                >
+                    Settings
+                </a>
 
-                <a href="administrators.html" class="menu-link">
-    Administrators
-</a>
+                <a
+                    href="administrators.html"
+                    class="menu-link"
+                    data-permission="administrators"
+                >
+                    Administrators
+                </a>
 
-                <a href="audit-log.html" class="menu-link">
-                    
+                <a
+                    href="audit-log.html"
+                    class="menu-link"
+                    data-permission="auditLog"
+                >
                     Audit Log
                 </a>
 
             </nav>
 
             <div class="sidebar-footer">
-                <span>R-E-D Attendance</span>
-                <small>Enterprise Edition</small>
+
+                <span>
+                    R-E-D Attendance
+                </span>
+
+                <small>
+                    Enterprise Edition
+                </small>
+
             </div>
 
         </aside>
+
+
+        <!-- =====================================
+             Main Content
+        ====================================== -->
 
         <main class="content">
 
             <header class="topbar">
 
                 <div>
-                    <h1>Reports</h1>
-                    <p>Review and export employee attendance records.</p>
+
+                    <h1>
+                        Reports
+                    </h1>
+
+                    <p>
+                        Review and export employee attendance records.
+                    </p>
+
                 </div>
 
                 <div class="topbar-right">
@@ -99,242 +159,322 @@
 
             </header>
 
+
+            <!-- =====================================
+                 Reports Heading
+            ====================================== -->
+
             <section class="employee-actions">
 
                 <div>
-                    <h2>Attendance Reports</h2>
-                    <p>Select a date range to view attendance records.</p>
+
+                    <h2>
+                        Attendance Reports
+                    </h2>
+
+                    <p>
+                        Select a date range and optional filters to view attendance records.
+                    </p>
+
                 </div>
 
             </section>
 
+
+            <!-- =====================================
+                 Report Summary
+            ====================================== -->
+
             <section class="report-summary">
 
-    <div class="info-card">
+                <div class="info-card">
 
-        <span>Total Records</span>
+                    <span>
+                        Total Records
+                    </span>
 
-        <strong id="totalRecords">
-            0
-        </strong>
+                    <strong id="totalRecords">
+                        0
+                    </strong>
 
-    </div>
+                </div>
 
-    <div class="info-card">
+                <div class="info-card">
 
-        <span>On Time</span>
+                    <span>
+                        On Time
+                    </span>
 
-        <strong id="onTimeCount">
-            0
-        </strong>
+                    <strong id="onTimeCount">
+                        0
+                    </strong>
 
-    </div>
+                </div>
 
-    <div class="info-card">
+                <div class="info-card">
 
-        <span>Late</span>
+                    <span>
+                        Late
+                    </span>
 
-        <strong id="lateCount">
-            0
-        </strong>
+                    <strong id="lateCount">
+                        0
+                    </strong>
 
-    </div>
+                </div>
 
-    <div class="info-card">
+                <div class="info-card">
 
-        <span>Absent</span>
+                    <span>
+                        Absent
+                    </span>
 
-        <strong id="absentCount">
-            0
-        </strong>
+                    <strong id="absentCount">
+                        0
+                    </strong>
 
-    </div>
+                </div>
 
-    <div class="info-card">
+                <div class="info-card">
 
-        <span>Attendance Rate</span>
+                    <span>
+                        Attendance Rate
+                    </span>
 
-        <strong id="attendanceRate">
-            0%
-        </strong>
+                    <strong id="attendanceRate">
+                        0%
+                    </strong>
 
-    </div>
+                </div>
 
-</section>
-            
+            </section>
+
+
+            <!-- =====================================
+                 Report Filters and Results
+            ====================================== -->
+
             <section class="employee-table-section">
 
-               <div class="report-filters">
+                <div class="report-filters">
 
-    <div class="form-group">
+                    <div class="form-group">
 
-        <label for="reportStartDate">
-            Start Date
-        </label>
+                        <label for="reportStartDate">
+                            Start Date
+                        </label>
 
-        <input
-            type="date"
-            id="reportStartDate"
-        >
+                        <input
+                            type="date"
+                            id="reportStartDate"
+                        >
 
-    </div>
+                    </div>
 
-    <div class="form-group">
+                    <div class="form-group">
 
-        <label for="reportEndDate">
-            End Date
-        </label>
+                        <label for="reportEndDate">
+                            End Date
+                        </label>
 
-        <input
-            type="date"
-            id="reportEndDate"
-        >
+                        <input
+                            type="date"
+                            id="reportEndDate"
+                        >
 
-    </div>
+                    </div>
 
-    <div class="form-group">
+                    <div class="form-group">
 
-        <label for="employeeFilter">
-            Employee
-        </label>
+                        <label for="employeeFilter">
+                            Employee
+                        </label>
 
-        <select id="employeeFilter">
+                        <select id="employeeFilter">
 
-            <option value="">
-                All Employees
-            </option>
+                            <option value="">
+                                All Employees
+                            </option>
 
-        </select>
+                        </select>
 
-    </div>
+                    </div>
 
-<div class="form-group">
+                    <div class="form-group">
 
-    <label for="departmentFilter">
-        Department
-    </label>
+                        <label for="departmentFilter">
+                            Department
+                        </label>
 
-    <select id="departmentFilter">
+                        <select id="departmentFilter">
 
-        <option value="">
-            All Departments
-        </option>
+                            <option value="">
+                                All Departments
+                            </option>
 
-    </select>
+                        </select>
 
-</div>
+                    </div>
 
-                   <div class="form-group">
+                    <div class="form-group">
 
-    <label for="statusFilter">
-        Status
-    </label>
+                        <label for="statusFilter">
+                            Status
+                        </label>
 
-    <select id="statusFilter">
+                        <select id="statusFilter">
 
-        <option value="">
-            All Statuses
-        </option>
+                            <option value="">
+                                All Statuses
+                            </option>
 
-        <option value="On Time">
-            On Time
-        </option>
+                            <option value="On Time">
+                                On Time
+                            </option>
 
-        <option value="Late">
-            Late
-        </option>
+                            <option value="Late">
+                                Late
+                            </option>
 
-        <option value="Absent">
-            Absent
-        </option>
+                            <option value="Absent">
+                                Absent
+                            </option>
 
-        <option value="Sick Leave">
-            Sick Leave
-        </option>
+                            <option value="Sick Leave">
+                                Sick Leave
+                            </option>
 
-        <option value="Annual Leave">
-            Annual Leave
-        </option>
+                            <option value="Annual Leave">
+                                Annual Leave
+                            </option>
 
-        <option value="Maternity Leave">
-            Maternity Leave
-        </option>
+                            <option value="Maternity Leave">
+                                Maternity Leave
+                            </option>
 
-        <option value="Unpaid Leave">
-            Unpaid Leave
-        </option>
+                            <option value="Family Responsibility Leave">
+                                Family Responsibility Leave
+                            </option>
 
-        <option value="Work From Home">
-            Work From Home
-        </option>
+                            <option value="Unpaid Leave">
+                                Unpaid Leave
+                            </option>
 
-    </select>
+                            <option value="Public Holiday">
+                                Public Holiday
+                            </option>
 
-</div>
-                   
-    <button
-        type="button"
-        class="refresh-btn"
-        id="generateReportButton"
-    >
-        Generate Report
-    </button>
+                            <option value="Work From Home">
+                                Work From Home
+                            </option>
 
-    <button
-        type="button"
-        class="refresh-btn"
-        id="exportCsvButton"
-    >
-        Export CSV
-    </button>
+                            <option value="Business Trip">
+                                Business Trip
+                            </option>
 
-                   <button
-    type="button"
-    class="refresh-btn"
-    id="printReportButton"
->
-    Print Report
-</button>
+                            <option value="Training">
+                                Training
+                            </option>
 
-</div>
+                            <option value="Medical Appointment">
+                                Medical Appointment
+                            </option>
 
-                <table class="attendance-table">
+                            <option value="Half Day">
+                                Half Day
+                            </option>
 
-                    <thead>
+                        </select>
 
-                        <tr>
-                            <th>Date</th>
-                            <th>Employee Number</th>
-                            <th>Employee Name</th>
-                            <th>Department</th>
-                            <th>Check-in Time</th>
-                            <th>Status</th>
-                        </tr>
+                    </div>
 
-                    </thead>
+                    <button
+                        type="button"
+                        class="refresh-btn"
+                        id="generateReportButton"
+                    >
+                        Generate Report
+                    </button>
 
-                    <tbody id="reportTableBody">
+                    <button
+                        type="button"
+                        class="refresh-btn"
+                        id="exportCsvButton"
+                    >
+                        Export CSV
+                    </button>
 
-                        <tr>
+                    <button
+                        type="button"
+                        class="refresh-btn"
+                        id="printReportButton"
+                    >
+                        Print Report
+                    </button>
 
-                            <td
-                                colspan="6"
-                                class="empty-row"
-                            >
-                                Select a date range and generate a report.
-                            </td>
+                </div>
 
-                        </tr>
+                <div class="employee-table-container">
 
-                    </tbody>
+                    <table class="attendance-table">
 
-                </table>
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Date
+                                </th>
+
+                                <th>
+                                    Employee Number
+                                </th>
+
+                                <th>
+                                    Employee Name
+                                </th>
+
+                                <th>
+                                    Department
+                                </th>
+
+                                <th>
+                                    Check-in Time
+                                </th>
+
+                                <th>
+                                    Status
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="reportTableBody">
+
+                            <tr>
+
+                                <td
+                                    colspan="6"
+                                    class="empty-row"
+                                >
+                                    Select a date range and generate a report.
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
 
             </section>
 
         </main>
 
     </div>
+
 
     <script
         type="module"
