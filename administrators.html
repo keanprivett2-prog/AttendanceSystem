@@ -25,6 +25,10 @@
 
     <div class="app">
 
+        <!-- =====================================
+             Sidebar
+        ====================================== -->
+
         <aside class="sidebar">
 
             <div class="sidebar-brand">
@@ -59,6 +63,7 @@
                 <a
                     href="employees.html"
                     class="menu-link"
+                    data-permission="employees"
                 >
                     Employees
                 </a>
@@ -66,6 +71,7 @@
                 <a
                     href="attendance-management.html"
                     class="menu-link"
+                    data-permission="attendance"
                 >
                     Attendance Management
                 </a>
@@ -73,6 +79,7 @@
                 <a
                     href="reports.html"
                     class="menu-link"
+                    data-permission="reports"
                 >
                     Reports
                 </a>
@@ -80,6 +87,7 @@
                 <a
                     href="settings.html"
                     class="menu-link"
+                    data-permission="settings"
                 >
                     Settings
                 </a>
@@ -87,6 +95,7 @@
                 <a
                     href="administrators.html"
                     class="menu-link active"
+                    data-permission="administrators"
                 >
                     Administrators
                 </a>
@@ -94,6 +103,7 @@
                 <a
                     href="audit-log.html"
                     class="menu-link"
+                    data-permission="auditLog"
                 >
                     Audit Log
                 </a>
@@ -113,6 +123,11 @@
             </div>
 
         </aside>
+
+
+        <!-- =====================================
+             Main Content
+        ====================================== -->
 
         <main class="content">
 
@@ -144,6 +159,11 @@
 
             </header>
 
+
+            <!-- =====================================
+                 Administrator Actions
+            ====================================== -->
+
             <section class="employee-actions">
 
                 <div>
@@ -168,6 +188,11 @@
 
             </section>
 
+
+            <!-- =====================================
+                 Administrator Table
+            ====================================== -->
+
             <section class="employee-table-section">
 
                 <div class="table-header">
@@ -186,12 +211,29 @@
 
                             <tr>
 
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Role</th>
-                                <th>Status</th>
-                                <th>Date Added</th>
-                                <th>Actions</th>
+                                <th>
+                                    Name
+                                </th>
+
+                                <th>
+                                    Email
+                                </th>
+
+                                <th>
+                                    Role
+                                </th>
+
+                                <th>
+                                    Status
+                                </th>
+
+                                <th>
+                                    Date Added
+                                </th>
+
+                                <th>
+                                    Actions
+                                </th>
 
                             </tr>
 
