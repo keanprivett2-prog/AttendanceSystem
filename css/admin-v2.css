@@ -2433,3 +2433,337 @@ line-height: 1.5;
 .toggle-admin-btn {
     color: #dc3545;
 }
+
+/* =====================================
+   Change Password Page
+===================================== */
+
+.password-page {
+    min-height: 100vh;
+    margin: 0;
+    background:
+        linear-gradient(
+            135deg,
+            #eef4ff 0%,
+            #f8fafc 55%,
+            #edf2f7 100%
+        );
+}
+
+.password-page-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 20px;
+    box-sizing: border-box;
+}
+
+.password-card {
+    width: 100%;
+    max-width: 620px;
+    background: #ffffff;
+    border: 1px solid #dfe7f1;
+    border-radius: 18px;
+    padding: 34px;
+    box-sizing: border-box;
+    box-shadow:
+        0 20px 50px
+        rgba(15, 23, 42, 0.12);
+}
+
+.password-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-bottom: 22px;
+    border-bottom: 1px solid #e5eaf0;
+}
+
+.password-brand .brand-logo {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: #0b5ed7;
+    color: #ffffff;
+    font-size: 22px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.password-brand h1 {
+    margin: 0;
+    font-size: 22px;
+    color: #172033;
+}
+
+.password-brand p {
+    margin: 4px 0 0;
+    color: #667085;
+    font-size: 14px;
+}
+
+.password-heading {
+    margin-top: 26px;
+    margin-bottom: 24px;
+}
+
+.password-heading h2 {
+    margin: 0 0 8px;
+    color: #172033;
+    font-size: 26px;
+}
+
+.password-heading p {
+    margin: 0;
+    color: #667085;
+    line-height: 1.6;
+}
+
+.password-input-wrapper {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.password-input-wrapper input {
+    flex: 1;
+    min-width: 0;
+}
+
+.password-toggle-button {
+    min-width: 72px;
+    border: 1px solid #cfd8e3;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #344054;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0 14px;
+}
+
+.password-toggle-button:hover {
+    background: #edf2f7;
+}
+
+.password-toggle-button:focus-visible {
+    outline: 3px solid rgba(11, 94, 215, 0.2);
+    outline-offset: 2px;
+}
+
+.password-strength {
+    margin-top: 18px;
+    margin-bottom: 18px;
+}
+
+.password-strength-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 8px;
+    color: #475467;
+    font-size: 14px;
+}
+
+.password-strength-header strong {
+    color: #172033;
+}
+
+.password-strength-track {
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e9eef5;
+}
+
+.password-strength-bar {
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: #cbd5e1;
+    transition:
+        width 0.25s ease,
+        background 0.25s ease;
+}
+
+.password-strength-bar[data-strength="weak"] {
+    background: #dc3545;
+}
+
+.password-strength-bar[data-strength="fair"] {
+    background: #f59e0b;
+}
+
+.password-strength-bar[data-strength="strong"] {
+    background: #0b5ed7;
+}
+
+.password-strength-bar[data-strength="very-strong"] {
+    background: #198754;
+}
+
+.password-requirements {
+    margin: 18px 0 22px;
+    padding: 18px;
+    border: 1px solid #dfe7f1;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+.password-requirements p {
+    margin: 0 0 12px;
+    color: #344054;
+    font-weight: 600;
+}
+
+.password-requirements ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 9px;
+}
+
+.password-requirements li {
+    position: relative;
+    padding-left: 26px;
+    color: #667085;
+    font-size: 14px;
+}
+
+.password-requirements li::before {
+    content: "○";
+    position: absolute;
+    left: 0;
+    top: -1px;
+    color: #98a2b3;
+    font-weight: 700;
+}
+
+.password-requirements li.requirement-met {
+    color: #198754;
+}
+
+.password-requirements li.requirement-met::before {
+    content: "✓";
+    color: #198754;
+}
+
+.password-requirements li.requirement-unmet {
+    color: #667085;
+}
+
+.password-match-message,
+.password-form-message {
+    min-height: 22px;
+    margin: 10px 0 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.password-match-message.match-success {
+    color: #198754;
+}
+
+.password-match-message.match-error {
+    color: #dc3545;
+}
+
+.password-form-message.message-success {
+    color: #198754;
+}
+
+.password-form-message.message-error {
+    color: #dc3545;
+}
+
+.password-form-message.message-info {
+    color: #0b5ed7;
+}
+
+.password-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.password-actions button {
+    flex: 1;
+    min-height: 44px;
+}
+
+.password-success-screen {
+    text-align: center;
+    padding: 28px 0 4px;
+}
+
+.password-success-icon {
+    width: 74px;
+    height: 74px;
+    margin: 0 auto 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #e8f7ee;
+    color: #198754;
+    font-size: 38px;
+    font-weight: 800;
+}
+
+.password-success-screen h2 {
+    margin: 0 0 10px;
+    color: #172033;
+}
+
+.password-success-screen p {
+    margin: 6px 0;
+    color: #667085;
+}
+
+.password-success-screen button {
+    margin-top: 22px;
+    min-width: 220px;
+}
+
+@media (max-width: 640px) {
+
+    .password-page-container {
+        align-items: flex-start;
+        padding: 18px 12px;
+    }
+
+    .password-card {
+        padding: 24px 18px;
+        border-radius: 14px;
+    }
+
+    .password-brand h1 {
+        font-size: 19px;
+    }
+
+    .password-heading h2 {
+        font-size: 23px;
+    }
+
+    .password-input-wrapper {
+        flex-direction: column;
+    }
+
+    .password-toggle-button {
+        min-height: 40px;
+    }
+
+    .password-actions {
+        flex-direction: column;
+    }
+
+    .password-success-screen button {
+        width: 100%;
+        min-width: 0;
+    }
+}
