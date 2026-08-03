@@ -17,7 +17,8 @@ import {
     EmailAuthProvider,
     reauthenticateWithCredential,
     updatePassword,
-    signOut
+    signOut,
+    onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 import {
@@ -142,16 +143,14 @@ let currentAdministratorReference =
 
 initializeChangePasswordPage();
 
-async function initializeChangePasswordPage() {
+function initializeChangePasswordPage() {
 
     const adminLoggedIn =
         sessionStorage.getItem(
             "adminLoggedIn"
         );
 
-    if (
-        adminLoggedIn !== "true"
-    ) {
+    if (adminLoggedIn !== "true") {
 
         window.location.replace(
             "admin-login.html"
@@ -161,69 +160,79 @@ async function initializeChangePasswordPage() {
 
     }
 
-    if (!auth.currentUser) {
+    onAuthStateChanged(auth, async (user) => {
 
-        showMessage(
-            "Your administrator session could not be verified. Please sign in again.",
-            "error"
-        );
+        if (!user) {
 
-        setTimeout(
-            signOutAdministrator,
-            1800
-        );
+            sessionStorage.clear();
 
-        return;
-
-    }
-
-    currentAdministratorReference =
-        doc(
-            db,
-            "administrators",
-            auth.currentUser.uid
-        );
-
-    try {
-
-        const administratorSnapshot =
-            await getDoc(
-                currentAdministratorReference
-            );
-
-        if (
-            !administratorSnapshot.exists()
-        ) {
-
-            showMessage(
-                "Your administrator account could not be found.",
-                "error"
-            );
-
-            setTimeout(
-                signOutAdministrator,
-                1800
+            window.location.replace(
+                "admin-login.html"
             );
 
             return;
 
         }
 
-    } catch (error) {
+        currentAdministratorReference =
+            doc(
+                db,
+                "administrators",
+                user.uid
+            );
 
-        console.error(
-            "Administrator verification error:",
-            error
-        );
+        try {
 
-        showMessage(
-            "Your administrator account could not be verified.",
-            "error"
-        );
+            const administratorSnapshot =
+                await getDoc(
+                    currentAdministratorReference
+                );
 
-        return;
+            if (
+                !administratorSnapshot.exists()
+            ) {
 
-    }
+                showMessage(
+                    "Administrator account not found.",
+                    "error"
+                );
+
+                return;
+
+            }
+
+            const administrator =
+                administratorSnapshot.data();
+
+            if (
+                administrator.status ===
+                "Disabled"
+            ) {
+
+                await signOutAdministrator();
+
+                return;
+
+            }
+
+            attachEvents();
+
+        } catch (error) {
+
+            console.error(error);
+
+            showMessage(
+                "Unable to verify administrator account.",
+                "error"
+            );
+
+        }
+
+    });
+
+}
+
+function attachEvents() {
 
     changePasswordForm.addEventListener(
         "submit",
@@ -255,23 +264,22 @@ async function initializeChangePasswordPage() {
         continueToDashboard
     );
 
-    passwordToggleButtons.forEach(
-        (button) => {
+    passwordToggleButtons.forEach((button) => {
 
-            button.addEventListener(
-                "click",
-                togglePasswordVisibility
-            );
+        button.addEventListener(
+            "click",
+            togglePasswordVisibility
+        );
 
-        }
-    );
+    });
 
     updatePasswordRequirements();
+
+    updatePasswordStrength();
 
     updatePasswordMatch();
 
 }
-
 
 // =====================================
 // New Password Input
