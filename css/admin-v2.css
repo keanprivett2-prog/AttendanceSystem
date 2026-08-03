@@ -2255,3 +2255,19 @@ line-height: 1.5;
 .dashboard-heading-text p {
     margin: 0;
 }
+
+/* =====================================
+   Sidebar Company Logo
+===================================== */
+
+.sidebar-company-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.brand-logo:has(.sidebar-company-logo:not([hidden])) {
+    background: white;
+    padding: 5px;
+    overflow: hidden;
+}
