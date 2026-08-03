@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        R-E-D Attendance | Administrators
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="css/admin-v2.css"
+    >
+
+</head>
+
+<body>
+
+    <div class="app">
+
+        <aside class="sidebar">
+
+            <div class="sidebar-brand">
+
+                <div class="brand-logo">
+                    R
+                </div>
+
+                <div>
+                    <h2>R-E-D</h2>
+                    <span>Attendance</span>
+                </div>
+
+            </div>
+
+            <nav class="sidebar-menu">
+
+                <a
+                    href="admin-v2.html"
+                    class="menu-link"
+                >
+                    Dashboard
+                </a>
+
+                <a
+                    href="employees.html"
+                    class="menu-link"
+                >
+                    Employees
+                </a>
+
+                <a
+                    href="attendance-management.html"
+                    class="menu-link"
+                >
+                    Attendance Management
+                </a>
+
+                <a
+                    href="reports.html"
+                    class="menu-link"
+                >
+                    Reports
+                </a>
+
+                <a
+                    href="settings.html"
+                    class="menu-link"
+                >
+                    Settings
+                </a>
+
+                <a
+                    href="administrators.html"
+                    class="menu-link active"
+                >
+                    Administrators
+                </a>
+
+                <a
+                    href="audit-log.html"
+                    class="menu-link"
+                >
+                    Audit Log
+                </a>
+
+            </nav>
+
+            <div class="sidebar-footer">
+
+                <span>
+                    R-E-D Attendance
+                </span>
+
+                <small>
+                    Enterprise Edition
+                </small>
+
+            </div>
+
+        </aside>
+
+        <main class="content">
+
+            <header class="topbar">
+
+                <div>
+
+                    <h1>
+                        Administrators
+                    </h1>
+
+                    <p>
+                        Manage administrator accounts and access levels.
+                    </p>
+
+                </div>
+
+                <div class="topbar-right">
+
+                    <button
+                        type="button"
+                        class="logout-btn"
+                        id="logoutButton"
+                    >
+                        Logout
+                    </button>
+
+                </div>
+
+            </header>
+
+            <section class="employee-actions">
+
+                <div>
+
+                    <h2>
+                        Administrator Management
+                    </h2>
+
+                    <p>
+                        Add and manage users who have access to the administration system.
+                    </p>
+
+                </div>
+
+                <button
+                    type="button"
+                    class="refresh-btn"
+                    id="addAdministratorButton"
+                >
+                    Add Administrator
+                </button>
+
+            </section>
+
+            <section class="employee-table-section">
+
+                <div class="table-header">
+
+                    <h2>
+                        Administrators
+                    </h2>
+
+                </div>
+
+                <table class="attendance-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Name
+                            </th>
+
+                            <th>
+                                Email
+                            </th>
+
+                            <th>
+                                Role
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th>
+                                Date Added
+                            </th>
+
+                            <th>
+                                Actions
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="administratorTableBody">
+
+                        <tr>
+
+                            <td
+                                colspan="6"
+                                class="empty-row"
+                            >
+                                No administrators found.
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </section>
+
+        </main>
+
+    </div>
+
+    <script
+        type="module"
+        src="js/administrators.js"
+    ></script>
+
+</body>
+
+</html>
