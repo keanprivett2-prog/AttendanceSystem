@@ -17,7 +17,9 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 import {
-    signOut
+    signOut,
+    setPersistence,
+    browserSessionPersistence
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 
@@ -98,6 +100,11 @@ async function adminLogin() {
         // Firebase Authentication
         // =====================================
 
+        await setPersistence(
+    auth,
+    browserSessionPersistence
+);
+        
         const user =
             await loginAdmin(
                 email,
