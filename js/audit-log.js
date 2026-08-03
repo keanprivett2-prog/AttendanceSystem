@@ -1,4 +1,17 @@
-import { auth, db } from "../firebase/firebase.js";
+// =====================================
+// R-E-D Attendance
+// Audit Log
+// =====================================
+
+
+// =====================================
+// Firebase
+// =====================================
+
+import {
+    auth,
+    db
+} from "../firebase/firebase.js";
 
 import {
     collection,
@@ -7,64 +20,156 @@ import {
     orderBy
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
+import {
+    signOut
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+
+
+// =====================================
+// Page Elements
+// =====================================
+
 const auditTableBody =
-    document.getElementById("auditTableBody");
+    document.getElementById(
+        "auditTableBody"
+    );
 
 const logoutButton =
-    document.getElementById("logoutButton");
+    document.getElementById(
+        "logoutButton"
+    );
+
+
+// =====================================
+// Start Audit Log Page
+// =====================================
+
+initializeAuditLogPage();
+
+function initializeAuditLogPage() {
+
+    loadAuditLog();
+
+    if (logoutButton) {
+
+        logoutButton.addEventListener(
+            "click",
+            logoutAdministrator
+        );
+
+    }
+
+}
+
+
+// =====================================
+// Load Audit Log
+// =====================================
 
 async function loadAuditLog() {
 
     try {
 
-        const auditQuery = query(
-            collection(db, "auditLog"),
-            orderBy("timestamp", "desc")
-        );
+        auditTableBody.innerHTML = `
+            <tr>
+                <td
+                    colspan="5"
+                    class="empty-row"
+                >
+                    Loading audit records...
+                </td>
+            </tr>
+        `;
 
-        const snapshot = await getDocs(auditQuery);
+        const auditQuery =
+            query(
+                collection(
+                    db,
+                    "auditLog"
+                ),
+                orderBy(
+                    "timestamp",
+                    "desc"
+                )
+            );
 
-        auditTableBody.innerHTML = "";
+        const snapshot =
+            await getDocs(
+                auditQuery
+            );
+
+        auditTableBody.innerHTML =
+            "";
 
         if (snapshot.empty) {
 
             auditTableBody.innerHTML = `
                 <tr>
-                    <td colspan="5" class="empty-row">
+                    <td
+                        colspan="5"
+                        class="empty-row"
+                    >
                         No audit records have been created yet.
                     </td>
                 </tr>
             `;
 
             return;
+
         }
 
-        snapshot.forEach((documentSnapshot) => {
+        snapshot.forEach(
+            (documentSnapshot) => {
 
-            const record = documentSnapshot.data();
+                const record =
+                    documentSnapshot.data();
 
-            let formattedDate = "Pending";
+                const formattedDate =
+                    formatAuditDate(
+                        record.timestamp
+                    );
 
-            if (record.timestamp) {
+                const row =
+                    document.createElement(
+                        "tr"
+                    );
 
-                formattedDate =
-                    record.timestamp.toDate().toLocaleString();
+                row.innerHTML = `
+                    <td>
+                        ${escapeHtml(formattedDate)}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(
+                            record.administrator ?? "-"
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(
+                            record.action ?? "-"
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(
+                            record.employee ?? "-"
+                        )}
+                    </td>
+
+                    <td class="audit-details">
+                        ${formatAuditDetails(
+                            record.details
+                        )}
+                    </td>
+                `;
+
+                auditTableBody.appendChild(
+                    row
+                );
 
             }
-
-            auditTableBody.innerHTML += `
-    <tr>
-        <td>${formattedDate}</td>
-        <td>${record.administrator ?? "-"}</td>
-        <td>${record.action ?? "-"}</td>
-        <td>${record.employee ?? "-"}</td>
-        <td class="audit-details">
-            ${formatAuditDetails(record.details)}
-        </td>
-    </tr>
-`;
-
-        });
+        );
 
     } catch (error) {
 
@@ -75,7 +180,10 @@ async function loadAuditLog() {
 
         auditTableBody.innerHTML = `
             <tr>
-                <td colspan="5" class="empty-row">
+                <td
+                    colspan="5"
+                    class="empty-row"
+                >
                     Unable to load audit records.
                 </td>
             </tr>
@@ -84,57 +192,203 @@ async function loadAuditLog() {
     }
 
 }
+
+
+// =====================================
+// Format Audit Date
+// =====================================
+
+function formatAuditDate(timestamp) {
+
+    if (!timestamp) {
+        return "Pending";
+    }
+
+    try {
+
+        return timestamp
+            .toDate()
+            .toLocaleString(
+                "en-ZA",
+                {
+                    day:
+                        "2-digit",
+
+                    month:
+                        "short",
+
+                    year:
+                        "numeric",
+
+                    hour:
+                        "2-digit",
+
+                    minute:
+                        "2-digit"
+                }
+            );
+
+    } catch (error) {
+
+        console.error(
+            "Audit date format error:",
+            error
+        );
+
+        return "Pending";
+
+    }
+
+}
+
+
+// =====================================
+// Format Audit Details
+// =====================================
+
 function formatAuditDetails(details) {
 
     if (!details) {
         return "-";
     }
 
+    const safeDetails =
+        String(details);
+
     if (
-        details.includes("Previous:") &&
-        details.includes("| Updated:")
+        safeDetails.includes(
+            "Previous:"
+        ) &&
+        safeDetails.includes(
+            "| Updated:"
+        )
     ) {
 
         const parts =
-            details.split("| Updated:");
+            safeDetails.split(
+                "| Updated:"
+            );
 
         const previousDetails =
-            parts[0].replace("Previous:", "").trim();
+            parts[0]
+                .replace(
+                    "Previous:",
+                    ""
+                )
+                .trim();
 
         const updatedDetails =
-            parts[1].trim();
+            parts
+                .slice(1)
+                .join(
+                    "| Updated:"
+                )
+                .trim();
 
         return `
             <div class="audit-comparison">
 
                 <div class="audit-value old-value">
+
                     <span class="audit-label">
                         Previous
                     </span>
 
                     <span>
-                        ${previousDetails}
+                        ${escapeHtml(
+                            previousDetails
+                        )}
                     </span>
+
                 </div>
 
                 <div class="audit-value new-value">
+
                     <span class="audit-label">
                         Updated
                     </span>
 
                     <span>
-                        ${updatedDetails}
+                        ${escapeHtml(
+                            updatedDetails
+                        )}
                     </span>
+
                 </div>
 
             </div>
         `;
+
     }
 
     return `
         <div class="audit-single-detail">
-            ${details}
+            ${escapeHtml(safeDetails)}
         </div>
     `;
+
 }
-loadAuditLog();
+
+
+// =====================================
+// Escape HTML
+// =====================================
+
+function escapeHtml(value) {
+
+    return String(
+        value ?? ""
+    )
+        .replaceAll(
+            "&",
+            "&amp;"
+        )
+        .replaceAll(
+            "<",
+            "&lt;"
+        )
+        .replaceAll(
+            ">",
+            "&gt;"
+        )
+        .replaceAll(
+            '"',
+            "&quot;"
+        )
+        .replaceAll(
+            "'",
+            "&#039;"
+        );
+
+}
+
+
+// =====================================
+// Administrator Logout
+// =====================================
+
+async function logoutAdministrator() {
+
+    try {
+
+        await signOut(auth);
+
+        sessionStorage.clear();
+
+        window.location.href =
+            "admin-login.html";
+
+    } catch (error) {
+
+        console.error(
+            "Logout error:",
+            error
+        );
+
+        alert(
+            "Unable to log out. Please try again."
+        );
+
+    }
+
+}
