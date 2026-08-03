@@ -34,8 +34,15 @@
                 </div>
 
                 <div>
-                    <h2>R-E-D</h2>
-                    <span>Attendance</span>
+
+                    <h2>
+                        R-E-D
+                    </h2>
+
+                    <span>
+                        Attendance
+                    </span>
+
                 </div>
 
             </div>
@@ -171,56 +178,43 @@
 
                 </div>
 
-                <table class="attendance-table">
+                <div class="employee-table-container">
 
-                    <thead>
+                    <table class="attendance-table">
 
-                        <tr>
+                        <thead>
 
-                            <th>
-                                Name
-                            </th>
+                            <tr>
 
-                            <th>
-                                Email
-                            </th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Date Added</th>
+                                <th>Actions</th>
 
-                            <th>
-                                Role
-                            </th>
+                            </tr>
 
-                            <th>
-                                Status
-                            </th>
+                        </thead>
 
-                            <th>
-                                Date Added
-                            </th>
+                        <tbody id="administratorTableBody">
 
-                            <th>
-                                Actions
-                            </th>
+                            <tr>
 
-                        </tr>
+                                <td
+                                    colspan="6"
+                                    class="empty-row"
+                                >
+                                    No administrators found.
+                                </td>
 
-                    </thead>
+                            </tr>
 
-                    <tbody id="administratorTableBody">
+                        </tbody>
 
-                        <tr>
+                    </table>
 
-                            <td
-                                colspan="6"
-                                class="empty-row"
-                            >
-                                No administrators found.
-                            </td>
-
-                        </tr>
-
-                    </tbody>
-
-                </table>
+                </div>
 
             </section>
 
@@ -228,145 +222,162 @@
 
     </div>
 
+
+    <!-- =====================================
+         Administrator Modal
+    ====================================== -->
+
     <div
-    class="modal-overlay"
-    id="administratorModal"
-    hidden
->
+        class="modal-overlay"
+        id="administratorModal"
+        hidden
+    >
 
-    <div class="modal-card">
+        <div class="modal-card">
 
-        <div class="modal-header">
+            <div class="modal-header">
 
-            <div>
+                <div>
 
-                <h2 id="administratorModalTitle">
-    Add Administrator
-</h2>
+                    <h2 id="administratorModalTitle">
+                        Add Administrator
+                    </h2>
 
-                <p>
-                    Create a new administrator account.
-                </p>
+                    <p>
+                        Create or update an administrator account.
+                    </p>
 
-            </div>
-
-            <button
-                type="button"
-                class="modal-close-btn"
-                id="closeAdministratorModalButton"
-            >
-                ×
-            </button>
-
-        </div>
-
-        <form id="administratorForm">
-
-            <div class="form-group">
-
-                <label for="administratorName">
-                    Full Name
-                </label>
-
-                <input
-                    type="text"
-                    id="administratorName"
-                    required
-                >
-
-            </div>
-
-            <div class="form-group">
-
-                <label for="administratorEmail">
-                    Email Address
-                </label>
-
-                <input
-                    type="email"
-                    id="administratorEmail"
-                    required
-                >
-
-            </div>
-
-            <div class="form-group">
-
-                <label for="administratorPassword">
-                    Temporary Password
-                </label>
-
-                <input
-                    type="password"
-                    id="administratorPassword"
-                    minlength="6"
-                    required
-                >
-
-            </div>
-
-            <div class="form-group">
-
-                <label for="administratorRole">
-                    Role
-                </label>
-
-                <select
-                    id="administratorRole"
-                    required
-                >
-
-                    <option value="">
-                        Select role
-                    </option>
-
-                    <option value="superAdministrator">
-                        Super Administrator
-                    </option>
-
-                    <option value="administrator">
-                        Administrator
-                    </option>
-
-                    <option value="manager">
-                        Manager
-                    </option>
-
-                    <option value="readOnly">
-                        Read Only
-                    </option>
-
-                </select>
-
-            </div>
-
-            <div class="modal-actions">
+                </div>
 
                 <button
                     type="button"
-                    class="logout-btn"
-                    id="cancelAdministratorButton"
+                    class="modal-close-btn"
+                    id="closeAdministratorModalButton"
+                    aria-label="Close administrator form"
                 >
-                    Cancel
+                    ×
                 </button>
-
-                <button
-    type="submit"
-    class="refresh-btn"
-    id="saveAdministratorButton"
->
-    Create Administrator
-</button>
 
             </div>
 
-            <p id="administratorMessage"></p>
+            <form id="administratorForm">
 
-        </form>
+                <div class="form-group">
+
+                    <label for="administratorName">
+                        Full Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="administratorName"
+                        autocomplete="name"
+                        required
+                    >
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="administratorEmail">
+                        Email Address
+                    </label>
+
+                    <input
+                        type="email"
+                        id="administratorEmail"
+                        autocomplete="email"
+                        required
+                    >
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="administratorPassword">
+                        Temporary Password
+                    </label>
+
+                    <input
+                        type="password"
+                        id="administratorPassword"
+                        minlength="6"
+                        autocomplete="new-password"
+                        required
+                    >
+
+                    <small>
+                        Minimum of 6 characters. Password editing is disabled when updating an existing administrator.
+                    </small>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="administratorRole">
+                        Role
+                    </label>
+
+                    <select
+                        id="administratorRole"
+                        required
+                    >
+
+                        <option value="">
+                            Select role
+                        </option>
+
+                        <option value="superAdministrator">
+                            Super Administrator
+                        </option>
+
+                        <option value="administrator">
+                            Administrator
+                        </option>
+
+                        <option value="manager">
+                            Manager
+                        </option>
+
+                        <option value="readOnly">
+                            Read Only
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="modal-actions">
+
+                    <button
+                        type="button"
+                        class="logout-btn"
+                        id="cancelAdministratorButton"
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="refresh-btn"
+                        id="saveAdministratorButton"
+                    >
+                        Create Administrator
+                    </button>
+
+                </div>
+
+                <p
+                    id="administratorMessage"
+                    aria-live="polite"
+                ></p>
+
+            </form>
+
+        </div>
 
     </div>
 
-</div>
 
     <script
         type="module"
