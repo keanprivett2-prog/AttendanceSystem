@@ -2376,3 +2376,51 @@ line-height: 1.5;
 
     margin-top: 25px;
 }
+
+/* =====================================
+   Administrator Status
+===================================== */
+
+.administrator-status {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.administrator-status-active {
+    background: #e8f7ee;
+    color: #198754;
+}
+
+
+/* =====================================
+   Administrator Actions
+===================================== */
+
+.administrator-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.admin-action-btn {
+    padding: 7px 12px;
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.admin-action-btn:hover {
+    background: #f5f7fa;
+}
+
+.edit-admin-btn {
+    color: #0b5ed7;
+}
+
+.disable-admin-btn {
+    color: #dc3545;
+}
