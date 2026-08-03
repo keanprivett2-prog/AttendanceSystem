@@ -726,6 +726,26 @@ async function toggleAdministratorStatus(
 }
 
 // =====================================
+// Handle Administrator Submit
+// =====================================
+
+async function handleAdministratorSubmit(event) {
+
+    event.preventDefault();
+
+    if (editingAdministratorId) {
+
+        await updateAdministrator();
+
+        return;
+
+    }
+
+    await createAdministrator(event);
+
+}
+
+// =====================================
 // Create Administrator
 // =====================================
 
