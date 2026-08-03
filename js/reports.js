@@ -3,6 +3,11 @@
 // Reports
 // =====================================
 
+
+// =====================================
+// Firebase
+// =====================================
+
 import {
     db,
     auth
@@ -21,51 +26,122 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 
-const startDateInput =
-    document.getElementById("reportStartDate");
+// =====================================
+// Page Elements
+// =====================================
 
+const startDateInput =
+    document.getElementById(
+        "reportStartDate"
+    );
 
 const endDateInput =
-    document.getElementById("reportEndDate");
+    document.getElementById(
+        "reportEndDate"
+    );
 
 const employeeFilter =
-    document.getElementById("employeeFilter");
+    document.getElementById(
+        "employeeFilter"
+    );
 
 const departmentFilter =
-    document.getElementById("departmentFilter");
+    document.getElementById(
+        "departmentFilter"
+    );
 
 const statusFilter =
-    document.getElementById("statusFilter");
+    document.getElementById(
+        "statusFilter"
+    );
 
 const generateReportButton =
-    document.getElementById("generateReportButton");
+    document.getElementById(
+        "generateReportButton"
+    );
 
 const exportCsvButton =
-    document.getElementById("exportCsvButton");
+    document.getElementById(
+        "exportCsvButton"
+    );
 
 const printReportButton =
-    document.getElementById("printReportButton");
+    document.getElementById(
+        "printReportButton"
+    );
 
 const reportTableBody =
-    document.getElementById("reportTableBody");
+    document.getElementById(
+        "reportTableBody"
+    );
 
 const totalRecords =
-    document.getElementById("totalRecords");
+    document.getElementById(
+        "totalRecords"
+    );
 
 const onTimeCount =
-    document.getElementById("onTimeCount");
+    document.getElementById(
+        "onTimeCount"
+    );
 
 const lateCount =
-    document.getElementById("lateCount");
+    document.getElementById(
+        "lateCount"
+    );
 
 const absentCount =
-    document.getElementById("absentCount");
+    document.getElementById(
+        "absentCount"
+    );
 
 const attendanceRate =
-    document.getElementById("attendanceRate");
+    document.getElementById(
+        "attendanceRate"
+    );
 
 const logoutButton =
-    document.getElementById("logoutButton");
+    document.getElementById(
+        "logoutButton"
+    );
+
+
+// =====================================
+// Start Reports Page
+// =====================================
+
+initializeReportsPage();
+
+function initializeReportsPage() {
+
+    setDefaultDates();
+
+    loadEmployeeFilter();
+
+    loadDepartmentFilter();
+
+    generateReportButton.addEventListener(
+        "click",
+        generateReport
+    );
+
+    exportCsvButton.addEventListener(
+        "click",
+        exportReportToCsv
+    );
+
+    printReportButton.addEventListener(
+        "click",
+        printReport
+    );
+
+    logoutButton.addEventListener(
+        "click",
+        logoutAdministrator
+    );
+
+}
+
 
 // =====================================
 // Default Report Dates
@@ -84,12 +160,17 @@ function setDefaultDates() {
         );
 
     startDateInput.value =
-    formatLocalDate(firstDay);
+        formatLocalDate(firstDay);
 
-endDateInput.value =
-    formatLocalDate(today);
+    endDateInput.value =
+        formatLocalDate(today);
 
 }
+
+
+// =====================================
+// Format Local Date
+// =====================================
 
 function formatLocalDate(date) {
 
@@ -97,58 +178,23 @@ function formatLocalDate(date) {
         date.getFullYear();
 
     const month =
-        String(date.getMonth() + 1)
-            .padStart(2, "0");
+        String(
+            date.getMonth() + 1
+        ).padStart(2, "0");
 
     const day =
-        String(date.getDate())
-            .padStart(2, "0");
+        String(
+            date.getDate()
+        ).padStart(2, "0");
 
     return `${year}-${month}-${day}`;
 
 }
-setDefaultDates();
 
-loadEmployeeFilter();
 
-loadDepartmentFilter();
-
-generateReportButton.addEventListener(
-    "click",
-    generateReport
-);
-
-exportCsvButton.addEventListener(
-    "click",
-    exportReportToCsv
-);
-
-printReportButton.addEventListener(
-    "click",
-    printReport
-);
-
-logoutButton.addEventListener(
-    "click",
-    async () => {
-
-        try {
-
-            await signOut(auth);
-
-                         window.location.href = "index.html";
-
-        } catch (error) {
-
-            console.error(
-                "Logout error:",
-                error
-            );
-
-        }
-
-    }
-);
+// =====================================
+// Load Employee Filter
+// =====================================
 
 async function loadEmployeeFilter() {
 
@@ -156,23 +202,33 @@ async function loadEmployeeFilter() {
 
         const employeesSnapshot =
             await getDocs(
-                collection(db, "employees")
+                collection(
+                    db,
+                    "employees"
+                )
             );
 
         const employees = [];
 
-        employeesSnapshot.forEach((documentSnapshot) => {
+        employeesSnapshot.forEach(
+            (documentSnapshot) => {
 
-            employees.push({
-                id: documentSnapshot.id,
-                ...documentSnapshot.data()
-            });
+                employees.push({
+                    id:
+                        documentSnapshot.id,
 
-        });
+                    ...documentSnapshot.data()
+                });
 
-        employees.sort((a, b) =>
-            String(a.name ?? "")
-                .localeCompare(String(b.name ?? ""))
+            }
+        );
+
+        employees.sort(
+            (a, b) =>
+                String(a.name ?? "")
+                    .localeCompare(
+                        String(b.name ?? "")
+                    )
         );
 
         employeeFilter.innerHTML = `
@@ -181,20 +237,26 @@ async function loadEmployeeFilter() {
             </option>
         `;
 
-        employees.forEach((employee) => {
+        employees.forEach(
+            (employee) => {
 
-            const option =
-                document.createElement("option");
+                const option =
+                    document.createElement(
+                        "option"
+                    );
 
-            option.value =
-                employee.employeeNumber ?? "";
+                option.value =
+                    employee.employeeNumber ?? "";
 
-            option.textContent =
-                `${employee.employeeNumber ?? "-"} - ${employee.name ?? "Unnamed Employee"}`;
+                option.textContent =
+                    `${employee.employeeNumber ?? "-"} - ${employee.name ?? "Unnamed Employee"}`;
 
-            employeeFilter.appendChild(option);
+                employeeFilter.appendChild(
+                    option
+                );
 
-        });
+            }
+        );
 
     } catch (error) {
 
@@ -207,45 +269,95 @@ async function loadEmployeeFilter() {
 
 }
 
+
+// =====================================
+// Load Department Filter
+// =====================================
+
 async function loadDepartmentFilter() {
 
-    const employeeSnapshot =
-        await getDocs(
-            collection(db, "employees")
+    try {
+
+        const employeeSnapshot =
+            await getDocs(
+                collection(
+                    db,
+                    "employees"
+                )
+            );
+
+        const departments =
+            new Set();
+
+        employeeSnapshot.forEach(
+            (employeeDocument) => {
+
+                const employeeData =
+                    employeeDocument.data();
+
+                const department =
+                    String(
+                        employeeData.department ?? ""
+                    ).trim();
+
+                if (department !== "") {
+
+                    departments.add(
+                        department
+                    );
+
+                }
+
+            }
         );
 
-    const departments = new Set();
+        const sortedDepartments =
+            Array.from(
+                departments
+            ).sort();
 
-    employeeSnapshot.forEach((employeeDocument) => {
+        departmentFilter.innerHTML = `
+            <option value="">
+                All Departments
+            </option>
+        `;
 
-        const employeeData =
-            employeeDocument.data();
+        sortedDepartments.forEach(
+            (department) => {
 
-        const department =
-            String(employeeData.department ?? "").trim();
+                const option =
+                    document.createElement(
+                        "option"
+                    );
 
-        if (department !== "") {
-            departments.add(department);
-        }
+                option.value =
+                    department;
 
-    });
+                option.textContent =
+                    department;
 
-    const sortedDepartments =
-        Array.from(departments).sort();
+                departmentFilter.appendChild(
+                    option
+                );
 
-    sortedDepartments.forEach((department) => {
+            }
+        );
 
-        const option =
-            document.createElement("option");
+    } catch (error) {
 
-        option.value = department;
-        option.textContent = department;
+        console.error(
+            "Department filter error:",
+            error
+        );
 
-        departmentFilter.appendChild(option);
-
-    });
+    }
 
 }
+
+
+// =====================================
+// Generate Report
+// =====================================
 
 async function generateReport() {
 
@@ -256,23 +368,30 @@ async function generateReport() {
         endDateInput.value;
 
     const selectedEmployee =
-    employeeFilter.value;
+        employeeFilter.value;
 
     const selectedDepartment =
-    departmentFilter.value;
+        departmentFilter.value;
 
     const selectedStatus =
-    statusFilter.value;
+        statusFilter.value;
 
-    if (!startDate || !endDate) {
+
+    if (
+        !startDate ||
+        !endDate
+    ) {
 
         showTableMessage(
             "Please select both a start date and an end date."
         );
 
+        resetSummaryCards();
+
         return;
 
     }
+
 
     if (startDate > endDate) {
 
@@ -280,64 +399,107 @@ async function generateReport() {
             "The start date cannot be after the end date."
         );
 
+        resetSummaryCards();
+
         return;
 
     }
+
 
     showTableMessage(
         "Loading attendance records..."
     );
 
+
     try {
 
-        let attendanceQuery;
-
-attendanceQuery = query(
-    collection(db, "attendance"),
-    where("dateKey", ">=", startDate),
-    where("dateKey", "<=", endDate),
-    orderBy("dateKey", "desc")
-);
+        const attendanceQuery =
+            query(
+                collection(
+                    db,
+                    "attendance"
+                ),
+                where(
+                    "dateKey",
+                    ">=",
+                    startDate
+                ),
+                where(
+                    "dateKey",
+                    "<=",
+                    endDate
+                ),
+                orderBy(
+                    "dateKey",
+                    "desc"
+                )
+            );
 
         const snapshot =
-            await getDocs(attendanceQuery);
+            await getDocs(
+                attendanceQuery
+            );
 
         let records = [];
 
-snapshot.forEach((documentSnapshot) => {
+        snapshot.forEach(
+            (documentSnapshot) => {
 
-    records.push({
-        id: documentSnapshot.id,
-        ...documentSnapshot.data()
-    });
+                records.push({
+                    id:
+                        documentSnapshot.id,
 
-});
+                    ...documentSnapshot.data()
+                });
 
-if (selectedEmployee !== "") {
+            }
+        );
 
-    records = records.filter((record) =>
-        String(record.employeeNumber ?? "") === selectedEmployee
-    );
 
-}
+        if (selectedEmployee !== "") {
 
-if (selectedDepartment !== "") {
+            records =
+                records.filter(
+                    (record) =>
+                        String(
+                            record.employeeNumber ?? ""
+                        ) === selectedEmployee
+                );
 
-    records = records.filter((record) =>
-        String(record.department ?? "").trim() === selectedDepartment
-    );
+        }
 
-}
+
+        if (selectedDepartment !== "") {
+
+            records =
+                records.filter(
+                    (record) =>
+                        String(
+                            record.department ?? ""
+                        ).trim() ===
+                        selectedDepartment
+                );
+
+        }
+
 
         if (selectedStatus !== "") {
 
-    records = records.filter((record) =>
-        String(record.status ?? "").trim() === selectedStatus
-    );
+            records =
+                records.filter(
+                    (record) =>
+                        String(
+                            record.status ?? ""
+                        ).trim() ===
+                        selectedStatus
+                );
 
-}
+        }
 
-displayReport(records);
+
+        displayReport(
+            records
+        );
 
     } catch (error) {
 
@@ -350,9 +512,16 @@ displayReport(records);
             "The report could not be loaded. Check the browser console."
         );
 
+        resetSummaryCards();
+
     }
 
 }
+
+
+// =====================================
+// Update Summary Cards
+// =====================================
 
 function updateSummaryCards(records) {
 
@@ -360,18 +529,30 @@ function updateSummaryCards(records) {
         records.length;
 
     const onTime =
-        records.filter((record) =>
-            String(record.status).toLowerCase() === "on time"
+        records.filter(
+            (record) =>
+                String(
+                    record.status ?? ""
+                ).toLowerCase() ===
+                "on time"
         ).length;
 
     const late =
-        records.filter((record) =>
-            String(record.status).toLowerCase() === "late"
+        records.filter(
+            (record) =>
+                String(
+                    record.status ?? ""
+                ).toLowerCase() ===
+                "late"
         ).length;
 
     const absent =
-        records.filter((record) =>
-            String(record.status).toLowerCase() === "absent"
+        records.filter(
+            (record) =>
+                String(
+                    record.status ?? ""
+                ).toLowerCase() ===
+                "absent"
         ).length;
 
     const attended =
@@ -380,7 +561,12 @@ function updateSummaryCards(records) {
     const rate =
         total === 0
             ? 0
-            : Math.round((attended / total) * 100);
+            : Math.round(
+                (
+                    attended /
+                    total
+                ) * 100
+            );
 
     totalRecords.textContent =
         total;
@@ -399,6 +585,35 @@ function updateSummaryCards(records) {
 
 }
 
+
+// =====================================
+// Reset Summary Cards
+// =====================================
+
+function resetSummaryCards() {
+
+    totalRecords.textContent =
+        "0";
+
+    onTimeCount.textContent =
+        "0";
+
+    lateCount.textContent =
+        "0";
+
+    absentCount.textContent =
+        "0";
+
+    attendanceRate.textContent =
+        "0%";
+
+}
+
+
+// =====================================
+// Format Report Date
+// =====================================
+
 function formatReportDate(dateKey) {
 
     if (!dateKey) {
@@ -406,14 +621,21 @@ function formatReportDate(dateKey) {
     }
 
     const date =
-        new Date(`${dateKey}T00:00:00`);
+        new Date(
+            `${dateKey}T00:00:00`
+        );
 
     return date.toLocaleDateString(
         "en-ZA",
         {
-            day: "2-digit",
-            month: "short",
-            year: "numeric"
+            day:
+                "2-digit",
+
+            month:
+                "short",
+
+            year:
+                "numeric"
         }
     );
 
@@ -426,17 +648,30 @@ function formatReportDate(dateKey) {
 
 function createStatusClass(status) {
 
-    return `status-${String(status ?? "unknown")
+    return `status-${String(
+        status ?? "unknown"
+    )
         .toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/[^a-z0-9-]/g, "")}`;
+        .replace(
+            /\s+/g,
+            "-"
+        )
+        .replace(
+            /[^a-z0-9-]/g,
+            ""
+        )}`;
 
 }
 
 
+// =====================================
+// Display Report
+// =====================================
+
 function displayReport(records) {
 
-    reportTableBody.innerHTML = "";
+    reportTableBody.innerHTML =
+        "";
 
     if (records.length === 0) {
 
@@ -444,76 +679,165 @@ function displayReport(records) {
             "No attendance records were found for that date range."
         );
 
+        resetSummaryCards();
+
         return;
 
     }
 
-    records.forEach((record) => {
+    records.forEach(
+        (record) => {
 
-        const row =
-            document.createElement("tr");
+            const row =
+                document.createElement(
+                    "tr"
+                );
 
-        const statusClass =
-    createStatusClass(record.status);
+            const statusClass =
+                createStatusClass(
+                    record.status
+                );
 
-row.innerHTML = `
-    <td>${escapeHtml(formatReportDate(record.dateKey ?? record.date))}</td>
-    <td>${escapeHtml(record.employeeNumber ?? "-")}</td>
-    <td>${escapeHtml(record.name ?? "-")}</td>
-    <td>${escapeHtml(record.department ?? "-")}</td>
-    <td>${escapeHtml(record.time ?? "-")}</td>
+            row.innerHTML = `
+                <td>
+                    ${escapeHtml(
+                        formatReportDate(
+                            record.dateKey ??
+                            record.date
+                        )
+                    )}
+                </td>
 
-    <td>
-        <span class="status-badge ${statusClass}">
-            ${escapeHtml(record.status ?? "Unknown")}
-        </span>
-    </td>
-`;
+                <td>
+                    ${escapeHtml(
+                        record.employeeNumber ??
+                        "-"
+                    )}
+                </td>
 
-        reportTableBody.appendChild(row);
+                <td>
+                    ${escapeHtml(
+                        record.name ??
+                        "-"
+                    )}
+                </td>
 
-    });
+                <td>
+                    ${escapeHtml(
+                        record.department ??
+                        "-"
+                    )}
+                </td>
 
-    updateSummaryCards(records);
-    
+                <td>
+                    ${escapeHtml(
+                        record.time ??
+                        "-"
+                    )}
+                </td>
+
+                <td>
+                    <span
+                        class="status-badge ${statusClass}"
+                    >
+                        ${escapeHtml(
+                            record.status ??
+                            "Unknown"
+                        )}
+                    </span>
+                </td>
+            `;
+
+            reportTableBody.appendChild(
+                row
+            );
+
+        }
+    );
+
+    updateSummaryCards(
+        records
+    );
+
 }
+
+
+// =====================================
+// Show Table Message
+// =====================================
 
 function showTableMessage(message) {
 
     reportTableBody.innerHTML = `
         <tr>
+
             <td
                 colspan="6"
                 class="empty-row"
             >
                 ${escapeHtml(message)}
             </td>
+
         </tr>
     `;
 
 }
 
+
+// =====================================
+// Escape HTML
+// =====================================
+
 function escapeHtml(value) {
 
-    return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+    return String(
+        value ?? ""
+    )
+        .replaceAll(
+            "&",
+            "&amp;"
+        )
+        .replaceAll(
+            "<",
+            "&lt;"
+        )
+        .replaceAll(
+            ">",
+            "&gt;"
+        )
+        .replaceAll(
+            '"',
+            "&quot;"
+        )
+        .replaceAll(
+            "'",
+            "&#039;"
+        );
 
 }
+
+
+// =====================================
+// Export Report to CSV
+// =====================================
+
 function exportReportToCsv() {
 
     const rows =
-        reportTableBody.querySelectorAll("tr");
+        reportTableBody.querySelectorAll(
+            "tr"
+        );
 
     if (
         rows.length === 0 ||
-        rows[0].querySelector(".empty-row")
+        rows[0].querySelector(
+            ".empty-row"
+        )
     ) {
 
-        alert("Please generate a report before exporting.");
+        alert(
+            "Please generate a report before exporting."
+        );
 
         return;
 
@@ -530,43 +854,67 @@ function exportReportToCsv() {
         "Status"
     ]);
 
-    rows.forEach((row) => {
+    rows.forEach(
+        (row) => {
 
-        const cells =
-            row.querySelectorAll("td");
+            const cells =
+                row.querySelectorAll(
+                    "td"
+                );
 
-        const rowData =
-            Array.from(cells).map((cell) => {
+            const rowData =
+                Array.from(
+                    cells
+                ).map(
+                    (cell) => {
 
-                const value =
-                    cell.textContent.trim();
+                        const value =
+                            cell.textContent.trim();
 
-                return `"${value.replaceAll('"', '""')}"`;
+                        return `"${value.replaceAll(
+                            '"',
+                            '""'
+                        )}"`;
 
-            });
+                    }
+                );
 
-        csvRows.push(rowData);
+            csvRows.push(
+                rowData
+            );
 
-    });
+        }
+    );
 
     const csvContent =
         csvRows
-            .map((row) => row.join(";"))
+            .map(
+                (row) =>
+                    row.join(";")
+            )
             .join("\n");
 
     const blob =
         new Blob(
-            [csvContent],
+            [
+                "\uFEFF" +
+                csvContent
+            ],
             {
-                type: "text/csv;charset=utf-8;"
+                type:
+                    "text/csv;charset=utf-8;"
             }
         );
 
     const downloadUrl =
-        URL.createObjectURL(blob);
+        URL.createObjectURL(
+            blob
+        );
 
     const downloadLink =
-        document.createElement("a");
+        document.createElement(
+            "a"
+        );
 
     downloadLink.href =
         downloadUrl;
@@ -574,31 +922,80 @@ function exportReportToCsv() {
     downloadLink.download =
         `attendance-report-${startDateInput.value}-to-${endDateInput.value}.csv`;
 
-    document.body.appendChild(downloadLink);
+    document.body.appendChild(
+        downloadLink
+    );
 
     downloadLink.click();
 
-    document.body.removeChild(downloadLink);
+    document.body.removeChild(
+        downloadLink
+    );
 
-    URL.revokeObjectURL(downloadUrl);
+    URL.revokeObjectURL(
+        downloadUrl
+    );
 
 }
+
+
+// =====================================
+// Print Report
+// =====================================
+
 function printReport() {
 
     const rows =
-        reportTableBody.querySelectorAll("tr");
+        reportTableBody.querySelectorAll(
+            "tr"
+        );
 
     if (
         rows.length === 0 ||
-        rows[0].querySelector(".empty-row")
+        rows[0].querySelector(
+            ".empty-row"
+        )
     ) {
 
-        alert("Please generate a report before printing.");
+        alert(
+            "Please generate a report before printing."
+        );
 
         return;
 
     }
 
     window.print();
+
+}
+
+
+// =====================================
+// Administrator Logout
+// =====================================
+
+async function logoutAdministrator() {
+
+    try {
+
+        await signOut(auth);
+
+        sessionStorage.clear();
+
+        window.location.href =
+            "admin-login.html";
+
+    } catch (error) {
+
+        console.error(
+            "Logout error:",
+            error
+        );
+
+        alert(
+            "Unable to log out. Please try again."
+        );
+
+    }
 
 }
