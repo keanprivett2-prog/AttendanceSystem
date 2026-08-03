@@ -1,3 +1,5 @@
+import "./admin-session.js";
+
 // =====================================
 // R-E-D Attendance
 // Administrators
