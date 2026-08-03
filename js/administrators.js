@@ -27,6 +27,8 @@ import {
 import {
     doc,
     setDoc,
+    getDoc,
+    updateDoc,
     serverTimestamp,
     collection,
     getDocs,
@@ -180,7 +182,26 @@ function initializeAdministratorsPage() {
 
 function openAdministratorModal() {
 
+    editingAdministratorId = null;
+
+    administratorModalTitle.textContent =
+        "Add Administrator";
+
+    saveAdministratorButton.textContent =
+        "Create Administrator";
+
+    administratorPasswordInput.disabled =
+        false;
+
+    administratorPasswordInput.required =
+        true;
+
+    administratorPasswordInput.placeholder =
+        "";
+
     administratorMessage.textContent = "";
+
+    administratorForm.reset();
 
     administratorModal.hidden = false;
 
@@ -413,6 +434,96 @@ function handleAdministratorActions(event) {
 
         openEditAdministrator(
             administratorId
+        );
+
+    }
+
+}
+
+// =====================================
+// Open Edit Administrator
+// =====================================
+
+async function openEditAdministrator(
+    administratorId
+) {
+
+    try {
+
+        const administratorReference =
+            doc(
+                db,
+                "administrators",
+                administratorId
+            );
+
+        const administratorSnapshot =
+            await getDoc(
+                administratorReference
+            );
+
+        if (!administratorSnapshot.exists()) {
+
+            alert(
+                "Administrator could not be found."
+            );
+
+            return;
+
+        }
+
+        const administrator =
+            administratorSnapshot.data();
+
+        editingAdministratorId =
+            administratorId;
+
+        administratorModalTitle.textContent =
+            "Edit Administrator";
+
+        saveAdministratorButton.textContent =
+            "Save Changes";
+
+        administratorNameInput.value =
+            administrator.fullName ?? "";
+
+        administratorEmailInput.value =
+            administrator.email ?? "";
+
+        administratorRoleInput.value =
+            administrator.role ?? "";
+
+        administratorPasswordInput.value =
+            "";
+
+        administratorPasswordInput.required =
+            false;
+
+        administratorPasswordInput.disabled =
+            true;
+
+        administratorPasswordInput.placeholder =
+            "Password cannot be changed here";
+
+        administratorMessage.textContent =
+            "";
+
+        administratorModal.hidden =
+            false;
+
+        administratorModal.classList.add(
+            "modal-open"
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Open administrator error:",
+            error
+        );
+
+        alert(
+            "The administrator could not be opened."
         );
 
     }
