@@ -27,7 +27,11 @@ import {
 import {
     doc,
     setDoc,
-    serverTimestamp
+    serverTimestamp,
+    collection,
+    getDocs,
+    query,
+    orderBy
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 
@@ -108,14 +112,22 @@ const logoutButton =
         "logoutButton"
     );
 
+const administratorTableBody =
+    document.getElementById(
+        "administratorTableBody"
+    );
+
 
 // =====================================
 // Start Page
 // =====================================
 
+
 initializeAdministratorsPage();
 
 function initializeAdministratorsPage() {
+
+    loadAdministrators();
 
     addAdministratorButton.addEventListener(
         "click",
@@ -177,6 +189,174 @@ function closeAdministratorModal() {
     administratorForm.reset();
 
     administratorMessage.textContent = "";
+
+}
+
+// =====================================
+// Load Administrators
+// =====================================
+
+async function loadAdministrators() {
+
+    try {
+
+        administratorTableBody.innerHTML = `
+            <tr>
+                <td colspan="6" class="empty-row">
+                    Loading administrators...
+                </td>
+            </tr>
+        `;
+
+        const administratorsQuery =
+            query(
+                collection(
+                    db,
+                    "administrators"
+                ),
+                orderBy(
+                    "createdAt",
+                    "desc"
+                )
+            );
+
+        const snapshot =
+            await getDocs(
+                administratorsQuery
+            );
+
+        if (snapshot.empty) {
+
+            administratorTableBody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="empty-row">
+                        No administrators found.
+                    </td>
+                </tr>
+            `;
+
+            return;
+
+        }
+
+        administratorTableBody.innerHTML = "";
+
+        snapshot.forEach(
+            (administratorDocument) => {
+
+                const administrator =
+                    administratorDocument.data();
+
+                const row =
+                    document.createElement("tr");
+
+                row.innerHTML = `
+                    <td>
+                        ${administrator.fullName ?? ""}
+                    </td>
+
+                    <td>
+                        ${administrator.email ?? ""}
+                    </td>
+
+                    <td>
+                        ${formatAdministratorRole(
+                            administrator.role
+                        )}
+                    </td>
+
+                    <td>
+                        <span class="status-badge">
+                            ${administrator.status ?? "Active"}
+                        </span>
+                    </td>
+
+                    <td>
+                        ${formatAdministratorDate(
+                            administrator.createdAt
+                        )}
+                    </td>
+
+                    <td>
+                        -
+                    </td>
+                `;
+
+                administratorTableBody.appendChild(
+                    row
+                );
+
+            }
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Load administrators error:",
+            error
+        );
+
+        administratorTableBody.innerHTML = `
+            <tr>
+                <td colspan="6" class="empty-row">
+                    Administrators could not be loaded.
+                </td>
+            </tr>
+        `;
+
+    }
+
+}
+
+
+// =====================================
+// Format Role
+// =====================================
+
+function formatAdministratorRole(role) {
+
+    if (role === "superAdministrator") {
+        return "Super Administrator";
+    }
+
+    if (role === "administrator") {
+        return "Administrator";
+    }
+
+    if (role === "manager") {
+        return "Manager";
+    }
+
+    if (role === "readOnly") {
+        return "Read Only";
+    }
+
+    return role ?? "";
+
+}
+
+
+// =====================================
+// Format Date
+// =====================================
+
+function formatAdministratorDate(timestamp) {
+
+    if (!timestamp) {
+        return "-";
+    }
+
+    const date =
+        timestamp.toDate();
+
+    return date.toLocaleDateString(
+        "en-ZA",
+        {
+            day: "2-digit",
+            month: "short",
+            year: "numeric"
+        }
+    );
 
 }
 
@@ -327,6 +507,7 @@ async function createAdministrator(event) {
         );
 
         administratorForm.reset();
+        await loadAdministrators();
 
 
         setTimeout(
