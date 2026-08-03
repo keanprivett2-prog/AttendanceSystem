@@ -266,20 +266,38 @@ async function loadAdministrators() {
                     </td>
 
                     <td>
-                        <span class="status-badge">
-                            ${administrator.status ?? "Active"}
-                        </span>
-                    </td>
+    <span class="administrator-status administrator-status-active">
+        ${administrator.status ?? "Active"}
+    </span>
+</td>
 
-                    <td>
-                        ${formatAdministratorDate(
-                            administrator.createdAt
-                        )}
-                    </td>
+<td>
+    ${formatAdministratorDate(
+        administrator.createdAt
+    )}
+</td>
 
-                    <td>
-                        -
-                    </td>
+<td>
+    <div class="administrator-actions">
+
+        <button
+            type="button"
+            class="admin-action-btn edit-admin-btn"
+            data-id="${administratorDocument.id}"
+        >
+            Edit
+        </button>
+
+        <button
+            type="button"
+            class="admin-action-btn disable-admin-btn"
+            data-id="${administratorDocument.id}"
+        >
+            Disable
+        </button>
+
+    </div>
+</td>
                 `;
 
                 administratorTableBody.appendChild(
