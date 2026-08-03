@@ -10,7 +10,9 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>R-E-D Attendance Enterprise</title>
+    <title>
+        R-E-D Attendance | Attendance Management
+    </title>
 
     <link
         rel="stylesheet"
@@ -21,107 +23,132 @@
 
 <body>
 
-    <div class="container">
+    <div class="app">
 
         <aside class="sidebar">
 
-    <div class="sidebar-brand">
+            <div class="sidebar-brand">
 
-        <div class="brand-logo">
-            R
-        </div>
+                <div class="brand-logo">
+                    R
+                </div>
 
-        <div>
+                <div>
 
-            <h2>R-E-D</h2>
+                    <h2>
+                        R-E-D
+                    </h2>
 
-            <span>Attendance</span>
+                    <span>
+                        Attendance
+                    </span>
 
-        </div>
+                </div>
 
-    </div>
+            </div>
 
-    <nav class="sidebar-menu">
+            <nav class="sidebar-menu">
 
-            <a href="admin-v2.html">
-                Dashboard
-            </a>
+                <a
+                    href="admin-v2.html"
+                    class="menu-link"
+                >
+                    Dashboard
+                </a>
 
-            <a href="employees.html">
-                Employees
-            </a>
+                <a
+                    href="employees.html"
+                    class="menu-link"
+                >
+                    Employees
+                </a>
 
-            <a
-                href="attendance-management.html"
-                class="active"
-            >
-                Attendance Management
-            </a>
+                <a
+                    href="attendance-management.html"
+                    class="menu-link active"
+                >
+                    Attendance Management
+                </a>
 
-            <a href="reports.html">
-                Reports
-            </a>
+                <a
+                    href="reports.html"
+                    class="menu-link"
+                >
+                    Reports
+                </a>
 
-            <a href="settings.html" class="menu-link">
-    Settings
-</a>
+                <a
+                    href="settings.html"
+                    class="menu-link"
+                >
+                    Settings
+                </a>
 
-            <a href="administrators.html" class="menu-link">
-    Administrators
-</a>
+                <a
+                    href="administrators.html"
+                    class="menu-link"
+                >
+                    Administrators
+                </a>
 
-            <a href="audit-log.html">
-                Audit Log
-            </a>
+                <a
+                    href="audit-log.html"
+                    class="menu-link"
+                >
+                    Audit Log
+                </a>
 
-    </nav>
+            </nav>
 
             <div class="sidebar-footer">
-                <span>R-E-D Attendance</span>
-                <small>Enterprise Edition</small>
+
+                <span>
+                    R-E-D Attendance
+                </span>
+
+                <small>
+                    Enterprise Edition
+                </small>
+
             </div>
 
         </aside>
-
-        </nav>
-
 
         <main class="content">
 
             <header class="topbar">
 
-    <div>
+                <div>
 
-        <h1>
-            Attendance Management
-        </h1>
+                    <h1>
+                        Attendance Management
+                    </h1>
 
-        <p>
-            Record, update and review employee attendance.
-        </p>
+                    <p>
+                        Record, update and review employee attendance.
+                    </p>
 
-    </div>
+                </div>
 
-    <div class="topbar-right">
+                <div class="topbar-right">
 
-        <button
-            type="button"
-            class="logout-btn"
-            id="logoutButton"
-        >
-            Logout
-        </button>
+                    <button
+                        type="button"
+                        class="logout-btn"
+                        id="logoutButton"
+                    >
+                        Logout
+                    </button>
 
-    </div>
+                </div>
 
-</header>
-
+            </header>
 
             <div class="attendance-layout">
 
-                <!-- =========================================
-                     Record Attendance Card
-                ========================================== -->
+                <!-- =====================================
+                     Record Attendance
+                ====================================== -->
 
                 <section class="attendance-management-card">
 
@@ -134,14 +161,12 @@
                             </h2>
 
                             <p>
-                                Assign or update an employee’s attendance
-                                status for a selected date.
+                                Assign or update an employee’s attendance status for a selected date.
                             </p>
 
                         </div>
 
                     </div>
-
 
                     <form id="attendanceManagementForm">
 
@@ -166,7 +191,6 @@
 
                             </div>
 
-
                             <div class="form-group">
 
                                 <label for="attendanceDate">
@@ -180,7 +204,6 @@
                                 >
 
                             </div>
-
 
                             <div class="form-group form-group-full">
 
@@ -257,7 +280,6 @@
 
                             </div>
 
-
                             <div class="form-group form-group-full">
 
                                 <label for="attendanceNotes">
@@ -275,7 +297,6 @@
 
                         </div>
 
-
                         <div class="form-actions">
 
                             <button
@@ -288,17 +309,19 @@
 
                         </div>
 
-
-                        <p id="attendanceMessage"></p>
+                        <p
+                            id="attendanceMessage"
+                            aria-live="polite"
+                        ></p>
 
                     </form>
 
                 </section>
 
 
-                <!-- =========================================
-                     Attendance History Card
-                ========================================== -->
+                <!-- =====================================
+                     Attendance History and Calendar
+                ====================================== -->
 
                 <section class="attendance-management-card">
 
@@ -311,8 +334,7 @@
                             </h2>
 
                             <p>
-                                The selected employee’s ten most recent
-                                attendance records.
+                                The selected employee’s ten most recent attendance records.
                             </p>
 
                         </div>
@@ -321,70 +343,100 @@
 
                     <div class="attendance-summary">
 
-    <h3>Attendance Summary</h3>
+                        <h3>
+                            Attendance Summary
+                        </h3>
 
-    <div class="summary-grid">
+                        <div class="summary-grid">
 
-        <div class="summary-item">
-            <span>On Time</span>
-            <strong id="summaryOnTime">0</strong>
-        </div>
+                            <div class="summary-item">
 
-        <div class="summary-item">
-            <span>Late</span>
-            <strong id="summaryLate">0</strong>
-        </div>
+                                <span>
+                                    On Time
+                                </span>
 
-        <div class="summary-item">
-            <span>Absent</span>
-            <strong id="summaryAbsent">0</strong>
-        </div>
+                                <strong id="summaryOnTime">
+                                    0
+                                </strong>
 
-        <div class="summary-item">
-            <span>Leave</span>
-            <strong id="summaryLeave">0</strong>
-        </div>
+                            </div>
 
-    </div>
+                            <div class="summary-item">
 
-</div>
+                                <span>
+                                    Late
+                                </span>
 
-<div class="attendance-calendar">
+                                <strong id="summaryLate">
+                                    0
+                                </strong>
 
-    <div class="calendar-header">
+                            </div>
 
-        <button
-            type="button"
-            id="previousMonthButton"
-            class="calendar-navigation-button"
-        >
-            Previous
-        </button>
+                            <div class="summary-item">
 
-        <h3 id="calendarMonthTitle">
-            Calendar
-        </h3>
+                                <span>
+                                    Absent
+                                </span>
 
-        <button
-            type="button"
-            id="nextMonthButton"
-            class="calendar-navigation-button"
-        >
-            Next
-        </button>
+                                <strong id="summaryAbsent">
+                                    0
+                                </strong>
 
-    </div>
+                            </div>
 
-    <div id="attendanceCalendarGrid">
+                            <div class="summary-item">
 
-        <p class="empty-state">
-            Select an employee to view the attendance calendar.
-        </p>
+                                <span>
+                                    Leave
+                                </span>
 
-    </div>
+                                <strong id="summaryLeave">
+                                    0
+                                </strong>
 
-</div>
-                    
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="attendance-calendar">
+
+                        <div class="calendar-header">
+
+                            <button
+                                type="button"
+                                id="previousMonthButton"
+                                class="calendar-navigation-button"
+                            >
+                                Previous
+                            </button>
+
+                            <h3 id="calendarMonthTitle">
+                                Calendar
+                            </h3>
+
+                            <button
+                                type="button"
+                                id="nextMonthButton"
+                                class="calendar-navigation-button"
+                            >
+                                Next
+                            </button>
+
+                        </div>
+
+                        <div id="attendanceCalendarGrid">
+
+                            <p class="empty-state">
+                                Select an employee to view the attendance calendar.
+                            </p>
+
+                        </div>
+
+                    </div>
+
                     <div id="attendanceHistory">
 
                         <p class="empty-state">
@@ -400,7 +452,6 @@
         </main>
 
     </div>
-
 
     <script
         type="module"
