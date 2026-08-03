@@ -25,6 +25,11 @@ import {
     signOut
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
+import {
+    applySidebarPermissions,
+    protectPage
+} from "./role-permissions.js";
+
 
 // =====================================
 // Page Elements
@@ -107,12 +112,25 @@ const logoutButton =
 
 
 // =====================================
-// Start Reports Page
+// Current Report Records
+// =====================================
+
+let currentReportRecords = [];
+
+
+// =====================================
+// Initialize Reports Page
 // =====================================
 
 initializeReportsPage();
 
 function initializeReportsPage() {
+
+    if (!protectPage("reports")) {
+        return;
+    }
+
+    applySidebarPermissions();
 
     setDefaultDates();
 
@@ -120,25 +138,41 @@ function initializeReportsPage() {
 
     loadDepartmentFilter();
 
-    generateReportButton.addEventListener(
-        "click",
-        generateReport
-    );
+    if (generateReportButton) {
 
-    exportCsvButton.addEventListener(
-        "click",
-        exportReportToCsv
-    );
+        generateReportButton.addEventListener(
+            "click",
+            generateReport
+        );
 
-    printReportButton.addEventListener(
-        "click",
-        printReport
-    );
+    }
 
-    logoutButton.addEventListener(
-        "click",
-        logoutAdministrator
-    );
+    if (exportCsvButton) {
+
+        exportCsvButton.addEventListener(
+            "click",
+            exportReportToCsv
+        );
+
+    }
+
+    if (printReportButton) {
+
+        printReportButton.addEventListener(
+            "click",
+            printReport
+        );
+
+    }
+
+    if (logoutButton) {
+
+        logoutButton.addEventListener(
+            "click",
+            logoutAdministrator
+        );
+
+    }
 
 }
 
@@ -198,9 +232,19 @@ function formatLocalDate(date) {
 
 async function loadEmployeeFilter() {
 
+    if (!employeeFilter) {
+        return;
+    }
+
+    employeeFilter.innerHTML = `
+        <option value="">
+            Loading employees...
+        </option>
+    `;
+
     try {
 
-        const employeesSnapshot =
+        const employeeSnapshot =
             await getDocs(
                 collection(
                     db,
@@ -208,27 +252,25 @@ async function loadEmployeeFilter() {
                 )
             );
 
-        const employees = [];
-
-        employeesSnapshot.forEach(
-            (documentSnapshot) => {
-
-                employees.push({
+        const employees =
+            employeeSnapshot.docs.map(
+                (employeeDocument) => ({
                     id:
-                        documentSnapshot.id,
+                        employeeDocument.id,
 
-                    ...documentSnapshot.data()
-                });
-
-            }
-        );
+                    ...employeeDocument.data()
+                })
+            );
 
         employees.sort(
-            (a, b) =>
-                String(a.name ?? "")
-                    .localeCompare(
-                        String(b.name ?? "")
+            (firstEmployee, secondEmployee) =>
+                String(
+                    firstEmployee.name ?? ""
+                ).localeCompare(
+                    String(
+                        secondEmployee.name ?? ""
                     )
+                )
         );
 
         employeeFilter.innerHTML = `
@@ -265,6 +307,12 @@ async function loadEmployeeFilter() {
             error
         );
 
+        employeeFilter.innerHTML = `
+            <option value="">
+                Unable to load employees
+            </option>
+        `;
+
     }
 
 }
@@ -275,6 +323,16 @@ async function loadEmployeeFilter() {
 // =====================================
 
 async function loadDepartmentFilter() {
+
+    if (!departmentFilter) {
+        return;
+    }
+
+    departmentFilter.innerHTML = `
+        <option value="">
+            Loading departments...
+        </option>
+    `;
 
     try {
 
@@ -314,7 +372,12 @@ async function loadDepartmentFilter() {
         const sortedDepartments =
             Array.from(
                 departments
-            ).sort();
+            ).sort(
+                (firstDepartment, secondDepartment) =>
+                    firstDepartment.localeCompare(
+                        secondDepartment
+                    )
+            );
 
         departmentFilter.innerHTML = `
             <option value="">
@@ -349,6 +412,12 @@ async function loadDepartmentFilter() {
             "Department filter error:",
             error
         );
+
+        departmentFilter.innerHTML = `
+            <option value="">
+                Unable to load departments
+            </option>
+        `;
 
     }
 
@@ -406,6 +475,10 @@ async function generateReport() {
     }
 
 
+    setGenerateButtonState(
+        true
+    );
+
     showTableMessage(
         "Loading attendance records..."
     );
@@ -435,25 +508,20 @@ async function generateReport() {
                 )
             );
 
-        const snapshot =
+        const attendanceSnapshot =
             await getDocs(
                 attendanceQuery
             );
 
-        let records = [];
-
-        snapshot.forEach(
-            (documentSnapshot) => {
-
-                records.push({
+        let records =
+            attendanceSnapshot.docs.map(
+                (attendanceDocument) => ({
                     id:
-                        documentSnapshot.id,
+                        attendanceDocument.id,
 
-                    ...documentSnapshot.data()
-                });
-
-            }
-        );
+                    ...attendanceDocument.data()
+                })
+            );
 
 
         if (selectedEmployee !== "") {
@@ -463,7 +531,8 @@ async function generateReport() {
                     (record) =>
                         String(
                             record.employeeNumber ?? ""
-                        ) === selectedEmployee
+                        ) ===
+                        selectedEmployee
                 );
 
         }
@@ -488,14 +557,19 @@ async function generateReport() {
             records =
                 records.filter(
                     (record) =>
-                        String(
-                            record.status ?? ""
-                        ).trim() ===
-                        selectedStatus
+                        normalizeStatus(
+                            record.status
+                        ) ===
+                        normalizeStatus(
+                            selectedStatus
+                        )
                 );
 
         }
 
+
+        currentReportRecords =
+            records;
 
         displayReport(
             records
@@ -508,158 +582,45 @@ async function generateReport() {
             error
         );
 
+        currentReportRecords =
+            [];
+
         showTableMessage(
             "The report could not be loaded. Check the browser console."
         );
 
         resetSummaryCards();
 
-    }
+    } finally {
 
-}
-
-
-// =====================================
-// Update Summary Cards
-// =====================================
-
-function updateSummaryCards(records) {
-
-    const total =
-        records.length;
-
-    const onTime =
-        records.filter(
-            (record) =>
-                String(
-                    record.status ?? ""
-                ).toLowerCase() ===
-                "on time"
-        ).length;
-
-    const late =
-        records.filter(
-            (record) =>
-                String(
-                    record.status ?? ""
-                ).toLowerCase() ===
-                "late"
-        ).length;
-
-    const absent =
-        records.filter(
-            (record) =>
-                String(
-                    record.status ?? ""
-                ).toLowerCase() ===
-                "absent"
-        ).length;
-
-    const attended =
-        onTime + late;
-
-    const rate =
-        total === 0
-            ? 0
-            : Math.round(
-                (
-                    attended /
-                    total
-                ) * 100
-            );
-
-    totalRecords.textContent =
-        total;
-
-    onTimeCount.textContent =
-        onTime;
-
-    lateCount.textContent =
-        late;
-
-    absentCount.textContent =
-        absent;
-
-    attendanceRate.textContent =
-        `${rate}%`;
-
-}
-
-
-// =====================================
-// Reset Summary Cards
-// =====================================
-
-function resetSummaryCards() {
-
-    totalRecords.textContent =
-        "0";
-
-    onTimeCount.textContent =
-        "0";
-
-    lateCount.textContent =
-        "0";
-
-    absentCount.textContent =
-        "0";
-
-    attendanceRate.textContent =
-        "0%";
-
-}
-
-
-// =====================================
-// Format Report Date
-// =====================================
-
-function formatReportDate(dateKey) {
-
-    if (!dateKey) {
-        return "-";
-    }
-
-    const date =
-        new Date(
-            `${dateKey}T00:00:00`
+        setGenerateButtonState(
+            false
         );
 
-    return date.toLocaleDateString(
-        "en-ZA",
-        {
-            day:
-                "2-digit",
-
-            month:
-                "short",
-
-            year:
-                "numeric"
-        }
-    );
+    }
 
 }
 
 
 // =====================================
-// Create Status CSS Class
+// Generate Button State
 // =====================================
 
-function createStatusClass(status) {
+function setGenerateButtonState(
+    loading
+) {
 
-    return `status-${String(
-        status ?? "unknown"
-    )
-        .toLowerCase()
-        .replace(
-            /\s+/g,
-            "-"
-        )
-        .replace(
-            /[^a-z0-9-]/g,
-            ""
-        )}`;
+    if (!generateReportButton) {
+        return;
+    }
+
+    generateReportButton.disabled =
+        loading;
+
+    generateReportButton.textContent =
+        loading
+            ? "Generating..."
+            : "Generate Report";
 
 }
 
@@ -737,6 +698,7 @@ function displayReport(records) {
                 </td>
 
                 <td>
+
                     <span
                         class="status-badge ${statusClass}"
                     >
@@ -745,6 +707,7 @@ function displayReport(records) {
                             "Unknown"
                         )}
                     </span>
+
                 </td>
             `;
 
@@ -758,6 +721,165 @@ function displayReport(records) {
     updateSummaryCards(
         records
     );
+
+}
+
+
+// =====================================
+// Update Summary Cards
+// =====================================
+
+function updateSummaryCards(records) {
+
+    const total =
+        records.length;
+
+    const onTime =
+        records.filter(
+            (record) =>
+                normalizeStatus(
+                    record.status
+                ) ===
+                "on time"
+        ).length;
+
+    const late =
+        records.filter(
+            (record) =>
+                normalizeStatus(
+                    record.status
+                ) ===
+                "late"
+        ).length;
+
+    const absent =
+        records.filter(
+            (record) =>
+                normalizeStatus(
+                    record.status
+                ) ===
+                "absent"
+        ).length;
+
+    const attended =
+        onTime + late;
+
+    const rate =
+        total === 0
+            ? 0
+            : Math.round(
+                (
+                    attended /
+                    total
+                ) * 100
+            );
+
+    totalRecords.textContent =
+        total;
+
+    onTimeCount.textContent =
+        onTime;
+
+    lateCount.textContent =
+        late;
+
+    absentCount.textContent =
+        absent;
+
+    attendanceRate.textContent =
+        `${rate}%`;
+
+}
+
+
+// =====================================
+// Reset Summary Cards
+// =====================================
+
+function resetSummaryCards() {
+
+    totalRecords.textContent =
+        "0";
+
+    onTimeCount.textContent =
+        "0";
+
+    lateCount.textContent =
+        "0";
+
+    absentCount.textContent =
+        "0";
+
+    attendanceRate.textContent =
+        "0%";
+
+}
+
+
+// =====================================
+// Normalize Status
+// =====================================
+
+function normalizeStatus(status) {
+
+    return String(
+        status ?? ""
+    )
+        .trim()
+        .toLowerCase();
+
+}
+
+
+// =====================================
+// Format Report Date
+// =====================================
+
+function formatReportDate(dateKey) {
+
+    if (!dateKey) {
+        return "-";
+    }
+
+    const date =
+        new Date(
+            `${dateKey}T00:00:00`
+        );
+
+    return date.toLocaleDateString(
+        "en-ZA",
+        {
+            day:
+                "2-digit",
+
+            month:
+                "short",
+
+            year:
+                "numeric"
+        }
+    );
+
+}
+
+
+// =====================================
+// Create Status CSS Class
+// =====================================
+
+function createStatusClass(status) {
+
+    return `status-${normalizeStatus(
+        status || "unknown"
+    )
+        .replace(
+            /\s+/g,
+            "-"
+        )
+        .replace(
+            /[^a-z0-9-]/g,
+            ""
+        )}`;
 
 }
 
@@ -785,54 +907,13 @@ function showTableMessage(message) {
 
 
 // =====================================
-// Escape HTML
-// =====================================
-
-function escapeHtml(value) {
-
-    return String(
-        value ?? ""
-    )
-        .replaceAll(
-            "&",
-            "&amp;"
-        )
-        .replaceAll(
-            "<",
-            "&lt;"
-        )
-        .replaceAll(
-            ">",
-            "&gt;"
-        )
-        .replaceAll(
-            '"',
-            "&quot;"
-        )
-        .replaceAll(
-            "'",
-            "&#039;"
-        );
-
-}
-
-
-// =====================================
 // Export Report to CSV
 // =====================================
 
 function exportReportToCsv() {
 
-    const rows =
-        reportTableBody.querySelectorAll(
-            "tr"
-        );
-
     if (
-        rows.length === 0 ||
-        rows[0].querySelector(
-            ".empty-row"
-        )
+        currentReportRecords.length === 0
     ) {
 
         alert(
@@ -843,45 +924,41 @@ function exportReportToCsv() {
 
     }
 
-    const csvRows = [];
+    const csvRows = [
+        [
+            "Date",
+            "Employee Number",
+            "Employee Name",
+            "Department",
+            "Check-in Time",
+            "Status"
+        ]
+    ];
 
-    csvRows.push([
-        "Date",
-        "Employee Number",
-        "Employee Name",
-        "Department",
-        "Check-in Time",
-        "Status"
-    ]);
+    currentReportRecords.forEach(
+        (record) => {
 
-    rows.forEach(
-        (row) => {
+            csvRows.push([
+                formatReportDate(
+                    record.dateKey ??
+                    record.date
+                ),
 
-            const cells =
-                row.querySelectorAll(
-                    "td"
-                );
+                record.employeeNumber ??
+                    "",
 
-            const rowData =
-                Array.from(
-                    cells
-                ).map(
-                    (cell) => {
+                record.name ??
+                    "",
 
-                        const value =
-                            cell.textContent.trim();
+                record.department ??
+                    "",
 
-                        return `"${value.replaceAll(
-                            '"',
-                            '""'
-                        )}"`;
+                record.time ??
+                    "",
 
-                    }
-                );
-
-            csvRows.push(
-                rowData
-            );
+                record.status ??
+                    ""
+            ]);
 
         }
     );
@@ -890,7 +967,11 @@ function exportReportToCsv() {
         csvRows
             .map(
                 (row) =>
-                    row.join(";")
+                    row
+                        .map(
+                            escapeCsvValue
+                        )
+                        .join(";")
             )
             .join("\n");
 
@@ -940,21 +1021,32 @@ function exportReportToCsv() {
 
 
 // =====================================
+// Escape CSV Value
+// =====================================
+
+function escapeCsvValue(value) {
+
+    const safeValue =
+        String(
+            value ?? ""
+        ).replaceAll(
+            '"',
+            '""'
+        );
+
+    return `"${safeValue}"`;
+
+}
+
+
+// =====================================
 // Print Report
 // =====================================
 
 function printReport() {
 
-    const rows =
-        reportTableBody.querySelectorAll(
-            "tr"
-        );
-
     if (
-        rows.length === 0 ||
-        rows[0].querySelector(
-            ".empty-row"
-        )
+        currentReportRecords.length === 0
     ) {
 
         alert(
@@ -971,6 +1063,39 @@ function printReport() {
 
 
 // =====================================
+// Escape HTML
+// =====================================
+
+function escapeHtml(value) {
+
+    return String(
+        value ?? ""
+    )
+        .replaceAll(
+            "&",
+            "&amp;"
+        )
+        .replaceAll(
+            "<",
+            "&lt;"
+        )
+        .replaceAll(
+            ">",
+            "&gt;"
+        )
+        .replaceAll(
+            '"',
+            "&quot;"
+        )
+        .replaceAll(
+            "'",
+            "&#039;"
+        );
+
+}
+
+
+// =====================================
 // Administrator Logout
 // =====================================
 
@@ -978,12 +1103,23 @@ async function logoutAdministrator() {
 
     try {
 
+        if (logoutButton) {
+
+            logoutButton.disabled =
+                true;
+
+            logoutButton.textContent =
+                "Logging out...";
+
+        }
+
         await signOut(auth);
 
         sessionStorage.clear();
 
-        window.location.href =
-            "admin-login.html";
+        window.location.replace(
+            "admin-login.html"
+        );
 
     } catch (error) {
 
@@ -991,6 +1127,16 @@ async function logoutAdministrator() {
             "Logout error:",
             error
         );
+
+        if (logoutButton) {
+
+            logoutButton.disabled =
+                false;
+
+            logoutButton.textContent =
+                "Logout";
+
+        }
 
         alert(
             "Unable to log out. Please try again."
