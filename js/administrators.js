@@ -38,12 +38,12 @@ import {
 
 
 // =====================================
-// Secondary Firebase App
+// Secondary Firebase Application
 // =====================================
 
-// This separate Firebase app creates new
-// administrators without logging out the
-// administrator currently using the system.
+// This secondary Firebase application creates a new
+// administrator without replacing the administrator
+// currently signed into the main application.
 
 const administratorCreatorApp =
     initializeApp(
@@ -52,7 +52,9 @@ const administratorCreatorApp =
     );
 
 const administratorCreatorAuth =
-    getAuth(administratorCreatorApp);
+    getAuth(
+        administratorCreatorApp
+    );
 
 
 // =====================================
@@ -109,11 +111,6 @@ const administratorMessage =
         "administratorMessage"
     );
 
-const logoutButton =
-    document.getElementById(
-        "logoutButton"
-    );
-
 const administratorTableBody =
     document.getElementById(
         "administratorTableBody"
@@ -129,13 +126,23 @@ const saveAdministratorButton =
         "saveAdministratorButton"
     );
 
-let editingAdministratorId = null;
+const logoutButton =
+    document.getElementById(
+        "logoutButton"
+    );
 
 
 // =====================================
-// Start Page
+// Page State
 // =====================================
 
+let editingAdministratorId =
+    null;
+
+
+// =====================================
+// Start Administrators Page
+// =====================================
 
 initializeAdministratorsPage();
 
@@ -159,30 +166,37 @@ function initializeAdministratorsPage() {
     );
 
     administratorForm.addEventListener(
-    "submit",
-    handleAdministratorSubmit
-);
+        "submit",
+        handleAdministratorSubmit
+    );
 
     administratorTableBody.addEventListener(
-    "click",
-    handleAdministratorActions
-);
-
-    logoutButton.addEventListener(
         "click",
-        logoutAdministrator
+        handleAdministratorActions
     );
+
+    if (logoutButton) {
+
+        logoutButton.addEventListener(
+            "click",
+            logoutAdministrator
+        );
+
+    }
 
 }
 
 
 // =====================================
-// Open Modal
+// Open Add Administrator Modal
 // =====================================
 
 function openAdministratorModal() {
 
-    editingAdministratorId = null;
+    editingAdministratorId =
+        null;
+
+    administratorForm.reset();
 
     administratorModalTitle.textContent =
         "Add Administrator";
@@ -199,11 +213,11 @@ function openAdministratorModal() {
     administratorPasswordInput.placeholder =
         "";
 
-    administratorMessage.textContent = "";
+    administratorMessage.textContent =
+        "";
 
-    administratorForm.reset();
-
-    administratorModal.hidden = false;
+    administratorModal.hidden =
+        false;
 
     administratorModal.classList.add(
         "modal-open"
@@ -213,7 +227,7 @@ function openAdministratorModal() {
 
 
 // =====================================
-// Close Modal
+// Close Administrator Modal
 // =====================================
 
 function closeAdministratorModal() {
@@ -222,13 +236,28 @@ function closeAdministratorModal() {
         "modal-open"
     );
 
-    administratorModal.hidden = true;
+    administratorModal.hidden =
+        true;
 
     administratorForm.reset();
 
-    administratorMessage.textContent = "";
+    administratorMessage.textContent =
+        "";
+
+    editingAdministratorId =
+        null;
+
+    administratorPasswordInput.disabled =
+        false;
+
+    administratorPasswordInput.required =
+        true;
+
+    administratorPasswordInput.placeholder =
+        "";
 
 }
+
 
 // =====================================
 // Load Administrators
@@ -240,7 +269,10 @@ async function loadAdministrators() {
 
         administratorTableBody.innerHTML = `
             <tr>
-                <td colspan="6" class="empty-row">
+                <td
+                    colspan="6"
+                    class="empty-row"
+                >
                     Loading administrators...
                 </td>
             </tr>
@@ -267,7 +299,10 @@ async function loadAdministrators() {
 
             administratorTableBody.innerHTML = `
                 <tr>
-                    <td colspan="6" class="empty-row">
+                    <td
+                        colspan="6"
+                        class="empty-row"
+                    >
                         No administrators found.
                     </td>
                 </tr>
@@ -277,7 +312,8 @@ async function loadAdministrators() {
 
         }
 
-        administratorTableBody.innerHTML = "";
+        administratorTableBody.innerHTML =
+            "";
 
         snapshot.forEach(
             (administratorDocument) => {
@@ -285,68 +321,88 @@ async function loadAdministrators() {
                 const administrator =
                     administratorDocument.data();
 
+                const status =
+                    administrator.status ??
+                    "Active";
+
+                const statusClass =
+                    status === "Active"
+                        ? "administrator-status-active"
+                        : "administrator-status-disabled";
+
+                const toggleButtonText =
+                    status === "Active"
+                        ? "Disable"
+                        : "Enable";
+
                 const row =
-                    document.createElement("tr");
+                    document.createElement(
+                        "tr"
+                    );
 
                 row.innerHTML = `
                     <td>
-                        ${administrator.fullName ?? ""}
-                    </td>
-
-                    <td>
-                        ${administrator.email ?? ""}
-                    </td>
-
-                    <td>
-                        ${formatAdministratorRole(
-                            administrator.role
+                        ${escapeHtml(
+                            administrator.fullName ??
+                            "-"
                         )}
                     </td>
 
                     <td>
-    <span
-    class="administrator-status ${
-        (administrator.status ?? "Active") === "Active"
-            ? "administrator-status-active"
-            : "administrator-status-disabled"
-    }"
->
-    ${administrator.status ?? "Active"}
-</span>
-</td>
+                        ${escapeHtml(
+                            administrator.email ??
+                            "-"
+                        )}
+                    </td>
 
-<td>
-    ${formatAdministratorDate(
-        administrator.createdAt
-    )}
-</td>
+                    <td>
+                        ${escapeHtml(
+                            formatAdministratorRole(
+                                administrator.role
+                            )
+                        )}
+                    </td>
 
-<td>
-    <div class="administrator-actions">
+                    <td>
+                        <span
+                            class="administrator-status ${statusClass}"
+                        >
+                            ${escapeHtml(status)}
+                        </span>
+                    </td>
 
-        <button
-            type="button"
-            class="admin-action-btn edit-admin-btn"
-            data-id="${administratorDocument.id}"
-        >
-            Edit
-        </button>
+                    <td>
+                        ${escapeHtml(
+                            formatAdministratorDate(
+                                administrator.createdAt
+                            )
+                        )}
+                    </td>
 
-        <button
-            type="button"
-            class="admin-action-btn toggle-admin-btn"
-            data-id="${administratorDocument.id}"
-            data-status="${administrator.status ?? "Active"}"
-        >
-            ${
-                (administrator.status ?? "Active") === "Active"
-                    ? "Disable"
-                    : "Enable"
-            }
-        </button>
+                    <td>
 
-    </div>
-</td>
+                        <div class="administrator-actions">
+
+                            <button
+                                type="button"
+                                class="admin-action-btn edit-admin-btn"
+                                data-id="${administratorDocument.id}"
+                            >
+                                Edit
+                            </button>
+
+                            <button
+                                type="button"
+                                class="admin-action-btn toggle-admin-btn"
+                                data-id="${administratorDocument.id}"
+                                data-status="${escapeHtml(status)}"
+                            >
+                                ${toggleButtonText}
+                            </button>
+
+                        </div>
+
+                    </td>
                 `;
 
                 administratorTableBody.appendChild(
@@ -365,7 +421,10 @@ async function loadAdministrators() {
 
         administratorTableBody.innerHTML = `
             <tr>
-                <td colspan="6" class="empty-row">
+                <td
+                    colspan="6"
+                    class="empty-row"
+                >
                     Administrators could not be loaded.
                 </td>
             </tr>
@@ -377,150 +436,7 @@ async function loadAdministrators() {
 
 
 // =====================================
-// Format Role
-// =====================================
-
-function formatAdministratorRole(role) {
-
-    if (role === "superAdministrator") {
-        return "Super Administrator";
-    }
-
-    if (role === "administrator") {
-        return "Administrator";
-    }
-
-    if (role === "manager") {
-        return "Manager";
-    }
-
-    if (role === "readOnly") {
-        return "Read Only";
-    }
-
-    return role ?? "";
-
-}
-
-
-// =====================================
-// Format Date
-// =====================================
-
-function formatAdministratorDate(timestamp) {
-
-    if (!timestamp) {
-        return "-";
-    }
-
-    const date =
-        timestamp.toDate();
-
-    return date.toLocaleDateString(
-        "en-ZA",
-        {
-            day: "2-digit",
-            month: "short",
-            year: "numeric"
-        }
-    );
-
-}
-
-
-
-// =====================================
-// Open Edit Administrator
-// =====================================
-
-async function openEditAdministrator(
-    administratorId
-) {
-
-    try {
-
-        const administratorReference =
-            doc(
-                db,
-                "administrators",
-                administratorId
-            );
-
-        const administratorSnapshot =
-            await getDoc(
-                administratorReference
-            );
-
-        if (!administratorSnapshot.exists()) {
-
-            alert(
-                "Administrator could not be found."
-            );
-
-            return;
-
-        }
-
-        const administrator =
-            administratorSnapshot.data();
-
-        editingAdministratorId =
-            administratorId;
-
-        administratorModalTitle.textContent =
-            "Edit Administrator";
-
-        saveAdministratorButton.textContent =
-            "Save Changes";
-
-        administratorNameInput.value =
-            administrator.fullName ?? "";
-
-        administratorEmailInput.value =
-            administrator.email ?? "";
-
-        administratorRoleInput.value =
-            administrator.role ?? "";
-
-        administratorPasswordInput.value =
-            "";
-
-        administratorPasswordInput.required =
-            false;
-
-        administratorPasswordInput.disabled =
-            true;
-
-        administratorPasswordInput.placeholder =
-            "Password cannot be changed here";
-
-        administratorMessage.textContent =
-            "";
-
-        administratorModal.hidden =
-            false;
-
-        administratorModal.classList.add(
-            "modal-open"
-        );
-
-    } catch (error) {
-
-        console.error(
-            "Open administrator error:",
-            error
-        );
-
-        alert(
-            "The administrator could not be opened."
-        );
-
-    }
-
-}
-
-// =====================================
-// Administrator Actions
+// Handle Administrator Table Actions
 // =====================================
 
 function handleAdministratorActions(event) {
@@ -564,133 +480,15 @@ function handleAdministratorActions(event) {
     }
 
 }
-// =====================================
-// Update Administrator
-// =====================================
 
-async function updateAdministrator() {
-
-    const fullName =
-        administratorNameInput.value.trim();
-
-    const email =
-        administratorEmailInput.value
-            .trim()
-            .toLowerCase();
-
-    const role =
-        administratorRoleInput.value;
-
-    if (fullName === "") {
-
-        showAdministratorMessage(
-            "Please enter the administrator's full name.",
-            "error"
-        );
-
-        return;
-    }
-
-    if (email === "") {
-
-        showAdministratorMessage(
-            "Please enter an email address.",
-            "error"
-        );
-
-        return;
-    }
-
-    if (role === "") {
-
-        showAdministratorMessage(
-            "Please select an administrator role.",
-            "error"
-        );
-
-        return;
-    }
-
-    try {
-
-        showAdministratorMessage(
-            "Saving changes...",
-            "info"
-        );
-
-        const administratorReference =
-            doc(
-                db,
-                "administrators",
-                editingAdministratorId
-            );
-
-        await updateDoc(
-            administratorReference,
-            {
-                fullName,
-                email,
-                role
-            }
-        );
-
-        showAdministratorMessage(
-            "Administrator updated successfully.",
-            "success"
-        );
-
-        await loadAdministrators();
-
-        setTimeout(
-            () => {
-                closeAdministratorModal();
-            },
-            1000
-        );
-
-    } catch (error) {
-
-        console.error(
-            "Update administrator error:",
-            error
-        );
-
-        showAdministratorMessage(
-            "The administrator could not be updated.",
-            "error"
-        );
-
-    }
-
-}
 
 // =====================================
-// Toggle Administrator Status
+// Open Edit Administrator
 // =====================================
 
-async function toggleAdministratorStatus(
-    administratorId,
-    currentStatus
+async function openEditAdministrator(
+    administratorId
 ) {
-
-    const newStatus =
-        currentStatus === "Active"
-            ? "Disabled"
-            : "Active";
-
-    const actionWord =
-        newStatus === "Disabled"
-            ? "disable"
-            : "enable";
-
-    const confirmed =
-        confirm(
-            `Are you sure you want to ${actionWord} this administrator?`
-        );
-
-    if (!confirmed) {
-        return;
-    }
 
     try {
 
@@ -701,35 +499,92 @@ async function toggleAdministratorStatus(
                 administratorId
             );
 
-        await updateDoc(
-            administratorReference,
-            {
-                status: newStatus
-            }
-        );
+        const administratorSnapshot =
+            await getDoc(
+                administratorReference
+            );
 
-        await loadAdministrators();
+        if (
+            !administratorSnapshot.exists()
+        ) {
+
+            alert(
+                "Administrator could not be found."
+            );
+
+            return;
+
+        }
+
+        const administrator =
+            administratorSnapshot.data();
+
+        editingAdministratorId =
+            administratorId;
+
+        administratorModalTitle.textContent =
+            "Edit Administrator";
+
+        saveAdministratorButton.textContent =
+            "Save Changes";
+
+        administratorNameInput.value =
+            administrator.fullName ??
+            "";
+
+        administratorEmailInput.value =
+            administrator.email ??
+            "";
+
+        administratorRoleInput.value =
+            administrator.role ??
+            "";
+
+        administratorPasswordInput.value =
+            "";
+
+        administratorPasswordInput.required =
+            false;
+
+        administratorPasswordInput.disabled =
+            true;
+
+        administratorPasswordInput.placeholder =
+            "Password cannot be changed here";
+
+        administratorMessage.textContent =
+            "";
+
+        administratorModal.hidden =
+            false;
+
+        administratorModal.classList.add(
+            "modal-open"
+        );
 
     } catch (error) {
 
         console.error(
-            "Toggle administrator status error:",
+            "Open administrator error:",
             error
         );
 
         alert(
-            "The administrator status could not be changed."
+            "The administrator could not be opened."
         );
 
     }
 
 }
 
+
 // =====================================
-// Handle Administrator Submit
+// Handle Form Submission
 // =====================================
 
-async function handleAdministratorSubmit(event) {
+async function handleAdministratorSubmit(
+    event
+) {
 
     event.preventDefault();
 
@@ -741,20 +596,20 @@ async function handleAdministratorSubmit(event) {
 
     }
 
-    await createAdministrator(event);
+    await createAdministrator();
 
 }
+
 
 // =====================================
 // Create Administrator
 // =====================================
 
-async function createAdministrator(event) {
-
-    event.preventDefault();
+async function createAdministrator() {
 
     const fullName =
-        administratorNameInput.value.trim();
+        administratorNameInput.value
+            .trim();
 
     const email =
         administratorEmailInput.value
@@ -767,10 +622,6 @@ async function createAdministrator(event) {
     const role =
         administratorRoleInput.value;
 
-
-    // ---------------------------------
-    // Validation
-    // ---------------------------------
 
     if (fullName === "") {
 
@@ -819,15 +670,15 @@ async function createAdministrator(event) {
 
     try {
 
+        setSaveButtonState(
+            true,
+            "Creating..."
+        );
+
         showAdministratorMessage(
             "Creating administrator...",
             "info"
         );
-
-
-        // =====================================
-        // Create Firebase Authentication User
-        // =====================================
 
         const userCredential =
             await createUserWithEmailAndPassword(
@@ -838,11 +689,6 @@ async function createAdministrator(event) {
 
         const newAdministrator =
             userCredential.user;
-
-
-        // =====================================
-        // Save Administrator Profile
-        // =====================================
 
         await setDoc(
             doc(
@@ -871,19 +717,9 @@ async function createAdministrator(event) {
             }
         );
 
-
-        // =====================================
-        // Sign Out Secondary Account
-        // =====================================
-
         await signOut(
             administratorCreatorAuth
         );
-
-
-        // =====================================
-        // Success
-        // =====================================
 
         showAdministratorMessage(
             "Administrator created successfully.",
@@ -891,18 +727,13 @@ async function createAdministrator(event) {
         );
 
         administratorForm.reset();
+
         await loadAdministrators();
 
-
         setTimeout(
-            () => {
-
-                closeAdministratorModal();
-
-            },
+            closeAdministratorModal,
             1200
         );
-
 
     } catch (error) {
 
@@ -910,10 +741,6 @@ async function createAdministrator(event) {
             "Create administrator error:",
             error
         );
-
-
-        // Make sure secondary account
-        // is signed out if creation partially worked.
 
         try {
 
@@ -930,63 +757,358 @@ async function createAdministrator(event) {
         } catch (signOutError) {
 
             console.error(
-                "Secondary sign out error:",
+                "Secondary sign-out error:",
                 signOutError
             );
 
         }
 
+        showCreateAdministratorError(
+            error
+        );
 
-        // =====================================
-        // Friendly Error Messages
-        // =====================================
+    } finally {
 
-        if (
-            error.code ===
-            "auth/email-already-in-use"
-        ) {
+        setSaveButtonState(
+            false,
+            "Create Administrator"
+        );
 
-            showAdministratorMessage(
-                "An account already exists with this email address.",
-                "error"
-            );
+    }
 
-            return;
+}
 
-        }
 
-        if (
-            error.code ===
-            "auth/invalid-email"
-        ) {
+// =====================================
+// Update Administrator
+// =====================================
 
-            showAdministratorMessage(
-                "Please enter a valid email address.",
-                "error"
-            );
+async function updateAdministrator() {
 
-            return;
+    const fullName =
+        administratorNameInput.value
+            .trim();
 
-        }
+    const email =
+        administratorEmailInput.value
+            .trim()
+            .toLowerCase();
 
-        if (
-            error.code ===
-            "auth/weak-password"
-        ) {
+    const role =
+        administratorRoleInput.value;
 
-            showAdministratorMessage(
-                "The temporary password is too weak.",
-                "error"
-            );
 
-            return;
-
-        }
+    if (fullName === "") {
 
         showAdministratorMessage(
-            "The administrator could not be created.",
+            "Please enter the administrator's full name.",
             "error"
         );
+
+        return;
+
+    }
+
+    if (email === "") {
+
+        showAdministratorMessage(
+            "Please enter an email address.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    if (role === "") {
+
+        showAdministratorMessage(
+            "Please select an administrator role.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    try {
+
+        setSaveButtonState(
+            true,
+            "Saving..."
+        );
+
+        showAdministratorMessage(
+            "Saving changes...",
+            "info"
+        );
+
+        const administratorReference =
+            doc(
+                db,
+                "administrators",
+                editingAdministratorId
+            );
+
+        await updateDoc(
+            administratorReference,
+            {
+                fullName:
+                    fullName,
+
+                email:
+                    email,
+
+                role:
+                    role
+            }
+        );
+
+        showAdministratorMessage(
+            "Administrator updated successfully.",
+            "success"
+        );
+
+        await loadAdministrators();
+
+        setTimeout(
+            closeAdministratorModal,
+            1000
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Update administrator error:",
+            error
+        );
+
+        showAdministratorMessage(
+            "The administrator could not be updated.",
+            "error"
+        );
+
+    } finally {
+
+        setSaveButtonState(
+            false,
+            "Save Changes"
+        );
+
+    }
+
+}
+
+
+// =====================================
+// Toggle Administrator Status
+// =====================================
+
+async function toggleAdministratorStatus(
+    administratorId,
+    currentStatus
+) {
+
+    const newStatus =
+        currentStatus === "Active"
+            ? "Disabled"
+            : "Active";
+
+    const actionWord =
+        newStatus === "Disabled"
+            ? "disable"
+            : "enable";
+
+    const confirmed =
+        confirm(
+            `Are you sure you want to ${actionWord} this administrator?`
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    try {
+
+        const administratorReference =
+            doc(
+                db,
+                "administrators",
+                administratorId
+            );
+
+        await updateDoc(
+            administratorReference,
+            {
+                status:
+                    newStatus
+            }
+        );
+
+        await loadAdministrators();
+
+    } catch (error) {
+
+        console.error(
+            "Toggle administrator status error:",
+            error
+        );
+
+        alert(
+            "The administrator status could not be changed."
+        );
+
+    }
+
+}
+
+
+// =====================================
+// Friendly Account-Creation Errors
+// =====================================
+
+function showCreateAdministratorError(
+    error
+) {
+
+    if (
+        error.code ===
+        "auth/email-already-in-use"
+    ) {
+
+        showAdministratorMessage(
+            "An account already exists with this email address.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    if (
+        error.code ===
+        "auth/invalid-email"
+    ) {
+
+        showAdministratorMessage(
+            "Please enter a valid email address.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    if (
+        error.code ===
+        "auth/weak-password"
+    ) {
+
+        showAdministratorMessage(
+            "The temporary password is too weak.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    showAdministratorMessage(
+        "The administrator could not be created.",
+        "error"
+    );
+
+}
+
+
+// =====================================
+// Format Administrator Role
+// =====================================
+
+function formatAdministratorRole(role) {
+
+    if (
+        role ===
+        "superAdministrator"
+    ) {
+
+        return "Super Administrator";
+
+    }
+
+    if (
+        role ===
+        "administrator"
+    ) {
+
+        return "Administrator";
+
+    }
+
+    if (
+        role ===
+        "manager"
+    ) {
+
+        return "Manager";
+
+    }
+
+    if (
+        role ===
+        "readOnly"
+    ) {
+
+        return "Read Only";
+
+    }
+
+    return role ??
+        "-";
+
+}
+
+
+// =====================================
+// Format Administrator Date
+// =====================================
+
+function formatAdministratorDate(
+    timestamp
+) {
+
+    if (!timestamp) {
+        return "-";
+    }
+
+    try {
+
+        return timestamp
+            .toDate()
+            .toLocaleDateString(
+                "en-ZA",
+                {
+                    day:
+                        "2-digit",
+
+                    month:
+                        "short",
+
+                    year:
+                        "numeric"
+                }
+            );
+
+    } catch (error) {
+
+        console.error(
+            "Administrator date format error:",
+            error
+        );
+
+        return "-";
 
     }
 
@@ -1010,16 +1132,12 @@ function showAdministratorMessage(
         administratorMessage.style.color =
             "green";
 
-    }
-
-    if (type === "error") {
+    } else if (type === "error") {
 
         administratorMessage.style.color =
             "red";
 
-    }
-
-    if (type === "info") {
+    } else {
 
         administratorMessage.style.color =
             "#0b5ed7";
@@ -1030,7 +1148,59 @@ function showAdministratorMessage(
 
 
 // =====================================
-// Logout
+// Save Button State
+// =====================================
+
+function setSaveButtonState(
+    disabled,
+    text
+) {
+
+    saveAdministratorButton.disabled =
+        disabled;
+
+    saveAdministratorButton.textContent =
+        text;
+
+}
+
+
+// =====================================
+// Escape HTML
+// =====================================
+
+function escapeHtml(value) {
+
+    return String(
+        value ??
+        ""
+    )
+        .replaceAll(
+            "&",
+            "&amp;"
+        )
+        .replaceAll(
+            "<",
+            "&lt;"
+        )
+        .replaceAll(
+            ">",
+            "&gt;"
+        )
+        .replaceAll(
+            '"',
+            "&quot;"
+        )
+        .replaceAll(
+            "'",
+            "&#039;"
+        );
+
+}
+
+
+// =====================================
+// Administrator Logout
 // =====================================
 
 async function logoutAdministrator() {
@@ -1039,14 +1209,20 @@ async function logoutAdministrator() {
 
         await signOut(auth);
 
+        sessionStorage.clear();
+
         window.location.href =
-            "index.html";
+            "admin-login.html";
 
     } catch (error) {
 
         console.error(
             "Logout error:",
             error
+        );
+
+        alert(
+            "Unable to log out. Please try again."
         );
 
     }
