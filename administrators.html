@@ -228,6 +228,145 @@
 
     </div>
 
+    <div
+    class="modal-overlay"
+    id="administratorModal"
+    hidden
+>
+
+    <div class="modal-card">
+
+        <div class="modal-header">
+
+            <div>
+
+                <h2>
+                    Add Administrator
+                </h2>
+
+                <p>
+                    Create a new administrator account.
+                </p>
+
+            </div>
+
+            <button
+                type="button"
+                class="modal-close-btn"
+                id="closeAdministratorModalButton"
+            >
+                ×
+            </button>
+
+        </div>
+
+        <form id="administratorForm">
+
+            <div class="form-group">
+
+                <label for="administratorName">
+                    Full Name
+                </label>
+
+                <input
+                    type="text"
+                    id="administratorName"
+                    required
+                >
+
+            </div>
+
+            <div class="form-group">
+
+                <label for="administratorEmail">
+                    Email Address
+                </label>
+
+                <input
+                    type="email"
+                    id="administratorEmail"
+                    required
+                >
+
+            </div>
+
+            <div class="form-group">
+
+                <label for="administratorPassword">
+                    Temporary Password
+                </label>
+
+                <input
+                    type="password"
+                    id="administratorPassword"
+                    minlength="6"
+                    required
+                >
+
+            </div>
+
+            <div class="form-group">
+
+                <label for="administratorRole">
+                    Role
+                </label>
+
+                <select
+                    id="administratorRole"
+                    required
+                >
+
+                    <option value="">
+                        Select role
+                    </option>
+
+                    <option value="superAdministrator">
+                        Super Administrator
+                    </option>
+
+                    <option value="administrator">
+                        Administrator
+                    </option>
+
+                    <option value="manager">
+                        Manager
+                    </option>
+
+                    <option value="readOnly">
+                        Read Only
+                    </option>
+
+                </select>
+
+            </div>
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    class="logout-btn"
+                    id="cancelAdministratorButton"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="refresh-btn"
+                >
+                    Create Administrator
+                </button>
+
+            </div>
+
+            <p id="administratorMessage"></p>
+
+        </form>
+
+    </div>
+
+</div>
+
     <script
         type="module"
         src="js/administrators.js"
