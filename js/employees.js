@@ -1049,7 +1049,7 @@ async function loadEmployees() {
     employeeTableBody.innerHTML = `
         <tr>
             <td
-                colspan="5"
+                colspan="6"
                 class="empty-row"
             >
                 Loading employees...
@@ -1107,7 +1107,7 @@ async function loadEmployees() {
         employeeTableBody.innerHTML = `
             <tr>
                 <td
-                    colspan="5"
+                    colspan="6"
                     class="empty-row"
                 >
                     Employees could not be loaded.
@@ -1188,7 +1188,7 @@ function displayEmployees(employeeList) {
         employeeTableBody.innerHTML = `
             <tr>
                 <td
-                    colspan="5"
+                    colspan="6"
                     class="empty-row"
                 >
                     No employees found.
@@ -1220,18 +1220,25 @@ function displayEmployees(employeeList) {
                 </td>
 
                 <td>
-                    ${escapeHtml(
-                        employee.name ??
-                        "-"
-                    )}
-                </td>
+    ${escapeHtml(
+        employee.name ??
+        "-"
+    )}
+</td>
 
-                <td>
-                    ${escapeHtml(
-                        employee.department ??
-                        "-"
-                    )}
-                </td>
+<td>
+    ${escapeHtml(
+        employee.role ??
+        "-"
+    )}
+</td>
+
+<td>
+    ${escapeHtml(
+        employee.department ??
+        "-"
+    )}
+</td>
 
                 <td>
                     <span
