@@ -2,12 +2,23 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>R-E-D Attendance | Admin Login</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <link rel="stylesheet" href="css/admin-login.css">
+    <title>
+        R-E-D Attendance | Admin Login
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="css/admin-login.css"
+    >
+
 </head>
 
 <body>
@@ -16,45 +27,202 @@
 
         <div class="login-container">
 
-    <div class="login-card">
+            <div class="login-card">
 
-        <div class="logo-circle">
-            🏢
+                <div class="logo-circle">
+                    🏢
+                </div>
+
+                <h1>
+                    R-E-D Attendance
+                </h1>
+
+                <p class="subtitle">
+                    Administrator Portal
+                </p>
+
+
+                <!-- =====================================
+                     Email Address
+                ====================================== -->
+
+                <input
+                    type="email"
+                    id="adminUsername"
+                    placeholder="Email Address"
+                    autocomplete="email"
+                    required
+                >
+
+
+                <!-- =====================================
+                     Password
+                ====================================== -->
+
+                <input
+                    type="password"
+                    id="adminPassword"
+                    placeholder="Password"
+                    autocomplete="current-password"
+                    required
+                >
+
+
+                <!-- =====================================
+                     Forgot Password
+                ====================================== -->
+
+                <div class="forgot-password-row">
+
+                    <button
+                        type="button"
+                        class="forgot-password-button"
+                        id="forgotPasswordButton"
+                    >
+                        Forgot your password?
+                    </button>
+
+                </div>
+
+
+                <!-- =====================================
+                     Sign In
+                ====================================== -->
+
+                <button
+                    type="button"
+                    id="adminLoginButton"
+                >
+                    Sign In
+                </button>
+
+
+                <!-- =====================================
+                     Login Message
+                ====================================== -->
+
+                <p
+                    id="adminLoginMessage"
+                    aria-live="polite"
+                ></p>
+
+            </div>
+
         </div>
-
-        <h1>R-E-D Attendance</h1>
-
-        <p class="subtitle">
-            Administrator Portal
-        </p>
-
-        <input
-    type="email"
-    id="adminUsername"
-    placeholder="Email Address"
-    autocomplete="email"
->
-
-        <input
-            type="password"
-            id="adminPassword"
-            placeholder="Password"
-        >
-
-        <button id="adminLoginButton">
-            Sign In
-        </button>
-
-        <p id="adminLoginMessage"></p>
 
     </div>
 
-</div>
+
+    <!-- =====================================
+         Forgot Password Modal
+    ====================================== -->
+
+    <div
+        class="modal-overlay"
+        id="forgotPasswordModal"
+        hidden
+    >
+
+        <div class="modal-card">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <h2>
+                        Reset Password
+                    </h2>
+
+                    <p>
+                        Enter your administrator email address and we will send you a secure password reset link.
+                    </p>
+
+                </div>
+
+                <button
+                    type="button"
+                    class="modal-close-btn"
+                    id="closeForgotPasswordModalButton"
+                    aria-label="Close password reset form"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+            <!-- =====================================
+                 Reset Password Form
+            ====================================== -->
+
+            <form id="forgotPasswordForm">
+
+                <div class="form-group">
+
+                    <label for="forgotPasswordEmail">
+                        Email Address
+                    </label>
+
+                    <input
+                        type="email"
+                        id="forgotPasswordEmail"
+                        placeholder="Enter your email address"
+                        autocomplete="email"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- =====================================
+                     Reset Actions
+                ====================================== -->
+
+                <div class="modal-actions">
+
+                    <button
+                        type="button"
+                        class="secondary-button"
+                        id="cancelForgotPasswordButton"
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="primary-button"
+                        id="sendPasswordResetButton"
+                    >
+                        Send Reset Link
+                    </button>
+
+                </div>
+
+
+                <!-- =====================================
+                     Reset Message
+                ====================================== -->
+
+                <p
+                    id="forgotPasswordMessage"
+                    aria-live="polite"
+                ></p>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================
+         JavaScript
+    ====================================== -->
 
     <script
-    type="module"
-    src="js/admin-login.js">
-</script>
+        type="module"
+        src="js/admin-login.js"
+    ></script>
 
 </body>
 
