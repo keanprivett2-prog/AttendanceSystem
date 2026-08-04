@@ -1,12 +1,25 @@
+/* =====================================
+   Reset
+===================================== */
+
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
 }
 
+
+/* =====================================
+   Page
+===================================== */
+
 body {
     min-height: 100vh;
-    font-family: Arial, sans-serif;
+
+    font-family:
+        Arial,
+        sans-serif;
+
     background:
         linear-gradient(
             135deg,
@@ -17,32 +30,69 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+
     padding: 20px;
+}
+
+
+/* =====================================
+   Main Container
+===================================== */
+
+.container {
+    width: 100%;
 }
 
 .login-container {
     width: 100%;
     max-width: 430px;
+
+    margin: 0 auto;
 }
+
+
+/* =====================================
+   Login Card
+===================================== */
 
 .login-card {
     background: white;
+
     border-radius: 20px;
-    padding: 42px 36px;
+
+    padding:
+        42px
+        36px;
+
     box-shadow:
         0 20px 50px
-        rgba(15, 23, 42, 0.12);
+        rgba(
+            15,
+            23,
+            42,
+            0.12
+        );
 
     text-align: center;
 }
 
+
+/* =====================================
+   Logo
+===================================== */
+
 .logo-circle {
     width: 72px;
     height: 72px;
-    margin: 0 auto 18px;
+
+    margin:
+        0 auto
+        18px;
 
     border-radius: 50%;
-    background: #1d4ed8;
+
+    background:
+        #1d4ed8;
 
     display: flex;
     justify-content: center;
@@ -51,69 +101,508 @@ body {
     font-size: 34px;
 }
 
+
+/* =====================================
+   Heading
+===================================== */
+
 .login-card h1 {
-    color: #0f172a;
+    color:
+        #0f172a;
+
     font-size: 30px;
+
     margin-bottom: 8px;
 }
 
 .subtitle {
-    color: #64748b;
+    color:
+        #64748b;
+
     margin-bottom: 30px;
 }
 
+
+/* =====================================
+   Login Inputs
+===================================== */
+
 .login-card input {
     width: 100%;
-    padding: 14px 16px;
+
+    padding:
+        14px
+        16px;
+
     margin-bottom: 16px;
 
-    border: 1px solid #cbd5e1;
+    border:
+        1px solid
+        #cbd5e1;
+
     border-radius: 10px;
 
     font-size: 16px;
+
     outline: none;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 .login-card input:focus {
-    border-color: #2563eb;
+    border-color:
+        #2563eb;
+
     box-shadow:
         0 0 0 3px
-        rgba(37, 99, 235, 0.12);
+        rgba(
+            37,
+            99,
+            235,
+            0.12
+        );
 }
+
+
+/* =====================================
+   Forgot Password
+===================================== */
+
+.forgot-password-row {
+    display: flex;
+    justify-content: flex-end;
+
+    margin-top: -6px;
+    margin-bottom: 18px;
+}
+
+.forgot-password-button {
+    border: none;
+
+    background: transparent;
+
+    color:
+        #2563eb;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    padding: 4px 0;
+
+    transition:
+        color 0.2s ease;
+}
+
+.forgot-password-button:hover {
+    color:
+        #1d4ed8;
+
+    text-decoration: underline;
+}
+
+.forgot-password-button:focus-visible {
+    outline:
+        3px solid
+        rgba(
+            37,
+            99,
+            235,
+            0.18
+        );
+
+    outline-offset: 3px;
+
+    border-radius: 4px;
+}
+
+
+/* =====================================
+   Sign In Button
+===================================== */
 
 #adminLoginButton {
     width: 100%;
+
     padding: 14px;
 
     border: none;
+
     border-radius: 10px;
 
-    background: #2563eb;
+    background:
+        #2563eb;
+
     color: white;
 
     font-size: 16px;
     font-weight: bold;
 
     cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        opacity 0.2s ease;
 }
 
 #adminLoginButton:hover {
-    background: #1d4ed8;
+    background:
+        #1d4ed8;
 }
 
 #adminLoginButton:disabled {
     opacity: 0.65;
+
     cursor: not-allowed;
 }
 
+
+/* =====================================
+   Login Message
+===================================== */
+
 #adminLoginMessage {
     min-height: 24px;
+
     margin-top: 18px;
+
     font-size: 14px;
+
+    line-height: 1.5;
 }
 
+
+/* =====================================
+   Forgot Password Modal
+===================================== */
+
+.modal-overlay {
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 1000;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    padding: 20px;
+
+    background:
+        rgba(
+            15,
+            23,
+            42,
+            0.55
+        );
+
+    backdrop-filter:
+        blur(4px);
+}
+
+.modal-overlay[hidden] {
+    display: none;
+}
+
+.modal-card {
+    width: 100%;
+    max-width: 480px;
+
+    background: white;
+
+    border-radius: 18px;
+
+    padding: 28px;
+
+    box-shadow:
+        0 24px 70px
+        rgba(
+            15,
+            23,
+            42,
+            0.22
+        );
+
+    text-align: left;
+}
+
+
+/* =====================================
+   Modal Header
+===================================== */
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+
+    gap: 20px;
+
+    margin-bottom: 24px;
+}
+
+.modal-header h2 {
+    color:
+        #0f172a;
+
+    font-size: 24px;
+
+    margin-bottom: 7px;
+}
+
+.modal-header p {
+    color:
+        #64748b;
+
+    font-size: 14px;
+
+    line-height: 1.6;
+}
+
+.modal-close-btn {
+    width: 36px;
+    height: 36px;
+
+    flex-shrink: 0;
+
+    border: none;
+
+    border-radius: 8px;
+
+    background:
+        #f1f5f9;
+
+    color:
+        #475569;
+
+    font-size: 24px;
+
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
+}
+
+.modal-close-btn:hover {
+    background:
+        #e2e8f0;
+
+    color:
+        #0f172a;
+}
+
+
+/* =====================================
+   Modal Form
+===================================== */
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+
+    margin-bottom: 8px;
+
+    color:
+        #334155;
+
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.form-group input {
+    width: 100%;
+
+    padding:
+        13px
+        14px;
+
+    border:
+        1px solid
+        #cbd5e1;
+
+    border-radius: 9px;
+
+    font-size: 15px;
+
+    outline: none;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.form-group input:focus {
+    border-color:
+        #2563eb;
+
+    box-shadow:
+        0 0 0 3px
+        rgba(
+            37,
+            99,
+            235,
+            0.12
+        );
+}
+
+
+/* =====================================
+   Modal Actions
+===================================== */
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+
+    gap: 12px;
+
+    margin-top: 8px;
+}
+
+.primary-button,
+.secondary-button {
+    min-height: 42px;
+
+    padding:
+        0
+        18px;
+
+    border-radius: 9px;
+
+    font-size: 14px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        opacity 0.2s ease;
+}
+
+.primary-button {
+    border: none;
+
+    background:
+        #2563eb;
+
+    color: white;
+}
+
+.primary-button:hover {
+    background:
+        #1d4ed8;
+}
+
+.secondary-button {
+    border:
+        1px solid
+        #cbd5e1;
+
+    background:
+        white;
+
+    color:
+        #475569;
+}
+
+.secondary-button:hover {
+    background:
+        #f8fafc;
+
+    border-color:
+        #94a3b8;
+}
+
+.primary-button:disabled,
+.secondary-button:disabled {
+    opacity: 0.6;
+
+    cursor: not-allowed;
+}
+
+
+/* =====================================
+   Forgot Password Message
+===================================== */
+
+#forgotPasswordMessage {
+    min-height: 22px;
+
+    margin-top: 18px;
+
+    font-size: 14px;
+
+    line-height: 1.5;
+}
+
+
+/* =====================================
+   Mobile
+===================================== */
+
 @media (max-width: 500px) {
-    .login-card {
-        padding: 32px 22px;
+
+    body {
+        align-items: flex-start;
+
+        padding:
+            24px
+            14px;
     }
+
+    .login-card {
+        padding:
+            32px
+            22px;
+    }
+
+    .login-card h1 {
+        font-size: 26px;
+    }
+
+    .logo-circle {
+        width: 64px;
+        height: 64px;
+
+        font-size: 30px;
+    }
+
+    .forgot-password-row {
+        margin-bottom: 16px;
+    }
+
+    .modal-card {
+        padding:
+            24px
+            20px;
+    }
+
+    .modal-header h2 {
+        font-size: 21px;
+    }
+
+    .modal-actions {
+        flex-direction: column-reverse;
+    }
+
+    .primary-button,
+    .secondary-button {
+        width: 100%;
+
+        min-height: 44px;
+    }
+
 }
