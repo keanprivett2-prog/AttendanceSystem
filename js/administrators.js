@@ -334,59 +334,16 @@ async function loadDepartments() {
 
     try {
 
-        const employeeSnapshot =
-            await getDocs(
-                collection(
-                    db,
-                    "employees"
-                )
+        const organisationReference =
+            doc(
+                db,
+                "systemSettings",
+                "organisation"
             );
 
-        const departments =
-            new Set();
-
-        employeeSnapshot.forEach(
-            (
-                employeeDocument
-            ) => {
-
-                const employee =
-                    employeeDocument.data();
-
-                const department =
-                    String(
-                        employee.department ??
-                        ""
-                    ).trim();
-
-                if (
-                    department !==
-                    ""
-                ) {
-
-                    departments.add(
-                        department
-                    );
-
-                }
-
-            }
-        );
-
-        const sortedDepartments =
-            Array.from(
-                departments
-            ).sort(
-                (
-                    firstDepartment,
-                    secondDepartment
-                ) => {
-
-                    return firstDepartment.localeCompare(
-                        secondDepartment
-                    );
-
-                }
+        const organisationSnapshot =
+            await getDoc(
+                organisationReference
             );
 
         administratorDepartmentInput.innerHTML = `
@@ -395,10 +352,86 @@ async function loadDepartments() {
             </option>
         `;
 
-        sortedDepartments.forEach(
+
+        // =====================================
+        // No Organisation Settings
+        // =====================================
+
+        if (
+            !organisationSnapshot.exists()
+        ) {
+
+            console.warn(
+                "Organisation settings do not exist."
+            );
+
+            return;
+
+        }
+
+
+        // =====================================
+        // Read Departments
+        // =====================================
+
+        const organisation =
+            organisationSnapshot.data();
+
+        const departments =
+            Array.isArray(
+                organisation.departments
+            )
+                ?
+                organisation.departments
+                :
+                [];
+
+
+        // =====================================
+        // Sort Departments
+        // =====================================
+
+        departments.sort(
+            (
+                firstDepartment,
+                secondDepartment
+            ) => {
+
+                return String(
+                    firstDepartment
+                ).localeCompare(
+                    String(
+                        secondDepartment
+                    )
+                );
+
+            }
+        );
+
+
+        // =====================================
+        // Build Department Dropdown
+        // =====================================
+
+        departments.forEach(
             (
                 department
             ) => {
+
+                const departmentName =
+                    String(
+                        department ??
+                        ""
+                    ).trim();
+
+                if (
+                    departmentName ===
+                    ""
+                ) {
+
+                    return;
+
+                }
 
                 const option =
                     document.createElement(
@@ -406,10 +439,10 @@ async function loadDepartments() {
                     );
 
                 option.value =
-                    department;
+                    departmentName;
 
                 option.textContent =
-                    department;
+                    departmentName;
 
                 administratorDepartmentInput.appendChild(
                     option
@@ -427,10 +460,15 @@ async function loadDepartments() {
             error
         );
 
+        administratorDepartmentInput.innerHTML = `
+            <option value="">
+                Departments unavailable
+            </option>
+        `;
+
     }
 
 }
-
 
 // =====================================
 // Open Add Administrator Modal
