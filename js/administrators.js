@@ -48,9 +48,11 @@ import {
 // Secondary Firebase Application
 // =====================================
 
-// This secondary Firebase application creates
-// a new administrator without replacing the
-// administrator currently signed into the system.
+// The secondary Firebase application is used
+// when creating another administrator.
+//
+// This prevents Firebase from signing the
+// currently logged-in administrator out.
 
 const administratorCreatorApp =
     initializeApp(
@@ -113,6 +115,16 @@ const administratorRoleInput =
         "administratorRole"
     );
 
+const administratorDepartmentGroup =
+    document.getElementById(
+        "administratorDepartmentGroup"
+    );
+
+const administratorDepartmentInput =
+    document.getElementById(
+        "administratorDepartment"
+    );
+
 const administratorMessage =
     document.getElementById(
         "administratorMessage"
@@ -160,12 +172,21 @@ function initializeAdministratorsPage() {
             "administrators"
         )
     ) {
+
         return;
+
     }
 
     applySidebarPermissions();
 
-    if (addAdministratorButton) {
+
+    // =====================================
+    // Add Administrator
+    // =====================================
+
+    if (
+        addAdministratorButton
+    ) {
 
         addAdministratorButton.addEventListener(
             "click",
@@ -174,7 +195,14 @@ function initializeAdministratorsPage() {
 
     }
 
-    if (closeAdministratorModalButton) {
+
+    // =====================================
+    // Close Modal
+    // =====================================
+
+    if (
+        closeAdministratorModalButton
+    ) {
 
         closeAdministratorModalButton.addEventListener(
             "click",
@@ -183,7 +211,9 @@ function initializeAdministratorsPage() {
 
     }
 
-    if (cancelAdministratorButton) {
+    if (
+        cancelAdministratorButton
+    ) {
 
         cancelAdministratorButton.addEventListener(
             "click",
@@ -192,7 +222,14 @@ function initializeAdministratorsPage() {
 
     }
 
-    if (administratorForm) {
+
+    // =====================================
+    // Administrator Form
+    // =====================================
+
+    if (
+        administratorForm
+    ) {
 
         administratorForm.addEventListener(
             "submit",
@@ -201,7 +238,14 @@ function initializeAdministratorsPage() {
 
     }
 
-    if (administratorTableBody) {
+
+    // =====================================
+    // Administrator Actions
+    // =====================================
+
+    if (
+        administratorTableBody
+    ) {
 
         administratorTableBody.addEventListener(
             "click",
@@ -210,7 +254,30 @@ function initializeAdministratorsPage() {
 
     }
 
-    if (logoutButton) {
+
+    // =====================================
+    // Role Change
+    // =====================================
+
+    if (
+        administratorRoleInput
+    ) {
+
+        administratorRoleInput.addEventListener(
+            "change",
+            handleAdministratorRoleChange
+        );
+
+    }
+
+
+    // =====================================
+    // Logout
+    // =====================================
+
+    if (
+        logoutButton
+    ) {
 
         logoutButton.addEventListener(
             "click",
@@ -219,7 +286,148 @@ function initializeAdministratorsPage() {
 
     }
 
+
+    // =====================================
+    // Load Page Data
+    // =====================================
+
+    loadDepartments();
+
     loadAdministrators();
+
+}
+
+
+// =====================================
+// Administrator Role Change
+// =====================================
+
+function handleAdministratorRoleChange() {
+
+    const isManager =
+        administratorRoleInput.value ===
+        "manager";
+
+    administratorDepartmentGroup.hidden =
+        !isManager;
+
+    administratorDepartmentInput.required =
+        isManager;
+
+    if (
+        !isManager
+    ) {
+
+        administratorDepartmentInput.value =
+            "";
+
+    }
+
+}
+
+
+// =====================================
+// Load Departments
+// =====================================
+
+async function loadDepartments() {
+
+    try {
+
+        const employeeSnapshot =
+            await getDocs(
+                collection(
+                    db,
+                    "employees"
+                )
+            );
+
+        const departments =
+            new Set();
+
+        employeeSnapshot.forEach(
+            (
+                employeeDocument
+            ) => {
+
+                const employee =
+                    employeeDocument.data();
+
+                const department =
+                    String(
+                        employee.department ??
+                        ""
+                    ).trim();
+
+                if (
+                    department !==
+                    ""
+                ) {
+
+                    departments.add(
+                        department
+                    );
+
+                }
+
+            }
+        );
+
+        const sortedDepartments =
+            Array.from(
+                departments
+            ).sort(
+                (
+                    firstDepartment,
+                    secondDepartment
+                ) => {
+
+                    return firstDepartment.localeCompare(
+                        secondDepartment
+                    );
+
+                }
+            );
+
+        administratorDepartmentInput.innerHTML = `
+            <option value="">
+                Select department
+            </option>
+        `;
+
+        sortedDepartments.forEach(
+            (
+                department
+            ) => {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value =
+                    department;
+
+                option.textContent =
+                    department;
+
+                administratorDepartmentInput.appendChild(
+                    option
+                );
+
+            }
+        );
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Load departments error:",
+            error
+        );
+
+    }
 
 }
 
@@ -248,6 +456,15 @@ function openAdministratorModal() {
         true;
 
     administratorPasswordInput.placeholder =
+        "";
+
+    administratorDepartmentGroup.hidden =
+        true;
+
+    administratorDepartmentInput.required =
+        false;
+
+    administratorDepartmentInput.value =
         "";
 
     administratorMessage.textContent =
@@ -291,6 +508,15 @@ function closeAdministratorModal() {
         true;
 
     administratorPasswordInput.placeholder =
+        "";
+
+    administratorDepartmentGroup.hidden =
+        true;
+
+    administratorDepartmentInput.required =
+        false;
+
+    administratorDepartmentInput.value =
         "";
 
     saveAdministratorButton.disabled =
@@ -361,7 +587,9 @@ async function loadAdministrators() {
             "";
 
         administratorSnapshot.forEach(
-            (administratorDocument) => {
+            (
+                administratorDocument
+            ) => {
 
                 const administrator =
                     administratorDocument.data();
@@ -371,14 +599,25 @@ async function loadAdministrators() {
                     "Active";
 
                 const statusClass =
-                    status === "Active"
-                        ? "administrator-status-active"
-                        : "administrator-status-disabled";
+                    status ===
+                    "Active"
+                        ?
+                        "administrator-status-active"
+                        :
+                        "administrator-status-disabled";
 
                 const toggleButtonText =
-                    status === "Active"
-                        ? "Disable"
-                        : "Enable";
+                    status ===
+                    "Active"
+                        ?
+                        "Disable"
+                        :
+                        "Enable";
+
+                const roleDisplay =
+                    formatAdministratorRole(
+                        administrator.role
+                    );
 
                 const row =
                     document.createElement(
@@ -386,6 +625,7 @@ async function loadAdministrators() {
                     );
 
                 row.innerHTML = `
+
                     <td>
                         ${escapeHtml(
                             administrator.fullName ??
@@ -402,18 +642,38 @@ async function loadAdministrators() {
 
                     <td>
                         ${escapeHtml(
-                            formatAdministratorRole(
-                                administrator.role
-                            )
+                            roleDisplay
                         )}
+
+                        ${
+                            administrator.role ===
+                            "manager"
+                            &&
+                            administrator.department
+                                ?
+                                `
+                                    <br>
+                                    <small>
+                                        ${escapeHtml(
+                                            administrator.department
+                                        )}
+                                    </small>
+                                `
+                                :
+                                ""
+                        }
                     </td>
 
                     <td>
+
                         <span
                             class="administrator-status ${statusClass}"
                         >
-                            ${escapeHtml(status)}
+                            ${escapeHtml(
+                                status
+                            )}
                         </span>
+
                     </td>
 
                     <td>
@@ -440,7 +700,9 @@ async function loadAdministrators() {
                                 type="button"
                                 class="admin-action-btn toggle-admin-btn"
                                 data-id="${administratorDocument.id}"
-                                data-status="${escapeHtml(status)}"
+                                data-status="${escapeHtml(
+                                    status
+                                )}"
                             >
                                 ${toggleButtonText}
                             </button>
@@ -448,6 +710,7 @@ async function loadAdministrators() {
                         </div>
 
                     </td>
+
                 `;
 
                 administratorTableBody.appendChild(
@@ -457,7 +720,9 @@ async function loadAdministrators() {
             }
         );
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Load administrators error:",
@@ -484,14 +749,18 @@ async function loadAdministrators() {
 // Handle Administrator Actions
 // =====================================
 
-function handleAdministratorActions(event) {
+function handleAdministratorActions(
+    event
+) {
 
     const editButton =
         event.target.closest(
             ".edit-admin-btn"
         );
 
-    if (editButton) {
+    if (
+        editButton
+    ) {
 
         openEditAdministrator(
             editButton.dataset.id
@@ -506,7 +775,9 @@ function handleAdministratorActions(event) {
             ".toggle-admin-btn"
         );
 
-    if (toggleButton) {
+    if (
+        toggleButton
+    ) {
 
         toggleAdministratorStatus(
             toggleButton.dataset.id,
@@ -588,6 +859,25 @@ async function openEditAdministrator(
         administratorPasswordInput.placeholder =
             "Password cannot be changed here";
 
+
+        // =====================================
+        // Manager Department
+        // =====================================
+
+        handleAdministratorRoleChange();
+
+        if (
+            administrator.role ===
+            "manager"
+        ) {
+
+            administratorDepartmentInput.value =
+                administrator.department ??
+                "";
+
+        }
+
+
         administratorMessage.textContent =
             "";
 
@@ -598,7 +888,9 @@ async function openEditAdministrator(
             "modal-open"
         );
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Open administrator error:",
@@ -624,7 +916,9 @@ async function handleAdministratorSubmit(
 
     event.preventDefault();
 
-    if (editingAdministratorId) {
+    if (
+        editingAdministratorId
+    ) {
 
         await updateAdministrator();
 
@@ -658,8 +952,23 @@ async function createAdministrator() {
     const role =
         administratorRoleInput.value;
 
+    const department =
+        role ===
+        "manager"
+            ?
+            administratorDepartmentInput.value.trim()
+            :
+            "";
 
-    if (fullName === "") {
+
+    // =====================================
+    // Validation
+    // =====================================
+
+    if (
+        fullName ===
+        ""
+    ) {
 
         showAdministratorMessage(
             "Please enter the administrator's full name.",
@@ -670,7 +979,10 @@ async function createAdministrator() {
 
     }
 
-    if (email === "") {
+    if (
+        email ===
+        ""
+    ) {
 
         showAdministratorMessage(
             "Please enter an email address.",
@@ -681,7 +993,10 @@ async function createAdministrator() {
 
     }
 
-    if (password.length < 6) {
+    if (
+        password.length <
+        6
+    ) {
 
         showAdministratorMessage(
             "The temporary password must contain at least 6 characters.",
@@ -692,10 +1007,30 @@ async function createAdministrator() {
 
     }
 
-    if (role === "") {
+    if (
+        role ===
+        ""
+    ) {
 
         showAdministratorMessage(
             "Please select an administrator role.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    if (
+        role ===
+        "manager"
+        &&
+        department ===
+        ""
+    ) {
+
+        showAdministratorMessage(
+            "Please select the manager's department.",
             "error"
         );
 
@@ -716,6 +1051,11 @@ async function createAdministrator() {
             "info"
         );
 
+
+        // =====================================
+        // Create Firebase Authentication Account
+        // =====================================
+
         const userCredential =
             await createUserWithEmailAndPassword(
                 administratorCreatorAuth,
@@ -726,38 +1066,55 @@ async function createAdministrator() {
         const newAdministrator =
             userCredential.user;
 
+
+        // =====================================
+        // Create Administrator Firestore Record
+        // =====================================
+
         await setDoc(
-    doc(
-        db,
-        "administrators",
-        newAdministrator.uid
-    ),
-    {
-        uid:
-            newAdministrator.uid,
+            doc(
+                db,
+                "administrators",
+                newAdministrator.uid
+            ),
+            {
 
-        fullName:
-            fullName,
+                uid:
+                    newAdministrator.uid,
 
-        email:
-            email,
+                fullName:
+                    fullName,
 
-        role:
-            role,
+                email:
+                    email,
 
-        status:
-            "Active",
+                role:
+                    role,
 
-        mustChangePassword:
-            true,
+                department:
+                    department,
 
-        createdAt:
-            serverTimestamp()
-    }
-);
+                status:
+                    "Active",
+
+                mustChangePassword:
+                    true,
+
+                createdAt:
+                    serverTimestamp()
+
+            }
+        );
+
+
+        // =====================================
+        // Sign Secondary Account Out
+        // =====================================
+
         await signOut(
             administratorCreatorAuth
         );
+
 
         showAdministratorMessage(
             "Administrator created successfully.",
@@ -766,6 +1123,12 @@ async function createAdministrator() {
 
         administratorForm.reset();
 
+        administratorDepartmentGroup.hidden =
+            true;
+
+        administratorDepartmentInput.required =
+            false;
+
         await loadAdministrators();
 
         setTimeout(
@@ -773,7 +1136,9 @@ async function createAdministrator() {
             1200
         );
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Create administrator error:",
@@ -792,7 +1157,9 @@ async function createAdministrator() {
 
             }
 
-        } catch (secondarySignOutError) {
+        } catch (
+            secondarySignOutError
+        ) {
 
             console.error(
                 "Secondary sign-out error:",
@@ -835,8 +1202,23 @@ async function updateAdministrator() {
     const role =
         administratorRoleInput.value;
 
+    const department =
+        role ===
+        "manager"
+            ?
+            administratorDepartmentInput.value.trim()
+            :
+            "";
 
-    if (fullName === "") {
+
+    // =====================================
+    // Validation
+    // =====================================
+
+    if (
+        fullName ===
+        ""
+    ) {
 
         showAdministratorMessage(
             "Please enter the administrator's full name.",
@@ -847,7 +1229,10 @@ async function updateAdministrator() {
 
     }
 
-    if (email === "") {
+    if (
+        email ===
+        ""
+    ) {
 
         showAdministratorMessage(
             "Please enter an email address.",
@@ -858,10 +1243,30 @@ async function updateAdministrator() {
 
     }
 
-    if (role === "") {
+    if (
+        role ===
+        ""
+    ) {
 
         showAdministratorMessage(
             "Please select an administrator role.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    if (
+        role ===
+        "manager"
+        &&
+        department ===
+        ""
+    ) {
+
+        showAdministratorMessage(
+            "Please select the manager's department.",
             "error"
         );
 
@@ -892,6 +1297,7 @@ async function updateAdministrator() {
         await updateDoc(
             administratorReference,
             {
+
                 fullName:
                     fullName,
 
@@ -899,7 +1305,11 @@ async function updateAdministrator() {
                     email,
 
                 role:
-                    role
+                    role,
+
+                department:
+                    department
+
             }
         );
 
@@ -915,7 +1325,9 @@ async function updateAdministrator() {
             1000
         );
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Update administrator error:",
@@ -962,24 +1374,33 @@ async function toggleAdministratorStatus(
     }
 
     const newStatus =
-        currentStatus === "Active"
-            ? "Disabled"
-            : "Active";
+        currentStatus ===
+        "Active"
+            ?
+            "Disabled"
+            :
+            "Active";
 
     const actionWord =
-        newStatus === "Disabled"
-            ? "disable"
-            : "enable";
+        newStatus ===
+        "Disabled"
+            ?
+            "disable"
+            :
+            "enable";
 
     const confirmed =
         confirm(
             `Are you sure you want to ${actionWord} this administrator?`
         );
 
-    if (!confirmed) {
-        return;
-    }
+    if (
+        !confirmed
+    ) {
 
+        return;
+
+    }
 
     try {
 
@@ -993,14 +1414,18 @@ async function toggleAdministratorStatus(
         await updateDoc(
             administratorReference,
             {
+
                 status:
                     newStatus
+
             }
         );
 
         await loadAdministrators();
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Toggle administrator status error:",
@@ -1078,34 +1503,44 @@ function showCreateAdministratorError(
 // Format Administrator Role
 // =====================================
 
-function formatAdministratorRole(role) {
+function formatAdministratorRole(
+    role
+) {
 
     if (
         role ===
         "superAdministrator"
     ) {
+
         return "Super Administrator";
+
     }
 
     if (
         role ===
         "administrator"
     ) {
+
         return "Administrator";
+
     }
 
     if (
         role ===
         "manager"
     ) {
+
         return "Manager";
+
     }
 
     if (
         role ===
         "readOnly"
     ) {
+
         return "Read Only";
+
     }
 
     return role ??
@@ -1122,8 +1557,12 @@ function formatAdministratorDate(
     timestamp
 ) {
 
-    if (!timestamp) {
+    if (
+        !timestamp
+    ) {
+
         return "-";
+
     }
 
     try {
@@ -1133,6 +1572,7 @@ function formatAdministratorDate(
             .toLocaleDateString(
                 "en-ZA",
                 {
+
                     day:
                         "2-digit",
 
@@ -1141,10 +1581,13 @@ function formatAdministratorDate(
 
                     year:
                         "numeric"
+
                 }
             );
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Administrator date format error:",
@@ -1170,12 +1613,18 @@ function showAdministratorMessage(
     administratorMessage.textContent =
         message;
 
-    if (type === "success") {
+    if (
+        type ===
+        "success"
+    ) {
 
         administratorMessage.style.color =
             "green";
 
-    } else if (type === "error") {
+    } else if (
+        type ===
+        "error"
+    ) {
 
         administratorMessage.style.color =
             "red";
@@ -1212,10 +1661,13 @@ function setSaveButtonState(
 // Escape HTML
 // =====================================
 
-function escapeHtml(value) {
+function escapeHtml(
+    value
+) {
 
     return String(
-        value ?? ""
+        value ??
+        ""
     )
         .replaceAll(
             "&",
@@ -1249,7 +1701,9 @@ async function logoutAdministrator() {
 
     try {
 
-        if (logoutButton) {
+        if (
+            logoutButton
+        ) {
 
             logoutButton.disabled =
                 true;
@@ -1259,7 +1713,9 @@ async function logoutAdministrator() {
 
         }
 
-        await signOut(auth);
+        await signOut(
+            auth
+        );
 
         sessionStorage.clear();
 
@@ -1267,14 +1723,18 @@ async function logoutAdministrator() {
             "admin-login.html"
         );
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Logout error:",
             error
         );
 
-        if (logoutButton) {
+        if (
+            logoutButton
+        ) {
 
             logoutButton.disabled =
                 false;
