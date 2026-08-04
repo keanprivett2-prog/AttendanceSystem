@@ -74,6 +74,9 @@ const employeeNumberInput =
 const employeeNameInput =
     document.getElementById("employeeName");
 
+const employeeRoleInput =
+    document.getElementById("employeeRole");
+
 const employeeDepartmentInput =
     document.getElementById("employeeDepartment");
 
@@ -160,6 +163,10 @@ const logoutButton =
 // =====================================
 
 let employees = [];
+
+let organisationDepartments = [];
+
+let organisationEmployeeRoles = [];
 
 let editingEmployeeId = null;
 
@@ -351,7 +358,174 @@ applySidebarPermissions();
 
     }
 
-    loadEmployees();
+    loadOrganisationStructure();
+
+loadEmployees();
+
+}
+
+// =====================================
+// Load Organisation Structure
+// =====================================
+
+async function loadOrganisationStructure() {
+
+    try {
+
+        const organisationReference =
+            doc(
+                db,
+                "systemSettings",
+                "organisation"
+            );
+
+        const organisationSnapshot =
+            await getDoc(
+                organisationReference
+            );
+
+        if (
+            !organisationSnapshot.exists()
+        ) {
+
+            organisationDepartments = [];
+            organisationEmployeeRoles = [];
+
+            populateOrganisationDropdowns();
+
+            return;
+
+        }
+
+        const organisation =
+            organisationSnapshot.data();
+
+        organisationDepartments =
+            Array.isArray(
+                organisation.departments
+            )
+                ? organisation.departments
+                : [];
+
+        organisationEmployeeRoles =
+            Array.isArray(
+                organisation.employeeRoles
+            )
+                ? organisation.employeeRoles
+                : [];
+
+        organisationDepartments.sort(
+            (a, b) =>
+                a.localeCompare(b)
+        );
+
+        organisationEmployeeRoles.sort(
+            (a, b) =>
+                a.localeCompare(b)
+        );
+
+        populateOrganisationDropdowns();
+
+    } catch (error) {
+
+        console.error(
+            "Load organisation structure error:",
+            error
+        );
+
+        showNotification(
+            "⚠️ Employee roles and departments could not be loaded.",
+            "warning"
+        );
+
+    }
+
+}
+
+
+// =====================================
+// Populate Organisation Dropdowns
+// =====================================
+
+function populateOrganisationDropdowns() {
+
+    if (
+        employeeRoleInput
+    ) {
+
+        const selectedRole =
+            employeeRoleInput.value;
+
+        employeeRoleInput.innerHTML = `
+            <option value="">
+                Select role
+            </option>
+        `;
+
+        organisationEmployeeRoles.forEach(
+            function (role) {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value =
+                    role;
+
+                option.textContent =
+                    role;
+
+                employeeRoleInput.appendChild(
+                    option
+                );
+
+            }
+        );
+
+        employeeRoleInput.value =
+            selectedRole;
+
+    }
+
+    if (
+        employeeDepartmentInput
+    ) {
+
+        const selectedDepartment =
+            employeeDepartmentInput.value;
+
+        employeeDepartmentInput.innerHTML = `
+            <option value="">
+                Select department
+            </option>
+        `;
+
+        organisationDepartments.forEach(
+            function (department) {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value =
+                    department;
+
+                option.textContent =
+                    department;
+
+                employeeDepartmentInput.appendChild(
+                    option
+                );
+
+            }
+        );
+
+        employeeDepartmentInput.value =
+            selectedDepartment;
+
+    }
 
 }
 
@@ -555,7 +729,10 @@ async function saveEmployee(event) {
     const employeeName =
         employeeNameInput.value.trim();
 
-    const employeeDepartment =
+    const employeeRole =
+    employeeRoleInput.value.trim();
+
+const employeeDepartment =
     employeeDepartmentInput.value.trim();
 
 const employeeStartTime =
@@ -571,6 +748,7 @@ const employeePin =
    if (
     employeeNumber === "" ||
     employeeName === "" ||
+       employeeRole === "" ||
     employeeDepartment === "" ||
     employeeStartTime === "" ||
     employeeEndTime === "" ||
@@ -667,11 +845,12 @@ const employeePin =
         }
 
 
-        if (editingEmployeeId) {
+       if (editingEmployeeId) {
 
     await updateExistingEmployee(
         employeeNumber,
         employeeName,
+        employeeRole,
         employeeDepartment,
         employeeStartTime,
         employeeEndTime,
@@ -683,6 +862,7 @@ const employeePin =
     await createNewEmployee(
         employeeNumber,
         employeeName,
+        employeeRole,
         employeeDepartment,
         employeeStartTime,
         employeeEndTime,
@@ -728,6 +908,7 @@ const employeePin =
 async function createNewEmployee(
     employeeNumber,
     employeeName,
+    employeeRole,
     employeeDepartment,
     employeeStartTime,
     employeeEndTime,
@@ -744,6 +925,9 @@ async function createNewEmployee(
 
             name:
                 employeeName,
+
+            role:
+                employeeRole,
 
             department:
                 employeeDepartment,
@@ -768,7 +952,7 @@ async function createNewEmployee(
     await writeAuditLog(
         "Added Employee",
         employeeName,
-        `Employee Number: ${employeeNumber}, Start Time: ${employeeStartTime}, End Time: ${employeeEndTime}`
+        `Employee Number: ${employeeNumber}, Role: ${employeeRole}, Department: ${employeeDepartment}, Start Time: ${employeeStartTime}, End Time: ${employeeEndTime}`
     );
 
     showNotification(
@@ -777,7 +961,6 @@ async function createNewEmployee(
 
 }
 
-
 // =====================================
 // Update Employee
 // =====================================
@@ -785,6 +968,7 @@ async function createNewEmployee(
 async function updateExistingEmployee(
     employeeNumber,
     employeeName,
+    employeeRole,
     employeeDepartment,
     employeeStartTime,
     employeeEndTime,
@@ -824,6 +1008,9 @@ async function updateExistingEmployee(
             name:
                 employeeName,
 
+            role:
+                employeeRole,
+
             department:
                 employeeDepartment,
 
@@ -841,7 +1028,7 @@ async function updateExistingEmployee(
     await writeAuditLog(
         "Updated Employee",
         employeeName,
-        `Previous: Employee Number: ${previousEmployee.employeeNumber}, Name: ${previousEmployee.name}, Department: ${previousEmployee.department}, Start Time: ${previousEmployee.startTime ?? "-"}, End Time: ${previousEmployee.endTime ?? "-"} | Updated: Employee Number: ${employeeNumber}, Name: ${employeeName}, Department: ${employeeDepartment}, Start Time: ${employeeStartTime}, End Time: ${employeeEndTime}`
+        `Previous: Employee Number: ${previousEmployee.employeeNumber}, Name: ${previousEmployee.name}, Role: ${previousEmployee.role ?? "-"}, Department: ${previousEmployee.department}, Start Time: ${previousEmployee.startTime ?? "-"}, End Time: ${previousEmployee.endTime ?? "-"} | Updated: Employee Number: ${employeeNumber}, Name: ${employeeName}, Role: ${employeeRole}, Department: ${employeeDepartment}, Start Time: ${employeeStartTime}, End Time: ${employeeEndTime}`
     );
 
     showNotification(
@@ -849,7 +1036,6 @@ async function updateExistingEmployee(
     );
 
 }
-
 // =====================================
 // Load Employees
 // =====================================
@@ -1240,12 +1426,14 @@ function openEditEmployee(employeeId) {
     employeeNameInput.value =
         employee.name ?? "";
 
-    employeeDepartmentInput.value =
+   employeeRoleInput.value =
+    employee.role ?? "";
+
+employeeDepartmentInput.value =
     employee.department ?? "";
 
 employeeStartTimeInput.value =
     employee.startTime ?? "08:00";
-
 employeeEndTimeInput.value =
     employee.endTime ?? "17:00";
 
