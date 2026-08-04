@@ -85,12 +85,12 @@
                 </a>
 
                 <a
-    href="disciplinary.html"
-    class="menu-link"
-    data-permission="disciplinary"
->
-    Disciplinary
-</a>
+                    href="disciplinary.html"
+                    class="menu-link"
+                    data-permission="disciplinary"
+                >
+                    Disciplinary
+                </a>
 
                 <a
                     href="settings.html"
@@ -310,7 +310,15 @@
 
             </div>
 
+
+            <!-- =====================================
+                 Administrator Form
+            ====================================== -->
+
             <form id="administratorForm">
+
+
+                <!-- Full Name -->
 
                 <div class="form-group">
 
@@ -327,6 +335,9 @@
 
                 </div>
 
+
+                <!-- Email -->
+
                 <div class="form-group">
 
                     <label for="administratorEmail">
@@ -341,6 +352,9 @@
                     >
 
                 </div>
+
+
+                <!-- Temporary Password -->
 
                 <div class="form-group">
 
@@ -361,6 +375,9 @@
                     </small>
 
                 </div>
+
+
+                <!-- Role -->
 
                 <div class="form-group">
 
@@ -397,6 +414,40 @@
 
                 </div>
 
+
+                <!-- =====================================
+                     Manager Department
+                ====================================== -->
+
+                <div
+                    class="form-group"
+                    id="administratorDepartmentGroup"
+                    hidden
+                >
+
+                    <label for="administratorDepartment">
+                        Manager Department
+                    </label>
+
+                    <select id="administratorDepartment">
+
+                        <option value="">
+                            Select department
+                        </option>
+
+                    </select>
+
+                    <small>
+                        Managers will only have access to employees and disciplinary records within this department.
+                    </small>
+
+                </div>
+
+
+                <!-- =====================================
+                     Modal Actions
+                ====================================== -->
+
                 <div class="modal-actions">
 
                     <button
@@ -417,6 +468,9 @@
 
                 </div>
 
+
+                <!-- Form Message -->
+
                 <p
                     id="administratorMessage"
                     aria-live="polite"
@@ -428,6 +482,10 @@
 
     </div>
 
+
+    <!-- =====================================
+         JavaScript
+    ====================================== -->
 
     <script
         type="module"
