@@ -738,11 +738,15 @@ async function checkIn() {
         const attendanceSettings =
             await getAttendanceSettings();
 
-        const attendanceStatus =
-            getAttendanceStatus(
-                scanTime,
-                attendanceSettings.lateThreshold
-            );
+        const employeeLateThreshold =
+    employee.startTime ??
+    attendanceSettings.lateThreshold;
+
+const attendanceStatus =
+    getAttendanceStatus(
+        scanTime,
+        employeeLateThreshold
+    );
 
 
         // =================================================
@@ -1370,6 +1374,14 @@ async function saveAttendanceToFirebase(
                             lateReason
                             :
                             "",
+
+                    scheduledStartTime:
+    employee.startTime ??
+    "",
+
+scheduledEndTime:
+    employee.endTime ??
+    "",
 
                     checkInMethod:
                         "QR Code",
