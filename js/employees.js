@@ -77,6 +77,12 @@ const employeeNameInput =
 const employeeDepartmentInput =
     document.getElementById("employeeDepartment");
 
+const employeeStartTimeInput =
+    document.getElementById("employeeStartTime");
+
+const employeeEndTimeInput =
+    document.getElementById("employeeEndTime");
+
 const employeePinInput =
     document.getElementById("employeePin");
 
@@ -550,27 +556,47 @@ async function saveEmployee(event) {
         employeeNameInput.value.trim();
 
     const employeeDepartment =
-        employeeDepartmentInput.value.trim();
+    employeeDepartmentInput.value.trim();
 
-    const employeePin =
-        employeePinInput.value.trim();
+const employeeStartTime =
+    employeeStartTimeInput.value.trim();
 
+const employeeEndTime =
+    employeeEndTimeInput.value.trim();
+
+const employeePin =
+    employeePinInput.value.trim();
+
+
+   if (
+    employeeNumber === "" ||
+    employeeName === "" ||
+    employeeDepartment === "" ||
+    employeeStartTime === "" ||
+    employeeEndTime === "" ||
+    employeePin === ""
+) {
+
+    showNotification(
+        "⚠️ Please complete all employee fields.",
+        "warning"
+    );
+
+    return;
+}
 
     if (
-        employeeNumber === "" ||
-        employeeName === "" ||
-        employeeDepartment === "" ||
-        employeePin === ""
-    ) {
+    employeeEndTime <=
+    employeeStartTime
+) {
 
-        showNotification(
-            "⚠️ Please complete all employee fields.",
-            "warning"
-        );
+    showNotification(
+        "⚠️ End Time must be later than Start Time.",
+        "warning"
+    );
 
-        return;
-
-    }
+    return;
+}
 
     if (
         !/^\d{4,6}$/.test(
@@ -643,24 +669,27 @@ async function saveEmployee(event) {
 
         if (editingEmployeeId) {
 
-            await updateExistingEmployee(
-                employeeNumber,
-                employeeName,
-                employeeDepartment,
-                employeePin
-            );
+    await updateExistingEmployee(
+        employeeNumber,
+        employeeName,
+        employeeDepartment,
+        employeeStartTime,
+        employeeEndTime,
+        employeePin
+    );
 
-        } else {
+} else {
 
-            await createNewEmployee(
-                employeeNumber,
-                employeeName,
-                employeeDepartment,
-                employeePin
-            );
+    await createNewEmployee(
+        employeeNumber,
+        employeeName,
+        employeeDepartment,
+        employeeStartTime,
+        employeeEndTime,
+        employeePin
+    );
 
-        }
-
+}
         closeEmployeeModal();
 
         await loadEmployees();
@@ -700,6 +729,8 @@ async function createNewEmployee(
     employeeNumber,
     employeeName,
     employeeDepartment,
+    employeeStartTime,
+    employeeEndTime,
     employeePin
 ) {
 
@@ -717,6 +748,12 @@ async function createNewEmployee(
             department:
                 employeeDepartment,
 
+            startTime:
+                employeeStartTime,
+
+            endTime:
+                employeeEndTime,
+
             pin:
                 employeePin,
 
@@ -731,7 +768,7 @@ async function createNewEmployee(
     await writeAuditLog(
         "Added Employee",
         employeeName,
-        `Employee Number: ${employeeNumber}`
+        `Employee Number: ${employeeNumber}, Start Time: ${employeeStartTime}, End Time: ${employeeEndTime}`
     );
 
     showNotification(
@@ -749,6 +786,8 @@ async function updateExistingEmployee(
     employeeNumber,
     employeeName,
     employeeDepartment,
+    employeeStartTime,
+    employeeEndTime,
     employeePin
 ) {
 
@@ -788,6 +827,12 @@ async function updateExistingEmployee(
             department:
                 employeeDepartment,
 
+            startTime:
+                employeeStartTime,
+
+            endTime:
+                employeeEndTime,
+
             pin:
                 employeePin
         }
@@ -796,7 +841,7 @@ async function updateExistingEmployee(
     await writeAuditLog(
         "Updated Employee",
         employeeName,
-        `Previous: Employee Number: ${previousEmployee.employeeNumber}, Name: ${previousEmployee.name}, Department: ${previousEmployee.department} | Updated: Employee Number: ${employeeNumber}, Name: ${employeeName}, Department: ${employeeDepartment}`
+        `Previous: Employee Number: ${previousEmployee.employeeNumber}, Name: ${previousEmployee.name}, Department: ${previousEmployee.department}, Start Time: ${previousEmployee.startTime ?? "-"}, End Time: ${previousEmployee.endTime ?? "-"} | Updated: Employee Number: ${employeeNumber}, Name: ${employeeName}, Department: ${employeeDepartment}, Start Time: ${employeeStartTime}, End Time: ${employeeEndTime}`
     );
 
     showNotification(
@@ -804,7 +849,6 @@ async function updateExistingEmployee(
     );
 
 }
-
 
 // =====================================
 // Load Employees
@@ -1197,10 +1241,16 @@ function openEditEmployee(employeeId) {
         employee.name ?? "";
 
     employeeDepartmentInput.value =
-        employee.department ?? "";
+    employee.department ?? "";
 
-    employeePinInput.value =
-        employee.pin ?? "";
+employeeStartTimeInput.value =
+    employee.startTime ?? "08:00";
+
+employeeEndTimeInput.value =
+    employee.endTime ?? "17:00";
+
+employeePinInput.value =
+    employee.pin ?? "";
 
     saveEmployeeButton.textContent =
         "Update Employee";
