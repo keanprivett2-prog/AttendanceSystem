@@ -711,6 +711,20 @@ function displayReport(records) {
                     </span>
 
                 </td>
+
+<td>
+    ${
+        normalizeStatus(
+            record.status
+        ) === "late"
+            ? escapeHtml(
+                record.lateReason ??
+                "No reason recorded"
+            )
+            : "-"
+    }
+</td>
+                
             `;
 
             reportTableBody.appendChild(
@@ -896,7 +910,7 @@ function showTableMessage(message) {
         <tr>
 
             <td
-                colspan="6"
+                colspan="7"
                 class="empty-row"
             >
                 ${escapeHtml(message)}
@@ -927,15 +941,16 @@ function exportReportToCsv() {
     }
 
     const csvRows = [
-        [
-            "Date",
-            "Employee Number",
-            "Employee Name",
-            "Department",
-            "Check-in Time",
-            "Status"
-        ]
-    ];
+    [
+        "Date",
+        "Employee Number",
+        "Employee Name",
+        "Department",
+        "Check-in Time",
+        "Status",
+        "Late Reason"
+    ]
+];
 
     currentReportRecords.forEach(
         (record) => {
@@ -959,7 +974,13 @@ function exportReportToCsv() {
                     "",
 
                 record.status ??
-                    ""
+    "",
+
+normalizeStatus(
+    record.status
+) === "late"
+    ? record.lateReason ?? ""
+    : ""
             ]);
 
         }
