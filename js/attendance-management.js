@@ -481,10 +481,37 @@ async function loadExistingAttendance() {
                 attendanceSnapshot.data();
 
             attendanceStatus.value =
-                attendance.status ?? "";
+    attendance.status ?? "";
 
-            attendanceNotes.value =
-                attendance.notes ?? "";
+const existingNotes =
+    String(
+        attendance.notes ?? ""
+    ).trim();
+
+const existingLateReason =
+    String(
+        attendance.lateReason ?? ""
+    ).trim();
+
+if (
+    attendance.status === "Late" &&
+    existingLateReason
+) {
+
+    attendanceNotes.value =
+        existingNotes
+            ? existingNotes
+                + "\n\nReason for Lateness: "
+                + existingLateReason
+            : "Reason for Lateness: "
+                + existingLateReason;
+
+} else {
+
+    attendanceNotes.value =
+        existingNotes;
+
+}
 
             showMessage(
                 "Existing attendance record loaded.",
