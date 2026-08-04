@@ -410,6 +410,124 @@
 
                     </div>
 
+                    <!-- =====================================
+     Organisation Structure
+====================================== -->
+
+<div class="settings-section">
+
+    <h3>
+        Organisation Structure
+    </h3>
+
+    <p>
+        Manage the departments and employee roles available throughout the system.
+    </p>
+
+
+    <!-- =====================================
+         Departments
+    ====================================== -->
+
+    <div class="settings-subsection">
+
+        <h4>
+            Departments
+        </h4>
+
+        <div class="form-group">
+
+            <label for="newDepartmentName">
+                Department Name
+            </label>
+
+            <div class="settings-inline-input">
+
+                <input
+                    type="text"
+                    id="newDepartmentName"
+                    placeholder="Enter department name"
+                    autocomplete="off"
+                >
+
+                <button
+                    type="button"
+                    class="refresh-btn"
+                    id="addDepartmentButton"
+                >
+                    Add Department
+                </button>
+
+            </div>
+
+        </div>
+
+        <div
+            class="settings-list"
+            id="departmentList"
+        >
+
+            <p class="empty-row">
+                No departments have been added yet.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================
+         Employee Roles
+    ====================================== -->
+
+    <div class="settings-subsection">
+
+        <h4>
+            Employee Roles
+        </h4>
+
+        <div class="form-group">
+
+            <label for="newEmployeeRoleName">
+                Role Name
+            </label>
+
+            <div class="settings-inline-input">
+
+                <input
+                    type="text"
+                    id="newEmployeeRoleName"
+                    placeholder="Enter employee role"
+                    autocomplete="off"
+                >
+
+                <button
+                    type="button"
+                    class="refresh-btn"
+                    id="addEmployeeRoleButton"
+                >
+                    Add Role
+                </button>
+
+            </div>
+
+        </div>
+
+        <div
+            class="settings-list"
+            id="employeeRoleList"
+        >
+
+            <p class="empty-row">
+                No employee roles have been added yet.
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
 
                     <!-- Save Settings -->
 
@@ -447,3 +565,5 @@
 </body>
 
 </html>
+
+
