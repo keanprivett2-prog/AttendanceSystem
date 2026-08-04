@@ -19,6 +19,8 @@ import {
     collection,
     addDoc,
     getDocs,
+    getDoc,
+    doc,
     query,
     orderBy,
     serverTimestamp
@@ -30,7 +32,8 @@ import {
 
 import {
     applySidebarPermissions,
-    protectPage
+    protectPage,
+    currentAdministratorRole
 } from "./role-permissions.js";
 
 
@@ -119,6 +122,12 @@ const logoutButton =
 // =====================================
 
 let employees = [];
+
+let managerDepartment =
+    "";
+
+let currentAdministratorProfile =
+    null;
 
 
 // =====================================
@@ -220,9 +229,90 @@ function initializeDisciplinaryPage() {
 
     }
 
-    loadEmployees();
+    loadDisciplinaryData();
 
-    loadWarnings();
+}
+
+// =====================================
+// Load Disciplinary Data
+// =====================================
+
+async function loadDisciplinaryData() {
+
+    await loadCurrentAdministratorProfile();
+
+    await loadEmployees();
+
+    await loadWarnings();
+
+}
+
+
+// =====================================
+// Load Current Administrator Profile
+// =====================================
+
+async function loadCurrentAdministratorProfile() {
+
+    try {
+
+        const currentUser =
+            auth.currentUser;
+
+        if (
+            !currentUser
+        ) {
+
+            return;
+
+        }
+
+        const administratorReference =
+            doc(
+                db,
+                "administrators",
+                currentUser.uid
+            );
+
+        const administratorSnapshot =
+            await getDoc(
+                administratorReference
+            );
+
+        if (
+            !administratorSnapshot.exists()
+        ) {
+
+            return;
+
+        }
+
+        currentAdministratorProfile =
+            administratorSnapshot.data();
+
+        if (
+            currentAdministratorRole ===
+            "manager"
+        ) {
+
+            managerDepartment =
+                String(
+                    currentAdministratorProfile.department ??
+                    ""
+                ).trim();
+
+        }
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Load administrator profile error:",
+            error
+        );
+
+    }
 
 }
 
@@ -406,18 +496,42 @@ async function loadEmployees() {
             );
 
         employees =
-            employees.filter(
-                function (
-                    employee
-                ) {
+    employees.filter(
+        function (
+            employee
+        ) {
 
-                    return (
-                        employee.active !==
-                        false
-                    );
+            const isActive =
+                employee.active !==
+                false;
 
-                }
-            );
+            if (
+                !isActive
+            ) {
+
+                return false;
+
+            }
+
+            if (
+                currentAdministratorRole ===
+                "manager"
+            ) {
+
+                return (
+                    String(
+                        employee.department ??
+                        ""
+                    ).trim() ===
+                    managerDepartment
+                );
+
+            }
+
+            return true;
+
+        }
+    );
 
         employees.sort(
             function (
@@ -757,6 +871,21 @@ async function loadWarnings() {
 
                 const warning =
                     warningDocument.data();
+
+                if (
+    currentAdministratorRole ===
+    "manager"
+    &&
+    String(
+        warning.department ??
+        ""
+    ).trim() !==
+    managerDepartment
+) {
+
+    return;
+
+}
 
                 const row =
                     document.createElement(
