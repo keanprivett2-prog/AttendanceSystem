@@ -127,11 +127,52 @@ const saveSettingsButton =
 
 
 // =====================================
+// Organisation Structure Elements
+// =====================================
+
+const newDepartmentNameInput =
+    document.getElementById(
+        "newDepartmentName"
+    );
+
+const addDepartmentButton =
+    document.getElementById(
+        "addDepartmentButton"
+    );
+
+const departmentList =
+    document.getElementById(
+        "departmentList"
+    );
+
+const newEmployeeRoleNameInput =
+    document.getElementById(
+        "newEmployeeRoleName"
+    );
+
+const addEmployeeRoleButton =
+    document.getElementById(
+        "addEmployeeRoleButton"
+    );
+
+const employeeRoleList =
+    document.getElementById(
+        "employeeRoleList"
+    );
+
+
+// =====================================
 // Page State
 // =====================================
 
 let selectedCompanyLogoData =
     "";
+
+let departments =
+    [];
+
+let employeeRoles =
+    [];
 
 
 // =====================================
@@ -142,13 +183,26 @@ initializeSettingsPage();
 
 function initializeSettingsPage() {
 
-    if (!protectPage("settings")) {
+    if (
+        !protectPage(
+            "settings"
+        )
+    ) {
+
         return;
+
     }
 
     applySidebarPermissions();
 
-    if (settingsForm) {
+
+    // =====================================
+    // Main Settings Form
+    // =====================================
+
+    if (
+        settingsForm
+    ) {
 
         settingsForm.addEventListener(
             "submit",
@@ -157,7 +211,14 @@ function initializeSettingsPage() {
 
     }
 
-    if (logoutButton) {
+
+    // =====================================
+    // Logout
+    // =====================================
+
+    if (
+        logoutButton
+    ) {
 
         logoutButton.addEventListener(
             "click",
@@ -166,7 +227,14 @@ function initializeSettingsPage() {
 
     }
 
-    if (companyLogoInput) {
+
+    // =====================================
+    // Company Logo
+    // =====================================
+
+    if (
+        companyLogoInput
+    ) {
 
         companyLogoInput.addEventListener(
             "change",
@@ -175,7 +243,9 @@ function initializeSettingsPage() {
 
     }
 
-    if (removeCompanyLogoButton) {
+    if (
+        removeCompanyLogoButton
+    ) {
 
         removeCompanyLogoButton.addEventListener(
             "click",
@@ -184,7 +254,120 @@ function initializeSettingsPage() {
 
     }
 
+
+    // =====================================
+    // Departments
+    // =====================================
+
+    if (
+        addDepartmentButton
+    ) {
+
+        addDepartmentButton.addEventListener(
+            "click",
+            addDepartment
+        );
+
+    }
+
+    if (
+        newDepartmentNameInput
+    ) {
+
+        newDepartmentNameInput.addEventListener(
+            "keydown",
+            function (
+                event
+            ) {
+
+                if (
+                    event.key ===
+                    "Enter"
+                ) {
+
+                    event.preventDefault();
+
+                    addDepartment();
+
+                }
+
+            }
+        );
+
+    }
+
+    if (
+        departmentList
+    ) {
+
+        departmentList.addEventListener(
+            "click",
+            handleDepartmentListClick
+        );
+
+    }
+
+
+    // =====================================
+    // Employee Roles
+    // =====================================
+
+    if (
+        addEmployeeRoleButton
+    ) {
+
+        addEmployeeRoleButton.addEventListener(
+            "click",
+            addEmployeeRole
+        );
+
+    }
+
+    if (
+        newEmployeeRoleNameInput
+    ) {
+
+        newEmployeeRoleNameInput.addEventListener(
+            "keydown",
+            function (
+                event
+            ) {
+
+                if (
+                    event.key ===
+                    "Enter"
+                ) {
+
+                    event.preventDefault();
+
+                    addEmployeeRole();
+
+                }
+
+            }
+        );
+
+    }
+
+    if (
+        employeeRoleList
+    ) {
+
+        employeeRoleList.addEventListener(
+            "click",
+            handleEmployeeRoleListClick
+        );
+
+    }
+
+
+    // =====================================
+    // Load Settings
+    // =====================================
+
     loadSettings();
+
+    loadOrganisationStructure();
 
 }
 
@@ -257,7 +440,9 @@ async function loadSettings() {
             "info"
         );
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Load settings error:",
@@ -275,6 +460,778 @@ async function loadSettings() {
 
 
 // =====================================
+// Load Organisation Structure
+// =====================================
+
+async function loadOrganisationStructure() {
+
+    try {
+
+        const organisationReference =
+            doc(
+                db,
+                "systemSettings",
+                "organisation"
+            );
+
+        const organisationSnapshot =
+            await getDoc(
+                organisationReference
+            );
+
+        if (
+            !organisationSnapshot.exists()
+        ) {
+
+            departments =
+                [];
+
+            employeeRoles =
+                [];
+
+            renderDepartments();
+
+            renderEmployeeRoles();
+
+            return;
+
+        }
+
+        const organisation =
+            organisationSnapshot.data();
+
+        departments =
+            Array.isArray(
+                organisation.departments
+            )
+                ?
+                organisation.departments
+                :
+                [];
+
+        employeeRoles =
+            Array.isArray(
+                organisation.employeeRoles
+            )
+                ?
+                organisation.employeeRoles
+                :
+                [];
+
+        sortOrganisationStructure();
+
+        renderDepartments();
+
+        renderEmployeeRoles();
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Load organisation structure error:",
+            error
+        );
+
+        showMessage(
+            "Departments and employee roles could not be loaded.",
+            "error"
+        );
+
+    }
+
+}
+
+
+// =====================================
+// Save Organisation Structure
+// =====================================
+
+async function saveOrganisationStructure() {
+
+    const organisationReference =
+        doc(
+            db,
+            "systemSettings",
+            "organisation"
+        );
+
+    await setDoc(
+        organisationReference,
+        {
+
+            departments:
+                departments,
+
+            employeeRoles:
+                employeeRoles
+
+        },
+        {
+            merge:
+                true
+        }
+    );
+
+}
+
+
+// =====================================
+// Sort Organisation Structure
+// =====================================
+
+function sortOrganisationStructure() {
+
+    departments.sort(
+        (
+            firstDepartment,
+            secondDepartment
+        ) => {
+
+            return firstDepartment.localeCompare(
+                secondDepartment
+            );
+
+        }
+    );
+
+    employeeRoles.sort(
+        (
+            firstRole,
+            secondRole
+        ) => {
+
+            return firstRole.localeCompare(
+                secondRole
+            );
+
+        }
+    );
+
+}
+
+
+// =====================================
+// Add Department
+// =====================================
+
+async function addDepartment() {
+
+    const departmentName =
+        newDepartmentNameInput.value
+            .trim();
+
+    if (
+        departmentName ===
+        ""
+    ) {
+
+        showMessage(
+            "Please enter a department name.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    const departmentExists =
+        departments.some(
+            (
+                department
+            ) => {
+
+                return (
+                    department
+                        .toLowerCase() ===
+                    departmentName
+                        .toLowerCase()
+                );
+
+            }
+        );
+
+    if (
+        departmentExists
+    ) {
+
+        showMessage(
+            "That department already exists.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    try {
+
+        addDepartmentButton.disabled =
+            true;
+
+        departments.push(
+            departmentName
+        );
+
+        sortOrganisationStructure();
+
+        await saveOrganisationStructure();
+
+        newDepartmentNameInput.value =
+            "";
+
+        renderDepartments();
+
+        showMessage(
+            `Department "${departmentName}" added successfully.`,
+            "success"
+        );
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Add department error:",
+            error
+        );
+
+        departments =
+            departments.filter(
+                (
+                    department
+                ) => {
+
+                    return (
+                        department !==
+                        departmentName
+                    );
+
+                }
+            );
+
+        renderDepartments();
+
+        showMessage(
+            "The department could not be added.",
+            "error"
+        );
+
+    } finally {
+
+        addDepartmentButton.disabled =
+            false;
+
+    }
+
+}
+
+
+// =====================================
+// Department List Click
+// =====================================
+
+function handleDepartmentListClick(
+    event
+) {
+
+    const removeButton =
+        event.target.closest(
+            ".remove-department-btn"
+        );
+
+    if (
+        !removeButton
+    ) {
+
+        return;
+
+    }
+
+    const departmentName =
+        removeButton.dataset.department;
+
+    removeDepartment(
+        departmentName
+    );
+
+}
+
+
+// =====================================
+// Remove Department
+// =====================================
+
+async function removeDepartment(
+    departmentName
+) {
+
+    const confirmed =
+        confirm(
+            `Remove the department "${departmentName}"?`
+        );
+
+    if (
+        !confirmed
+    ) {
+
+        return;
+
+    }
+
+    const previousDepartments =
+        [
+            ...departments
+        ];
+
+    try {
+
+        departments =
+            departments.filter(
+                (
+                    department
+                ) => {
+
+                    return (
+                        department !==
+                        departmentName
+                    );
+
+                }
+            );
+
+        await saveOrganisationStructure();
+
+        renderDepartments();
+
+        showMessage(
+            `Department "${departmentName}" removed.`,
+            "success"
+        );
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Remove department error:",
+            error
+        );
+
+        departments =
+            previousDepartments;
+
+        renderDepartments();
+
+        showMessage(
+            "The department could not be removed.",
+            "error"
+        );
+
+    }
+
+}
+
+
+// =====================================
+// Render Departments
+// =====================================
+
+function renderDepartments() {
+
+    if (
+        !departmentList
+    ) {
+
+        return;
+
+    }
+
+    departmentList.innerHTML =
+        "";
+
+    if (
+        departments.length ===
+        0
+    ) {
+
+        departmentList.innerHTML = `
+            <p class="empty-row">
+                No departments have been added yet.
+            </p>
+        `;
+
+        return;
+
+    }
+
+    departments.forEach(
+        (
+            department
+        ) => {
+
+            const item =
+                document.createElement(
+                    "div"
+                );
+
+            item.className =
+                "settings-list-item";
+
+            const name =
+                document.createElement(
+                    "span"
+                );
+
+            name.textContent =
+                department;
+
+            const removeButton =
+                document.createElement(
+                    "button"
+                );
+
+            removeButton.type =
+                "button";
+
+            removeButton.className =
+                "remove-department-btn";
+
+            removeButton.dataset.department =
+                department;
+
+            removeButton.textContent =
+                "Remove";
+
+            item.appendChild(
+                name
+            );
+
+            item.appendChild(
+                removeButton
+            );
+
+            departmentList.appendChild(
+                item
+            );
+
+        }
+    );
+
+}
+
+
+// =====================================
+// Add Employee Role
+// =====================================
+
+async function addEmployeeRole() {
+
+    const roleName =
+        newEmployeeRoleNameInput.value
+            .trim();
+
+    if (
+        roleName ===
+        ""
+    ) {
+
+        showMessage(
+            "Please enter an employee role.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    const roleExists =
+        employeeRoles.some(
+            (
+                role
+            ) => {
+
+                return (
+                    role
+                        .toLowerCase() ===
+                    roleName
+                        .toLowerCase()
+                );
+
+            }
+        );
+
+    if (
+        roleExists
+    ) {
+
+        showMessage(
+            "That employee role already exists.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    try {
+
+        addEmployeeRoleButton.disabled =
+            true;
+
+        employeeRoles.push(
+            roleName
+        );
+
+        sortOrganisationStructure();
+
+        await saveOrganisationStructure();
+
+        newEmployeeRoleNameInput.value =
+            "";
+
+        renderEmployeeRoles();
+
+        showMessage(
+            `Employee role "${roleName}" added successfully.`,
+            "success"
+        );
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Add employee role error:",
+            error
+        );
+
+        employeeRoles =
+            employeeRoles.filter(
+                (
+                    role
+                ) => {
+
+                    return (
+                        role !==
+                        roleName
+                    );
+
+                }
+            );
+
+        renderEmployeeRoles();
+
+        showMessage(
+            "The employee role could not be added.",
+            "error"
+        );
+
+    } finally {
+
+        addEmployeeRoleButton.disabled =
+            false;
+
+    }
+
+}
+
+
+// =====================================
+// Employee Role List Click
+// =====================================
+
+function handleEmployeeRoleListClick(
+    event
+) {
+
+    const removeButton =
+        event.target.closest(
+            ".remove-employee-role-btn"
+        );
+
+    if (
+        !removeButton
+    ) {
+
+        return;
+
+    }
+
+    const roleName =
+        removeButton.dataset.role;
+
+    removeEmployeeRole(
+        roleName
+    );
+
+}
+
+
+// =====================================
+// Remove Employee Role
+// =====================================
+
+async function removeEmployeeRole(
+    roleName
+) {
+
+    const confirmed =
+        confirm(
+            `Remove the employee role "${roleName}"?`
+        );
+
+    if (
+        !confirmed
+    ) {
+
+        return;
+
+    }
+
+    const previousEmployeeRoles =
+        [
+            ...employeeRoles
+        ];
+
+    try {
+
+        employeeRoles =
+            employeeRoles.filter(
+                (
+                    role
+                ) => {
+
+                    return (
+                        role !==
+                        roleName
+                    );
+
+                }
+            );
+
+        await saveOrganisationStructure();
+
+        renderEmployeeRoles();
+
+        showMessage(
+            `Employee role "${roleName}" removed.`,
+            "success"
+        );
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Remove employee role error:",
+            error
+        );
+
+        employeeRoles =
+            previousEmployeeRoles;
+
+        renderEmployeeRoles();
+
+        showMessage(
+            "The employee role could not be removed.",
+            "error"
+        );
+
+    }
+
+}
+
+
+// =====================================
+// Render Employee Roles
+// =====================================
+
+function renderEmployeeRoles() {
+
+    if (
+        !employeeRoleList
+    ) {
+
+        return;
+
+    }
+
+    employeeRoleList.innerHTML =
+        "";
+
+    if (
+        employeeRoles.length ===
+        0
+    ) {
+
+        employeeRoleList.innerHTML = `
+            <p class="empty-row">
+                No employee roles have been added yet.
+            </p>
+        `;
+
+        return;
+
+    }
+
+    employeeRoles.forEach(
+        (
+            role
+        ) => {
+
+            const item =
+                document.createElement(
+                    "div"
+                );
+
+            item.className =
+                "settings-list-item";
+
+            const name =
+                document.createElement(
+                    "span"
+                );
+
+            name.textContent =
+                role;
+
+            const removeButton =
+                document.createElement(
+                    "button"
+                );
+
+            removeButton.type =
+                "button";
+
+            removeButton.className =
+                "remove-employee-role-btn";
+
+            removeButton.dataset.role =
+                role;
+
+            removeButton.textContent =
+                "Remove";
+
+            item.appendChild(
+                name
+            );
+
+            item.appendChild(
+                removeButton
+            );
+
+            employeeRoleList.appendChild(
+                item
+            );
+
+        }
+    );
+
+}
+
+
+// =====================================
 // Load Company Logo
 // =====================================
 
@@ -282,7 +1239,9 @@ function loadCompanyLogo(
     companyLogo
 ) {
 
-    if (companyLogo) {
+    if (
+        companyLogo
+    ) {
 
         selectedCompanyLogoData =
             companyLogo;
@@ -296,7 +1255,9 @@ function loadCompanyLogo(
         noCompanyLogoMessage.style.display =
             "none";
 
-        if (removeCompanyLogoButton) {
+        if (
+            removeCompanyLogoButton
+        ) {
 
             removeCompanyLogoButton.hidden =
                 false;
@@ -320,7 +1281,9 @@ function loadCompanyLogo(
     noCompanyLogoMessage.style.display =
         "block";
 
-    if (removeCompanyLogoButton) {
+    if (
+        removeCompanyLogoButton
+    ) {
 
         removeCompanyLogoButton.hidden =
             true;
@@ -342,8 +1305,10 @@ function loadWorkingDays(
         Array.isArray(
             workingDays
         )
-            ? workingDays
-            : [
+            ?
+            workingDays
+            :
+            [
                 "Monday",
                 "Tuesday",
                 "Wednesday",
@@ -395,13 +1360,15 @@ function loadWorkingDays(
 
 function setDefaultWorkingDays() {
 
-    loadWorkingDays([
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday"
-    ]);
+    loadWorkingDays(
+        [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday"
+        ]
+    );
 
 }
 
@@ -412,34 +1379,77 @@ function setDefaultWorkingDays() {
 
 function getSelectedWorkingDays() {
 
-    const workingDays = [];
+    const workingDays =
+        [];
 
-    if (workMonday.checked) {
-        workingDays.push("Monday");
+    if (
+        workMonday.checked
+    ) {
+
+        workingDays.push(
+            "Monday"
+        );
+
     }
 
-    if (workTuesday.checked) {
-        workingDays.push("Tuesday");
+    if (
+        workTuesday.checked
+    ) {
+
+        workingDays.push(
+            "Tuesday"
+        );
+
     }
 
-    if (workWednesday.checked) {
-        workingDays.push("Wednesday");
+    if (
+        workWednesday.checked
+    ) {
+
+        workingDays.push(
+            "Wednesday"
+        );
+
     }
 
-    if (workThursday.checked) {
-        workingDays.push("Thursday");
+    if (
+        workThursday.checked
+    ) {
+
+        workingDays.push(
+            "Thursday"
+        );
+
     }
 
-    if (workFriday.checked) {
-        workingDays.push("Friday");
+    if (
+        workFriday.checked
+    ) {
+
+        workingDays.push(
+            "Friday"
+        );
+
     }
 
-    if (workSaturday.checked) {
-        workingDays.push("Saturday");
+    if (
+        workSaturday.checked
+    ) {
+
+        workingDays.push(
+            "Saturday"
+        );
+
     }
 
-    if (workSunday.checked) {
-        workingDays.push("Sunday");
+    if (
+        workSunday.checked
+    ) {
+
+        workingDays.push(
+            "Sunday"
+        );
+
     }
 
     return workingDays;
@@ -448,10 +1458,12 @@ function getSelectedWorkingDays() {
 
 
 // =====================================
-// Save Settings
+// Save Main Settings
 // =====================================
 
-async function saveSettings(event) {
+async function saveSettings(
+    event
+) {
 
     event.preventDefault();
 
@@ -469,7 +1481,14 @@ async function saveSettings(event) {
         getSelectedWorkingDays();
 
 
-    if (companyName === "") {
+    // =====================================
+    // Validation
+    // =====================================
+
+    if (
+        companyName ===
+        ""
+    ) {
 
         showMessage(
             "Please enter a company name.",
@@ -479,7 +1498,6 @@ async function saveSettings(event) {
         return;
 
     }
-
 
     if (
         !standardStartTime ||
@@ -495,7 +1513,6 @@ async function saveSettings(event) {
 
     }
 
-
     if (
         lateThreshold <
         standardStartTime
@@ -510,9 +1527,9 @@ async function saveSettings(event) {
 
     }
 
-
     if (
-        workingDays.length === 0
+        workingDays.length ===
+        0
     ) {
 
         showMessage(
@@ -524,6 +1541,10 @@ async function saveSettings(event) {
 
     }
 
+
+    // =====================================
+    // Save
+    // =====================================
 
     try {
 
@@ -544,19 +1565,30 @@ async function saveSettings(event) {
             );
 
         const settingsData = {
-            companyName,
-            standardStartTime,
-            lateThreshold,
-            workingDays,
+
+            companyName:
+                companyName,
+
+            standardStartTime:
+                standardStartTime,
+
+            lateThreshold:
+                lateThreshold,
+
+            workingDays:
+                workingDays,
+
             companyLogo:
                 selectedCompanyLogoData
+
         };
 
         await setDoc(
             settingsReference,
             settingsData,
             {
-                merge: true
+                merge:
+                    true
             }
         );
 
@@ -565,7 +1597,9 @@ async function saveSettings(event) {
             "success"
         );
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Save settings error:",
@@ -596,8 +1630,12 @@ function setSaveButtonState(
     isSaving
 ) {
 
-    if (!saveSettingsButton) {
+    if (
+        !saveSettingsButton
+    ) {
+
         return;
+
     }
 
     saveSettingsButton.disabled =
@@ -605,8 +1643,10 @@ function setSaveButtonState(
 
     saveSettingsButton.textContent =
         isSaving
-            ? "Saving..."
-            : "Save Settings";
+            ?
+            "Saving..."
+            :
+            "Save Settings";
 
 }
 
@@ -620,15 +1660,20 @@ function previewCompanyLogo() {
     const selectedFile =
         companyLogoInput.files[0];
 
-    if (!selectedFile) {
+    if (
+        !selectedFile
+    ) {
+
         return;
+
     }
 
-    const allowedTypes = [
-        "image/png",
-        "image/jpeg",
-        "image/webp"
-    ];
+    const allowedTypes =
+        [
+            "image/png",
+            "image/jpeg",
+            "image/webp"
+        ];
 
     if (
         !allowedTypes.includes(
@@ -672,7 +1717,9 @@ function previewCompanyLogo() {
         new FileReader();
 
     fileReader.onload =
-        function (event) {
+        function (
+            event
+        ) {
 
             selectedCompanyLogoData =
                 event.target.result;
@@ -730,8 +1777,12 @@ async function removeCompanyLogo() {
             "Are you sure you want to remove the company logo?"
         );
 
-    if (!confirmed) {
+    if (
+        !confirmed
+    ) {
+
         return;
+
     }
 
     try {
@@ -770,10 +1821,12 @@ async function removeCompanyLogo() {
         await setDoc(
             settingsReference,
             {
-                companyLogo: ""
+                companyLogo:
+                    ""
             },
             {
-                merge: true
+                merge:
+                    true
             }
         );
 
@@ -785,7 +1838,9 @@ async function removeCompanyLogo() {
             "success"
         );
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Remove logo error:",
@@ -816,19 +1871,29 @@ function showMessage(
     type
 ) {
 
-    if (!settingsMessage) {
+    if (
+        !settingsMessage
+    ) {
+
         return;
+
     }
 
     settingsMessage.textContent =
         message;
 
-    if (type === "success") {
+    if (
+        type ===
+        "success"
+    ) {
 
         settingsMessage.style.color =
             "green";
 
-    } else if (type === "error") {
+    } else if (
+        type ===
+        "error"
+    ) {
 
         settingsMessage.style.color =
             "red";
@@ -851,7 +1916,9 @@ async function logoutAdministrator() {
 
     try {
 
-        if (logoutButton) {
+        if (
+            logoutButton
+        ) {
 
             logoutButton.disabled =
                 true;
@@ -861,7 +1928,9 @@ async function logoutAdministrator() {
 
         }
 
-        await signOut(auth);
+        await signOut(
+            auth
+        );
 
         sessionStorage.clear();
 
@@ -869,14 +1938,18 @@ async function logoutAdministrator() {
             "admin-login.html"
         );
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Logout error:",
             error
         );
 
-        if (logoutButton) {
+        if (
+            logoutButton
+        ) {
 
             logoutButton.disabled =
                 false;
