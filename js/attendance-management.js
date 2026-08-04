@@ -623,10 +623,20 @@ async function loadAttendanceHistory() {
                     "Unknown";
 
                 const notes =
-                    String(
-                        attendance.notes ?? ""
-                    ).trim() ||
-                    "No additional notes.";
+    String(
+        attendance.notes ?? ""
+    ).trim() ||
+    "No additional notes.";
+
+const lateReason =
+    String(
+        attendance.lateReason ?? ""
+    ).trim();
+
+const isLate =
+    String(
+        attendance.status ?? ""
+    ).trim() === "Late";
 
                 const historyCard =
                     document.createElement(
@@ -677,19 +687,41 @@ async function loadAttendanceHistory() {
 
                     <div class="history-expanded">
 
-                        <div class="history-detail-row">
+    ${
+        isLate
+            ? `
+                <div class="history-detail-row late-reason-detail">
 
-                            <span class="history-label">
-                                Notes
-                            </span>
+                    <span class="history-label">
+                        Reason for Lateness
+                    </span>
 
-                            <p>
-                                ${escapeHtml(notes)}
-                            </p>
+                    <p>
+                        ${
+                            lateReason
+                                ? escapeHtml(lateReason)
+                                : "No late reason was recorded."
+                        }
+                    </p>
 
-                        </div>
+                </div>
+            `
+            : ""
+    }
 
-                    </div>
+    <div class="history-detail-row">
+
+        <span class="history-label">
+            Notes
+        </span>
+
+        <p>
+            ${escapeHtml(notes)}
+        </p>
+
+    </div>
+
+</div>
                 `;
 
                 attendanceHistory.appendChild(
