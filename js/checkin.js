@@ -54,6 +54,48 @@ const message =
 const clock =
     document.getElementById("clock");
 
+// =====================================================
+// Late Reason Elements
+// =====================================================
+
+const lateReasonSection =
+    document.getElementById(
+        "lateReasonSection"
+    );
+
+const lateScanTime =
+    document.getElementById(
+        "lateScanTime"
+    );
+
+const lateReasonInput =
+    document.getElementById(
+        "lateReason"
+    );
+
+const submitLateReasonButton =
+    document.getElementById(
+        "submitLateReasonButton"
+    );
+
+const cancelLateReasonButton =
+    document.getElementById(
+        "cancelLateReasonButton"
+    );
+
+const lateReasonMessage =
+    document.getElementById(
+        "lateReasonMessage"
+    );
+
+
+// =====================================================
+// Pending Late Check-In
+// =====================================================
+
+let pendingLateCheckIn =
+    null;
+
 
 // =====================================================
 // Start System
@@ -70,12 +112,32 @@ function initializeSystem() {
 
     updateClock();
 
-    setInterval(updateClock, 1000);
+    setInterval(
+        updateClock,
+        1000
+    );
 
-    checkInButton.addEventListener("click", checkIn);
+    checkInButton.addEventListener(
+        "click",
+        checkIn
+    );
 
-    message.style.color = "#0b5ed7";
-    message.innerHTML = "Ready for employee check-in.";
+    submitLateReasonButton.addEventListener(
+        "click",
+        submitLateReason
+    );
+
+    cancelLateReasonButton.addEventListener(
+        "click",
+        cancelLateReason
+    );
+
+    message.style.color =
+        "#0b5ed7";
+
+    message.innerHTML =
+        "Ready for employee check-in.";
+
 }
 
 
@@ -340,7 +402,15 @@ function calculateDistanceFromOfficeBoundary(
 
 async function checkIn() {
 
-    message.style.color = "#0b5ed7";
+    // Capture the check-in attempt time immediately.
+    // This becomes the official attendance time even
+    // if the employee must provide a late reason.
+
+    const scanTime =
+        new Date();
+
+    message.style.color =
+        "#0b5ed7";
     message.innerHTML =
         "Starting attendance verification...";
 
@@ -365,7 +435,9 @@ if (!securityResult.allowed) {
     
 
     const attendanceStatus =
-    getAttendanceStatus();
+    getAttendanceStatus(
+        scanTime
+    );
 
 try {
 
@@ -884,18 +956,21 @@ function getLocationStatus(
 // Attendance Status
 // =====================================================
 
-function getAttendanceStatus() {
-
-    const now = new Date();
+function getAttendanceStatus(
+    scanTime
+) {
 
     const currentHour =
-        now.getHours();
+        scanTime.getHours();
 
     const currentMinute =
-        now.getMinutes();
+        scanTime.getMinutes();
 
-    const startHour = 8;
-    const startMinute = 0;
+    const startHour =
+        8;
+
+    const startMinute =
+        0;
 
     if (
         currentHour < startHour ||
@@ -904,12 +979,14 @@ function getAttendanceStatus() {
             currentMinute <= startMinute
         )
     ) {
+
         return "On Time";
+
     }
 
     return "Late";
-}
 
+}
 
 // =====================================================
 // Save Attendance Locally
