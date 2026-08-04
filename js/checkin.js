@@ -1,15 +1,29 @@
-import { db } from "../firebase/firebase.js";
+// =====================================================
+// R-E-D Attendance
+// Employee QR Check-In
+// =====================================================
+
+import {
+    db
+} from "../firebase/firebase.js";
 
 import {
     collection,
     doc,
     addDoc,
     getDocs,
+    getDoc,
     query,
     where,
     runTransaction,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+
+// =====================================================
+// Office Boundary
+// =====================================================
+
 const OFFICE_BOUNDARY = [
 
     {
@@ -31,28 +45,53 @@ const OFFICE_BOUNDARY = [
         latitude: -26.0462511426058,
         longitude: 28.089323680298712
     }
+
 ];
 
-const TEST_MODE = true;
+
+// =====================================================
+// Testing
+// =====================================================
+
+// Keep TRUE while testing.
+//
+// Change to FALSE before the system goes live
+// so duplicate employee/device/browser locks
+// become fully active.
+
+const TEST_MODE =
+    true;
+
 
 // =====================================================
 // Page Elements
 // =====================================================
 
 const employeeNumberInput =
-    document.getElementById("employeeNumber");
+    document.getElementById(
+        "employeeNumber"
+    );
 
 const pinInput =
-    document.getElementById("pin");
+    document.getElementById(
+        "pin"
+    );
 
 const checkInButton =
-    document.getElementById("checkInButton");
+    document.getElementById(
+        "checkInButton"
+    );
 
 const message =
-    document.getElementById("message");
+    document.getElementById(
+        "message"
+    );
 
 const clock =
-    document.getElementById("clock");
+    document.getElementById(
+        "clock"
+    );
+
 
 // =====================================================
 // Late Reason Elements
@@ -90,8 +129,22 @@ const lateReasonMessage =
 
 
 // =====================================================
-// Pending Late Check-In
+// QR Scan State
 // =====================================================
+
+// Because this page is opened by scanning the QR code,
+// this captures approximately when the QR code was
+// originally scanned.
+//
+// This time is preserved even when a late employee
+// spends several minutes typing their reason.
+
+let originalScanTime =
+    new Date();
+
+
+// Holds a late check-in while we wait for the
+// employee to provide their mandatory reason.
 
 let pendingLateCheckIn =
     null;
@@ -109,6 +162,9 @@ initializeSystem();
 // =====================================================
 
 function initializeSystem() {
+
+    originalScanTime =
+        new Date();
 
     updateClock();
 
@@ -132,6 +188,9 @@ function initializeSystem() {
         cancelLateReason
     );
 
+    lateReasonSection.hidden =
+        true;
+
     message.style.color =
         "#0b5ed7";
 
@@ -147,43 +206,86 @@ function initializeSystem() {
 
 function updateClock() {
 
-    const now = new Date();
+    const now =
+        new Date();
 
     const options = {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric"
+
+        weekday:
+            "long",
+
+        year:
+            "numeric",
+
+        month:
+            "long",
+
+        day:
+            "numeric"
+
     };
 
     clock.innerHTML =
-        now.toLocaleDateString("en-ZA", options)
-        + "<br>"
-        + now.toLocaleTimeString("en-ZA");
-}
-function getLocalDateKey() {
+        now.toLocaleDateString(
+            "en-ZA",
+            options
+        )
+        +
+        "<br>"
+        +
+        now.toLocaleTimeString(
+            "en-ZA"
+        );
 
-    const now = new Date();
+}
+
+
+// =====================================================
+// Local Date Key
+// =====================================================
+
+function getLocalDateKey(
+    date = new Date()
+) {
 
     const year =
-        now.getFullYear();
+        date.getFullYear();
 
     const month =
         String(
-            now.getMonth() + 1
-        ).padStart(2, "0");
+            date.getMonth() + 1
+        ).padStart(
+            2,
+            "0"
+        );
 
     const day =
         String(
-            now.getDate()
-        ).padStart(2, "0");
+            date.getDate()
+        ).padStart(
+            2,
+            "0"
+        );
 
-    return year
-        + "-"
-        + month
-        + "-"
-        + day;
+    return (
+        year
+        +
+        "-"
+        +
+        month
+        +
+        "-"
+        +
+        day
+    );
+
 }
+
+
+// =====================================================
+// Failed Attendance Attempt
+// =====================================================
+
 async function saveFailedAttendanceAttempt(
     employee,
     reason,
@@ -198,16 +300,23 @@ async function saveFailedAttendanceAttempt(
             new Date();
 
         await addDoc(
-            collection(db, "attendanceAttempts"),
+            collection(
+                db,
+                "attendanceAttempts"
+            ),
             {
+
                 employeeNumber:
-                    employee.employeeNumber ?? "",
+                    employee.employeeNumber ??
+                    "",
 
                 name:
-                    employee.name ?? "",
+                    employee.name ??
+                    "",
 
                 department:
-                    employee.department ?? "",
+                    employee.department ??
+                    "",
 
                 result:
                     "Failed",
@@ -216,28 +325,39 @@ async function saveFailedAttendanceAttempt(
                     reason,
 
                 dateKey:
-                    getLocalDateKey(),
+                    getLocalDateKey(
+                        now
+                    ),
 
                 date:
-                    now.toLocaleDateString("en-ZA"),
+                    now.toLocaleDateString(
+                        "en-ZA"
+                    ),
 
                 time:
-                    now.toLocaleTimeString("en-ZA"),
+                    now.toLocaleTimeString(
+                        "en-ZA"
+                    ),
 
                 latitude:
-                    location?.latitude ?? null,
+                    location?.latitude ??
+                    null,
 
                 longitude:
-                    location?.longitude ?? null,
+                    location?.longitude ??
+                    null,
 
                 accuracy:
-                    location?.accuracy ?? null,
+                    location?.accuracy ??
+                    null,
 
                 distanceMetres:
-                    distanceMetres ?? null,
+                    distanceMetres ??
+                    null,
 
                 locationStatus:
-                    locationStatus ?? null,
+                    locationStatus ??
+                    null,
 
                 deviceId:
                     getDeviceId(),
@@ -247,6 +367,7 @@ async function saveFailedAttendanceAttempt(
 
                 createdAt:
                     serverTimestamp()
+
             }
         );
 
@@ -260,6 +381,8 @@ async function saveFailedAttendanceAttempt(
     }
 
 }
+
+
 // =====================================================
 // Distance to Office Boundary
 // =====================================================
@@ -272,13 +395,18 @@ function distanceToLineSegmentMetres(
     endLatitude,
     endLongitude
 ) {
-    const metresPerDegreeLatitude = 111320;
+
+    const metresPerDegreeLatitude =
+        111320;
 
     const averageLatitudeRadians =
-        latitude * Math.PI / 180;
+        latitude *
+        Math.PI /
+        180;
 
     const metresPerDegreeLongitude =
-        111320 * Math.cos(
+        111320 *
+        Math.cos(
             averageLatitudeRadians
         );
 
@@ -307,70 +435,120 @@ function distanceToLineSegmentMetres(
         metresPerDegreeLatitude;
 
     const lineX =
-        endX - startX;
+        endX -
+        startX;
 
     const lineY =
-        endY - startY;
+        endY -
+        startY;
 
     const lineLengthSquared =
-        lineX * lineX +
-        lineY * lineY;
+        lineX *
+        lineX
+        +
+        lineY *
+        lineY;
 
-    let position = 0;
+    let position =
+        0;
 
-    if (lineLengthSquared !== 0) {
+    if (
+        lineLengthSquared !==
+        0
+    ) {
+
         position =
             (
-                (pointX - startX) * lineX +
-                (pointY - startY) * lineY
-            ) /
+                (
+                    pointX -
+                    startX
+                )
+                *
+                lineX
+                +
+                (
+                    pointY -
+                    startY
+                )
+                *
+                lineY
+            )
+            /
             lineLengthSquared;
+
     }
 
     position =
         Math.max(
             0,
-            Math.min(1, position)
+            Math.min(
+                1,
+                position
+            )
         );
 
     const nearestX =
-        startX +
-        position * lineX;
+        startX
+        +
+        position *
+        lineX;
 
     const nearestY =
-        startY +
-        position * lineY;
+        startY
+        +
+        position *
+        lineY;
 
     const differenceX =
-        pointX - nearestX;
+        pointX -
+        nearestX;
 
     const differenceY =
-        pointY - nearestY;
+        pointY -
+        nearestY;
 
     return Math.sqrt(
-        differenceX * differenceX +
-        differenceY * differenceY
+        differenceX *
+        differenceX
+        +
+        differenceY *
+        differenceY
     );
+
 }
+
+
+// =====================================================
+// Distance from Office Boundary
+// =====================================================
 
 function calculateDistanceFromOfficeBoundary(
     latitude,
     longitude
 ) {
+
     let shortestDistance =
         Infinity;
 
     for (
-        let i = 0;
-        i < OFFICE_BOUNDARY.length;
-        i++
+        let index = 0;
+        index <
+        OFFICE_BOUNDARY.length;
+        index++
     ) {
+
         const currentCorner =
-            OFFICE_BOUNDARY[i];
+            OFFICE_BOUNDARY[
+                index
+            ];
 
         const nextCorner =
             OFFICE_BOUNDARY[
-                (i + 1) %
+                (
+                    index +
+                    1
+                )
+                %
                 OFFICE_BOUNDARY.length
             ];
 
@@ -388,217 +566,591 @@ function calculateDistanceFromOfficeBoundary(
             edgeDistance <
             shortestDistance
         ) {
+
             shortestDistance =
                 edgeDistance;
+
         }
+
     }
 
     return shortestDistance;
+
 }
 
+
 // =====================================================
-// Main Check In
+// Attendance Settings
+// =====================================================
+
+async function getAttendanceSettings() {
+
+    try {
+
+        const settingsReference =
+            doc(
+                db,
+                "systemSettings",
+                "attendance"
+            );
+
+        const settingsSnapshot =
+            await getDoc(
+                settingsReference
+            );
+
+        if (
+            !settingsSnapshot.exists()
+        ) {
+
+            return {
+
+                standardStartTime:
+                    "08:00",
+
+                lateThreshold:
+                    "08:15"
+
+            };
+
+        }
+
+        const settings =
+            settingsSnapshot.data();
+
+        return {
+
+            standardStartTime:
+                settings.standardStartTime ??
+                "08:00",
+
+            lateThreshold:
+                settings.lateThreshold ??
+                "08:15"
+
+        };
+
+    } catch (error) {
+
+        console.error(
+            "Unable to load attendance settings:",
+            error
+        );
+
+        return {
+
+            standardStartTime:
+                "08:00",
+
+            lateThreshold:
+                "08:15"
+
+        };
+
+    }
+
+}
+
+
+// =====================================================
+// Main Check-In
 // =====================================================
 
 async function checkIn() {
 
-    // Capture the check-in attempt time immediately.
-    // This becomes the official attendance time even
-    // if the employee must provide a late reason.
+    // Use the original QR/page-open time,
+    // not the time the employee clicks Submit.
 
     const scanTime =
+        new Date(
+            originalScanTime.getTime()
+        );
+
+    checkInButton.disabled =
+        true;
+
+    message.style.color =
+        "#0b5ed7";
+
+    message.innerHTML =
+        "Starting attendance verification...";
+
+    try {
+
+        // =================================================
+        // Authenticate Employee
+        // =================================================
+
+        const employee =
+            await authenticateEmployee();
+
+        if (!employee) {
+
+            checkInButton.disabled =
+                false;
+
+            return;
+
+        }
+
+
+        // =================================================
+        // Security Check
+        // =================================================
+
+        const securityResult =
+            await securityCheck(
+                employee
+            );
+
+        if (
+            !securityResult.allowed
+        ) {
+
+            message.style.color =
+                "orange";
+
+            message.innerHTML =
+                securityResult.message;
+
+            checkInButton.disabled =
+                false;
+
+            return;
+
+        }
+
+
+        // =================================================
+        // Attendance Settings / Status
+        // =================================================
+
+        const attendanceSettings =
+            await getAttendanceSettings();
+
+        const attendanceStatus =
+            getAttendanceStatus(
+                scanTime,
+                attendanceSettings.lateThreshold
+            );
+
+
+        // =================================================
+        // Location
+        // =================================================
+
+        message.style.color =
+            "#0b5ed7";
+
+        message.innerHTML =
+            "Getting your current location...";
+
+        const location =
+            await getCurrentLocation();
+
+        const distanceMetres =
+            calculateDistanceFromOfficeBoundary(
+                location.latitude,
+                location.longitude
+            );
+
+        let locationStatus =
+            getLocationStatus(
+                location.latitude,
+                location.longitude
+            );
+
+
+        // =================================================
+        // GPS Accuracy
+        // =================================================
+
+        if (
+            location.accuracy >
+            15
+        ) {
+
+            locationStatus =
+                "Location Uncertain";
+
+        }
+
+
+        // =================================================
+        // Location Rejected
+        // =================================================
+
+        if (
+            locationStatus !==
+            "At Office"
+        ) {
+
+            message.style.color =
+                "red";
+
+            if (
+                locationStatus ===
+                "Location Uncertain"
+            ) {
+
+                message.innerHTML =
+                    "❌ Check-in denied because your GPS location is not accurate enough."
+                    +
+                    "<br>Please move near a window or outside and try again."
+                    +
+                    "<br>Current GPS Accuracy: ±"
+                    +
+                    Math.round(
+                        location.accuracy
+                    )
+                    +
+                    " metres";
+
+            } else {
+
+                message.innerHTML =
+                    "❌ Check-in denied."
+                    +
+                    "<br>You are outside the office boundary.";
+
+            }
+
+            await saveFailedAttendanceAttempt(
+                employee,
+
+                locationStatus ===
+                "Location Uncertain"
+                    ?
+                    "GPS location was not accurate enough"
+                    :
+                    "Outside office boundary",
+
+                location,
+                distanceMetres,
+                locationStatus
+            );
+
+            checkInButton.disabled =
+                false;
+
+            return;
+
+        }
+
+
+        // =================================================
+        // Late Check-In
+        // =================================================
+
+        if (
+            attendanceStatus ===
+            "Late"
+        ) {
+
+            pendingLateCheckIn = {
+
+                employee:
+                    employee,
+
+                attendanceStatus:
+                    attendanceStatus,
+
+                location:
+                    location,
+
+                distanceMetres:
+                    distanceMetres,
+
+                locationStatus:
+                    locationStatus,
+
+                scanTime:
+                    scanTime
+
+            };
+
+            lateScanTime.textContent =
+                scanTime.toLocaleTimeString(
+                    "en-ZA"
+                );
+
+            lateReasonInput.value =
+                "";
+
+            lateReasonMessage.textContent =
+                "";
+
+            lateReasonSection.hidden =
+                false;
+
+            employeeNumberInput.disabled =
+                true;
+
+            pinInput.disabled =
+                true;
+
+            message.style.color =
+                "orange";
+
+            message.innerHTML =
+                "⚠️ You are checking in late."
+                +
+                "<br>Please provide a reason before attendance can be recorded.";
+
+            lateReasonInput.focus();
+
+            return;
+
+        }
+
+
+        // =================================================
+        // On-Time Attendance Save
+        // =================================================
+
+        await saveAttendanceToFirebase(
+            employee,
+            attendanceStatus,
+            location,
+            distanceMetres,
+            locationStatus,
+            scanTime,
+            ""
+        );
+
+        saveAttendance(
+            employee,
+            attendanceStatus,
+            scanTime,
+            ""
+        );
+
+        showSuccessfulAttendance(
+            employee,
+            attendanceStatus,
+            location,
+            distanceMetres,
+            locationStatus,
+            scanTime,
+            ""
+        );
+
+        resetCheckInForm();
+
+    } catch (error) {
+
+        console.error(
+            "Check-in error:",
+            error
+        );
+
+        handleAttendanceSaveError(
+            error,
+            message
+        );
+
+        checkInButton.disabled =
+            false;
+
+    }
+
+}
+
+
+// =====================================================
+// Submit Mandatory Late Reason
+// =====================================================
+
+async function submitLateReason() {
+
+    if (
+        !pendingLateCheckIn
+    ) {
+
+        lateReasonMessage.style.color =
+            "red";
+
+        lateReasonMessage.textContent =
+            "No pending late check-in was found.";
+
+        return;
+
+    }
+
+    const reason =
+        lateReasonInput.value
+            .trim();
+
+    if (!reason) {
+
+        lateReasonMessage.style.color =
+            "red";
+
+        lateReasonMessage.textContent =
+            "Please enter a reason for being late.";
+
+        lateReasonInput.focus();
+
+        return;
+
+    }
+
+    if (
+        reason.length <
+        3
+    ) {
+
+        lateReasonMessage.style.color =
+            "red";
+
+        lateReasonMessage.textContent =
+            "Please provide a valid reason.";
+
+        lateReasonInput.focus();
+
+        return;
+
+    }
+
+    try {
+
+        submitLateReasonButton.disabled =
+            true;
+
+        cancelLateReasonButton.disabled =
+            true;
+
+        submitLateReasonButton.textContent =
+            "Submitting...";
+
+        lateReasonMessage.style.color =
+            "#0b5ed7";
+
+        lateReasonMessage.textContent =
+            "Saving your late check-in...";
+
+        const {
+
+            employee,
+            attendanceStatus,
+            location,
+            distanceMetres,
+            locationStatus,
+            scanTime
+
+        } =
+            pendingLateCheckIn;
+
+
+        // =================================================
+        // Save Late Attendance
+        // =================================================
+
+        await saveAttendanceToFirebase(
+            employee,
+            attendanceStatus,
+            location,
+            distanceMetres,
+            locationStatus,
+            scanTime,
+            reason
+        );
+
+        saveAttendance(
+            employee,
+            attendanceStatus,
+            scanTime,
+            reason
+        );
+
+        lateReasonSection.hidden =
+            true;
+
+        showSuccessfulAttendance(
+            employee,
+            attendanceStatus,
+            location,
+            distanceMetres,
+            locationStatus,
+            scanTime,
+            reason
+        );
+
+        pendingLateCheckIn =
+            null;
+
+        resetCheckInForm();
+
+    } catch (error) {
+
+        console.error(
+            "Late check-in save error:",
+            error
+        );
+
+        handleAttendanceSaveError(
+            error,
+            lateReasonMessage
+        );
+
+    } finally {
+
+        submitLateReasonButton.disabled =
+            false;
+
+        cancelLateReasonButton.disabled =
+            false;
+
+        submitLateReasonButton.textContent =
+            "Submit Late Check-In";
+
+    }
+
+}
+
+
+// =====================================================
+// Cancel Late Reason
+// =====================================================
+
+function cancelLateReason() {
+
+    pendingLateCheckIn =
+        null;
+
+    lateReasonInput.value =
+        "";
+
+    lateReasonMessage.textContent =
+        "";
+
+    lateReasonSection.hidden =
+        true;
+
+    employeeNumberInput.disabled =
+        false;
+
+    pinInput.disabled =
+        false;
+
+    checkInButton.disabled =
+        false;
+
+    // A cancelled attempt means a new attempt gets
+    // a fresh timestamp.
+
+    originalScanTime =
         new Date();
 
     message.style.color =
         "#0b5ed7";
-    message.innerHTML =
-        "Starting attendance verification...";
-
-    const employee = await authenticateEmployee();
-
-    if (!employee) {
-        return;
-    }
-
-    const securityResult =
-    await securityCheck(employee);
-
-if (!securityResult.allowed) {
-
-    message.style.color = "orange";
 
     message.innerHTML =
-        securityResult.message;
+        "Late check-in cancelled. Attendance was not recorded.";
 
-    return;
-}
-    
-
-    const attendanceStatus =
-    getAttendanceStatus(
-        scanTime
-    );
-
-try {
-
-    message.style.color = "#0b5ed7";
-
-    message.innerHTML =
-        " Getting your current location...";
-
-    const location =
-        await getCurrentLocation();
-
-    const distanceMetres =
-    calculateDistanceFromOfficeBoundary(
-        location.latitude,
-        location.longitude
-    );
-
-    let locationStatus =
-    getLocationStatus(
-        location.latitude,
-        location.longitude
-    );
-
-    if (location.accuracy > 15) {
-    locationStatus = "Location Uncertain";
-}
-
-    if (locationStatus !== "At Office") {
-
-    message.style.color = "red";
-
-    if (locationStatus === "Location Uncertain") {
-
-        message.innerHTML =
-            "❌ Check-in denied because your GPS location is not accurate enough."
-            + "<br>Please move near a window or outside and try again."
-            + "<br>Current GPS Accuracy: ±"
-            + Math.round(location.accuracy)
-            + " metres";
-
-    } else {
-
-        message.innerHTML =
-            "❌ Check-in denied."
-            + "<br>You are outside the office boundary.";
-
-    }
-
-    await saveFailedAttendanceAttempt(
-        employee,
-        locationStatus === "Location Uncertain"
-            ? "GPS location was not accurate enough"
-            : "Outside office boundary",
-        location,
-        distanceMetres,
-        locationStatus
-    );
-
-    return;
 }
 
 
-    
-console.log("Saving attendance to Firebase...", {
-    employeeNumber: employee.employeeNumber,
-    location,
-    distanceMetres,
-    locationStatus
-    
-});
-    await saveAttendanceToFirebase(
-        employee,
-        attendanceStatus,
-        location,
-        distanceMetres,
-        locationStatus
-    );
-console.log("Firebase save completed.");
-    
-        saveAttendance(
-            employee,
-            attendanceStatus
-        );
-
-        console.log(
-            "Device ID:",
-            getDeviceId()
-        );
-
-        console.log(
-            "Fingerprint:",
-            getFingerprint()
-        );
-
-        message.style.color = "green";
-
-        message.innerHTML =
-    " Welcome, "
-    + employee.name
-    + "!<br><br>"
-    + "Attendance recorded successfully.<br>"
-    + "Attendance Status: "
-    + attendanceStatus
-    + "<br>"
-    + "Location Status: "
-    + locationStatus
-    + "<br>"
-    + "Distance from Office Boundary: "
-    + Math.round(distanceMetres)
-    + " metres"
-    + "<br>"
-    + "GPS Accuracy: ±"
-    + Math.round(location.accuracy)
-    + " metres";
-
-        employeeNumberInput.value = "";
-        pinInput.value = "";
-
-   } catch (error) {
-
-    console.error(error);
-
-    if (
-        error.message ===
-        "EMPLOYEE_ALREADY_CHECKED_IN"
-    ) {
-
-        message.style.color = "orange";
-
-        message.innerHTML =
-            " You have already checked in today.";
-
-    } else if (
-        error.message ===
-        "DEVICE_ALREADY_USED"
-    ) {
-
-        message.style.color = "orange";
-
-        message.innerHTML =
-            " This device has already been used for a check-in today.";
-
-    } else if (
-        error.message ===
-        "FINGERPRINT_ALREADY_USED"
-    ) {
-
-        message.style.color = "orange";
-
-        message.innerHTML =
-            " This browser has already been used for a check-in today.";
-
-    } else {
-
-        message.style.color = "red";
-
-        message.innerHTML =
-            "❌ Attendance could not be saved. Please try again.";
-    }
-    }
-}
 // =====================================================
 // Save Attendance to Firebase
 // =====================================================
@@ -608,85 +1160,158 @@ async function saveAttendanceToFirebase(
     attendanceStatus,
     location,
     distanceMetres,
-    locationStatus
+    locationStatus,
+    scanTime,
+    lateReason = ""
 ) {
 
-    const now = new Date();
-    const dateKey = getLocalDateKey();
+    const submittedTime =
+        new Date();
 
-    const deviceId = getDeviceId();
-    const fingerprint = getFingerprint();
+    const dateKey =
+        getLocalDateKey(
+            scanTime
+        );
+
+    const deviceId =
+        getDeviceId();
+
+    const fingerprint =
+        getFingerprint();
 
     const safeDeviceId =
-        encodeURIComponent(deviceId);
+        encodeURIComponent(
+            deviceId
+        );
 
     const safeFingerprint =
-        encodeURIComponent(fingerprint);
+        encodeURIComponent(
+            fingerprint
+        );
 
-    const employeeLockRef = doc(
-        db,
-        "employeeDailyLocks",
-        employee.employeeNumber + "_" + dateKey
-    );
 
-    const deviceLockRef = doc(
-        db,
-        "deviceDailyLocks",
-        safeDeviceId + "_" + dateKey
-    );
+    // =================================================
+    // Daily Lock References
+    // =================================================
 
-    const fingerprintLockRef = doc(
-        db,
-        "fingerprintDailyLocks",
-        safeFingerprint + "_" + dateKey
-    );
+    const employeeLockRef =
+        doc(
+            db,
+            "employeeDailyLocks",
+            employee.employeeNumber
+            +
+            "_"
+            +
+            dateKey
+        );
 
-    const attendanceRef = doc(
-        db,
-        "attendance",
-        employee.employeeNumber + "_" + dateKey
-    );
+    const deviceLockRef =
+        doc(
+            db,
+            "deviceDailyLocks",
+            safeDeviceId
+            +
+            "_"
+            +
+            dateKey
+        );
+
+    const fingerprintLockRef =
+        doc(
+            db,
+            "fingerprintDailyLocks",
+            safeFingerprint
+            +
+            "_"
+            +
+            dateKey
+        );
+
+    const attendanceRef =
+        doc(
+            db,
+            "attendance",
+            employee.employeeNumber
+            +
+            "_"
+            +
+            dateKey
+        );
+
+
+    // =================================================
+    // Firestore Transaction
+    // =================================================
 
     await runTransaction(
         db,
-        async transaction => {
+        async (
+            transaction
+        ) => {
 
             const employeeLock =
-                await transaction.get(employeeLockRef);
+                await transaction.get(
+                    employeeLockRef
+                );
 
             const deviceLock =
-                await transaction.get(deviceLockRef);
+                await transaction.get(
+                    deviceLockRef
+                );
 
             const fingerprintLock =
                 await transaction.get(
                     fingerprintLockRef
                 );
 
+
+            // =================================================
+            // Duplicate Security
+            // =================================================
+
             if (!TEST_MODE) {
 
-    if (employeeLock.exists()) {
-        throw new Error(
-            "EMPLOYEE_ALREADY_CHECKED_IN"
-        );
-    }
+                if (
+                    employeeLock.exists()
+                ) {
 
-    if (deviceLock.exists()) {
-        throw new Error(
-            "DEVICE_ALREADY_USED"
-        );
-    }
+                    throw new Error(
+                        "EMPLOYEE_ALREADY_CHECKED_IN"
+                    );
 
-    if (fingerprintLock.exists()) {
-        throw new Error(
-            "FINGERPRINT_ALREADY_USED"
-        );
-    }
+                }
 
-}
+                if (
+                    deviceLock.exists()
+                ) {
+
+                    throw new Error(
+                        "DEVICE_ALREADY_USED"
+                    );
+
+                }
+
+                if (
+                    fingerprintLock.exists()
+                ) {
+
+                    throw new Error(
+                        "FINGERPRINT_ALREADY_USED"
+                    );
+
+                }
+
+            }
+
+
+            // =================================================
+            // Attendance Record
+            // =================================================
 
             transaction.set(
                 attendanceRef,
                 {
+
                     employeeNumber:
                         employee.employeeNumber,
 
@@ -697,36 +1322,62 @@ async function saveAttendanceToFirebase(
                         employee.department,
 
                     date:
-                        now.toLocaleDateString("en-ZA"),
+                        scanTime.toLocaleDateString(
+                            "en-ZA"
+                        ),
 
                     dateKey:
                         dateKey,
 
+                    // Official attendance time is the
+                    // original QR scan/page-open time.
+
                     time:
-                        now.toLocaleTimeString("en-ZA"),
+                        scanTime.toLocaleTimeString(
+                            "en-ZA"
+                        ),
 
                     status:
                         attendanceStatus,
+
+                    lateReason:
+                        attendanceStatus ===
+                        "Late"
+                            ?
+                            lateReason
+                            :
+                            "",
+
+                    checkInMethod:
+                        "QR Code",
+
                     latitude:
-    location.latitude,
+                        location.latitude,
 
-longitude:
-    location.longitude,
+                    longitude:
+                        location.longitude,
 
-locationAccuracyMetres:
-    Math.round(location.accuracy),
+                    locationAccuracyMetres:
+                        Math.round(
+                            location.accuracy
+                        ),
 
-distanceFromOfficeMetres:
-    Math.round(distanceMetres),
+                    distanceFromOfficeMetres:
+                        Math.round(
+                            distanceMetres
+                        ),
 
-locationStatus:
-    locationStatus,
+                    locationStatus:
+                        locationStatus,
 
-mapsLink:
-    "https://www.google.com/maps?q="
-    + location.latitude
-    + ","
-    + location.longitude,
+                    mapsLink:
+                        "https://www.google.com/maps?q="
+                        +
+                        location.latitude
+                        +
+                        ","
+                        +
+                        location.longitude,
 
                     deviceId:
                         deviceId,
@@ -734,28 +1385,56 @@ mapsLink:
                     fingerprint:
                         fingerprint,
 
+                    // Stores actual original scan timestamp.
+
+                    scanTimestamp:
+                        scanTime,
+
+                    // Stores when the final record was
+                    // actually submitted.
+
+                    submittedTimestamp:
+                        submittedTime,
+
                     createdAt:
                         serverTimestamp()
+
                 }
             );
+
+
+            // =================================================
+            // Employee Daily Lock
+            // =================================================
 
             transaction.set(
                 employeeLockRef,
                 {
+
                     employeeNumber:
                         employee.employeeNumber,
 
                     dateKey:
                         dateKey,
 
+                    scanTimestamp:
+                        scanTime,
+
                     createdAt:
                         serverTimestamp()
+
                 }
             );
+
+
+            // =================================================
+            // Device Daily Lock
+            // =================================================
 
             transaction.set(
                 deviceLockRef,
                 {
+
                     employeeNumber:
                         employee.employeeNumber,
 
@@ -767,12 +1446,19 @@ mapsLink:
 
                     createdAt:
                         serverTimestamp()
+
                 }
             );
+
+
+            // =================================================
+            // Fingerprint Daily Lock
+            // =================================================
 
             transaction.set(
                 fingerprintLockRef,
                 {
+
                     employeeNumber:
                         employee.employeeNumber,
 
@@ -784,156 +1470,387 @@ mapsLink:
 
                     createdAt:
                         serverTimestamp()
+
                 }
             );
+
         }
     );
+
 }
-    // =====================================================
+
+
+// =====================================================
+// Show Successful Attendance
+// =====================================================
+
+function showSuccessfulAttendance(
+    employee,
+    attendanceStatus,
+    location,
+    distanceMetres,
+    locationStatus,
+    scanTime,
+    lateReason
+) {
+
+    message.style.color =
+        "green";
+
+    let resultMessage =
+        "✅ Welcome, "
+        +
+        escapeHtml(
+            employee.name
+        )
+        +
+        "!<br><br>"
+        +
+        "Attendance recorded successfully."
+        +
+        "<br>"
+        +
+        "Attendance Status: "
+        +
+        escapeHtml(
+            attendanceStatus
+        )
+        +
+        "<br>"
+        +
+        "Check-In Time: "
+        +
+        scanTime.toLocaleTimeString(
+            "en-ZA"
+        );
+
+
+    if (
+        attendanceStatus ===
+        "Late"
+    ) {
+
+        resultMessage +=
+            "<br>"
+            +
+            "Late Reason: "
+            +
+            escapeHtml(
+                lateReason
+            );
+
+    }
+
+
+    resultMessage +=
+        "<br>"
+        +
+        "Location Status: "
+        +
+        escapeHtml(
+            locationStatus
+        )
+        +
+        "<br>"
+        +
+        "Distance from Office Boundary: "
+        +
+        Math.round(
+            distanceMetres
+        )
+        +
+        " metres"
+        +
+        "<br>"
+        +
+        "GPS Accuracy: ±"
+        +
+        Math.round(
+            location.accuracy
+        )
+        +
+        " metres";
+
+    message.innerHTML =
+        resultMessage;
+
+}
+
+
+// =====================================================
+// Attendance Error Handler
+// =====================================================
+
+function handleAttendanceSaveError(
+    error,
+    targetElement
+) {
+
+    if (
+        error.message ===
+        "EMPLOYEE_ALREADY_CHECKED_IN"
+    ) {
+
+        targetElement.style.color =
+            "orange";
+
+        targetElement.innerHTML =
+            "⚠️ You have already checked in today.";
+
+        return;
+
+    }
+
+    if (
+        error.message ===
+        "DEVICE_ALREADY_USED"
+    ) {
+
+        targetElement.style.color =
+            "orange";
+
+        targetElement.innerHTML =
+            "⚠️ This device has already been used for a check-in today.";
+
+        return;
+
+    }
+
+    if (
+        error.message ===
+        "FINGERPRINT_ALREADY_USED"
+    ) {
+
+        targetElement.style.color =
+            "orange";
+
+        targetElement.innerHTML =
+            "⚠️ This browser has already been used for a check-in today.";
+
+        return;
+
+    }
+
+    targetElement.style.color =
+        "red";
+
+    targetElement.innerHTML =
+        "❌ Attendance could not be saved. Please try again.";
+
+}
+
+
+// =====================================================
+// Reset Check-In Form
+// =====================================================
+
+function resetCheckInForm() {
+
+    employeeNumberInput.value =
+        "";
+
+    pinInput.value =
+        "";
+
+    employeeNumberInput.disabled =
+        false;
+
+    pinInput.disabled =
+        false;
+
+    checkInButton.disabled =
+        false;
+
+    lateReasonInput.value =
+        "";
+
+    lateReasonMessage.textContent =
+        "";
+
+    lateReasonSection.hidden =
+        true;
+
+    pendingLateCheckIn =
+        null;
+
+    // Ready for a future QR/check-in attempt.
+
+    originalScanTime =
+        new Date();
+
+}
+
+
+// =====================================================
 // Get Current Location
 // =====================================================
 
 async function getCurrentLocation() {
 
-    return new Promise((resolve, reject) => {
+    return new Promise(
+        (
+            resolve,
+            reject
+        ) => {
 
-        if (!navigator.geolocation) {
-
-            reject(
-                "Geolocation is not supported by this browser."
-            );
-
-            return;
-        }
-
-        navigator.geolocation.getCurrentPosition(
-
-            position => {
-
-                resolve({
-                    latitude:
-                        position.coords.latitude,
-
-                    longitude:
-                        position.coords.longitude,
-
-                    accuracy:
-                        position.coords.accuracy
-                });
-            },
-
-            error => {
+            if (
+                !navigator.geolocation
+            ) {
 
                 reject(
-                    "Could not retrieve location."
+                    new Error(
+                        "GEOLOCATION_NOT_SUPPORTED"
+                    )
                 );
-            },
 
-            {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 0
+                return;
+
             }
-        );
-    });
+
+            navigator.geolocation.getCurrentPosition(
+
+                position => {
+
+                    resolve({
+
+                        latitude:
+                            position.coords.latitude,
+
+                        longitude:
+                            position.coords.longitude,
+
+                        accuracy:
+                            position.coords.accuracy
+
+                    });
+
+                },
+
+                error => {
+
+                    console.error(
+                        "Geolocation error:",
+                        error
+                    );
+
+                    reject(
+                        new Error(
+                            "GEOLOCATION_FAILED"
+                        )
+                    );
+
+                },
+
+                {
+
+                    enableHighAccuracy:
+                        true,
+
+                    timeout:
+                        10000,
+
+                    maximumAge:
+                        0
+
+                }
+
+            );
+
+        }
+    );
+
 }
-    
-function calculateDistanceMetres(
-    latitude1,
-    longitude1,
-    latitude2,
-    longitude2
-) {
 
-    const earthRadiusMetres = 6371000;
 
-    const toRadians = degrees =>
-        degrees * Math.PI / 180;
+// =====================================================
+// Point Inside Office Boundary
+// =====================================================
 
-    const latitudeDifference =
-        toRadians(latitude2 - latitude1);
-
-    const longitudeDifference =
-        toRadians(longitude2 - longitude1);
-
-    const firstLatitude =
-        toRadians(latitude1);
-
-    const secondLatitude =
-        toRadians(latitude2);
-
-    const a =
-        Math.sin(latitudeDifference / 2) ** 2
-        +
-        Math.cos(firstLatitude)
-        *
-        Math.cos(secondLatitude)
-        *
-        Math.sin(longitudeDifference / 2) ** 2;
-
-    const c =
-        2 * Math.atan2(
-            Math.sqrt(a),
-            Math.sqrt(1 - a)
-        );
-
-    return earthRadiusMetres * c;
-}
-    
-    function isInsideOfficeBoundary(
+function isInsideOfficeBoundary(
     latitude,
     longitude
 ) {
 
-    let inside = false;
+    let inside =
+        false;
 
     for (
-        let i = 0,
-        j = OFFICE_BOUNDARY.length - 1;
-        i < OFFICE_BOUNDARY.length;
-        j = i++
+        let index = 0,
+            previousIndex =
+                OFFICE_BOUNDARY.length -
+                1;
+
+        index <
+        OFFICE_BOUNDARY.length;
+
+        previousIndex =
+            index++
     ) {
 
-        const pointI =
-            OFFICE_BOUNDARY[i];
+        const currentPoint =
+            OFFICE_BOUNDARY[
+                index
+            ];
 
-        const pointJ =
-            OFFICE_BOUNDARY[j];
+        const previousPoint =
+            OFFICE_BOUNDARY[
+                previousIndex
+            ];
 
         const intersects =
             (
-                pointI.latitude > latitude
-            ) !== (
-                pointJ.latitude > latitude
+                currentPoint.latitude >
+                latitude
+            )
+            !==
+            (
+                previousPoint.latitude >
+                latitude
             )
             &&
-            longitude <
+            longitude
+            <
             (
                 (
-                    pointJ.longitude
-                    - pointI.longitude
+                    previousPoint.longitude
+                    -
+                    currentPoint.longitude
                 )
                 *
                 (
                     latitude
-                    - pointI.latitude
+                    -
+                    currentPoint.latitude
                 )
                 /
                 (
-                    pointJ.latitude
-                    - pointI.latitude
+                    previousPoint.latitude
+                    -
+                    currentPoint.latitude
                 )
                 +
-                pointI.longitude
+                currentPoint.longitude
             );
 
-        if (intersects) {
-            inside = !inside;
+        if (
+            intersects
+        ) {
+
+            inside =
+                !inside;
+
         }
+
     }
 
     return inside;
+
 }
+
+
+// =====================================================
+// Location Status
+// =====================================================
 
 function getLocationStatus(
     latitude,
@@ -946,37 +1863,52 @@ function getLocationStatus(
             longitude
         )
     ) {
+
         return "At Office";
+
     }
 
     return "Outside Office";
+
 }
+
 
 // =====================================================
 // Attendance Status
 // =====================================================
 
 function getAttendanceStatus(
-    scanTime
+    scanTime,
+    lateThreshold
 ) {
 
-    const currentHour =
+    const [
+        thresholdHour,
+        thresholdMinute
+    ] =
+        String(
+            lateThreshold ??
+            "08:15"
+        )
+            .split(":")
+            .map(Number);
+
+    const scanHour =
         scanTime.getHours();
 
-    const currentMinute =
+    const scanMinute =
         scanTime.getMinutes();
 
-    const startHour =
-        8;
-
-    const startMinute =
-        0;
-
     if (
-        currentHour < startHour ||
+        scanHour <
+        thresholdHour
+        ||
         (
-            currentHour === startHour &&
-            currentMinute <= startMinute
+            scanHour ===
+            thresholdHour
+            &&
+            scanMinute <=
+            thresholdMinute
         )
     ) {
 
@@ -988,44 +1920,70 @@ function getAttendanceStatus(
 
 }
 
+
 // =====================================================
 // Save Attendance Locally
 // =====================================================
 
 function saveAttendance(
     employee,
-    attendanceStatus
+    attendanceStatus,
+    scanTime,
+    lateReason = ""
 ) {
 
     const attendance =
         JSON.parse(
-            localStorage.getItem("attendance")
-        ) || [];
+            localStorage.getItem(
+                "attendance"
+            )
+        )
+        ||
+        [];
 
-    attendance.push({
-        employeeNumber:
-            employee.employeeNumber,
+    attendance.push(
+        {
 
-        name:
-            employee.name,
+            employeeNumber:
+                employee.employeeNumber,
 
-        department:
-            employee.department,
+            name:
+                employee.name,
 
-        date:
-            new Date().toLocaleDateString(),
+            department:
+                employee.department,
 
-        time:
-            new Date().toLocaleTimeString(),
+            date:
+                scanTime.toLocaleDateString(
+                    "en-ZA"
+                ),
 
-        status:
-            attendanceStatus
-    });
+            time:
+                scanTime.toLocaleTimeString(
+                    "en-ZA"
+                ),
+
+            status:
+                attendanceStatus,
+
+            lateReason:
+                attendanceStatus ===
+                "Late"
+                    ?
+                    lateReason
+                    :
+                    ""
+
+        }
+    );
 
     localStorage.setItem(
         "attendance",
-        JSON.stringify(attendance)
+        JSON.stringify(
+            attendance
+        )
     );
+
 }
 
 
@@ -1033,61 +1991,106 @@ function saveAttendance(
 // Security Check
 // =====================================================
 
-async function securityCheck(employee) {
+async function securityCheck(
+    employee
+) {
 
-    if (TEST_MODE) {
+    if (
+        TEST_MODE
+    ) {
 
-    return {
-        allowed: true,
-        message: ""
-    };
-}
+        return {
+
+            allowed:
+                true,
+
+            message:
+                ""
+
+        };
+
+    }
 
     const attendance =
         JSON.parse(
-            localStorage.getItem("attendance")
-        ) || [];
+            localStorage.getItem(
+                "attendance"
+            )
+        )
+        ||
+        [];
 
     const today =
-        new Date().toLocaleDateString();
+        new Date()
+            .toLocaleDateString(
+                "en-ZA"
+            );
 
     const alreadyCheckedIn =
-        attendance.some(record =>
-            record.employeeNumber ===
-                employee.employeeNumber &&
-            record.date === today
+        attendance.some(
+            record => {
+
+                return (
+                    record.employeeNumber ===
+                    employee.employeeNumber
+                    &&
+                    record.date ===
+                    today
+                );
+
+            }
         );
 
-    if (alreadyCheckedIn) {
+    if (
+        alreadyCheckedIn
+    ) {
 
         return {
-            allowed: false,
+
+            allowed:
+                false,
+
             message:
                 "⚠️ You have already checked in today."
+
         };
+
     }
 
     return {
-        allowed: true,
-        message: ""
+
+        allowed:
+            true,
+
+        message:
+            ""
+
     };
+
 }
 
+
 // =====================================================
-// Validate User Input
+// Validate Inputs
 // =====================================================
 
 function validateInputs() {
 
     const employeeNumber =
-        employeeNumberInput.value.trim();
+        employeeNumberInput.value
+            .trim();
 
     const pin =
-        pinInput.value.trim();
+        pinInput.value
+            .trim();
 
-    if (employeeNumber === "") {
+    if (
+        employeeNumber ===
+        ""
+    ) {
 
-        message.style.color = "red";
+        message.style.color =
+            "red";
 
         message.innerHTML =
             "❌ Please enter your Employee Number.";
@@ -1095,11 +2098,16 @@ function validateInputs() {
         employeeNumberInput.focus();
 
         return false;
+
     }
 
-    if (pin === "") {
+    if (
+        pin ===
+        ""
+    ) {
 
-        message.style.color = "red";
+        message.style.color =
+            "red";
 
         message.innerHTML =
             "❌ Please enter your PIN.";
@@ -1107,9 +2115,11 @@ function validateInputs() {
         pinInput.focus();
 
         return false;
+
     }
 
     return true;
+
 }
 
 
@@ -1120,19 +2130,33 @@ function validateInputs() {
 async function validateEmployee() {
 
     const employeeNumber =
-        employeeNumberInput.value.trim();
+        employeeNumberInput.value
+            .trim();
 
-    const employeeQuery = query(
-        collection(db, "employees"),
-        where("employeeNumber", "==", employeeNumber)
-    );
+    const employeeQuery =
+        query(
+            collection(
+                db,
+                "employees"
+            ),
+            where(
+                "employeeNumber",
+                "==",
+                employeeNumber
+            )
+        );
 
     const employeeSnapshot =
-        await getDocs(employeeQuery);
+        await getDocs(
+            employeeQuery
+        );
 
-    if (employeeSnapshot.empty) {
+    if (
+        employeeSnapshot.empty
+    ) {
 
-        message.style.color = "red";
+        message.style.color =
+            "red";
 
         message.innerHTML =
             "❌ Employee Number not found.";
@@ -1140,15 +2164,23 @@ async function validateEmployee() {
         employeeNumberInput.focus();
 
         return null;
+
     }
 
     const employeeDocument =
-        employeeSnapshot.docs[0];
+        employeeSnapshot.docs[
+            0
+        ];
 
     return {
-        id: employeeDocument.id,
+
+        id:
+            employeeDocument.id,
+
         ...employeeDocument.data()
+
     };
+
 }
 
 
@@ -1156,14 +2188,25 @@ async function validateEmployee() {
 // Validate PIN
 // =====================================================
 
-function validatePin(employee) {
+function validatePin(
+    employee
+) {
 
     const enteredPin =
-        pinInput.value.trim();
+        pinInput.value
+            .trim();
 
-    if (employee.pin !== enteredPin) {
+    if (
+        String(
+            employee.pin ??
+            ""
+        )
+        !==
+        enteredPin
+    ) {
 
-        message.style.color = "red";
+        message.style.color =
+            "red";
 
         message.innerHTML =
             "❌ Incorrect PIN.";
@@ -1171,9 +2214,11 @@ function validatePin(employee) {
         pinInput.focus();
 
         return false;
+
     }
 
     return true;
+
 }
 
 
@@ -1183,31 +2228,88 @@ function validatePin(employee) {
 
 async function authenticateEmployee() {
 
-    if (!validateInputs()) {
+    if (
+        !validateInputs()
+    ) {
+
         return null;
+
     }
 
     const employee =
         await validateEmployee();
 
-    if (!employee) {
+    if (
+        !employee
+    ) {
+
         return null;
+
     }
 
-    if (employee.active === false) {
+    if (
+        employee.active ===
+        false
+    ) {
 
-        message.style.color = "red";
+        message.style.color =
+            "red";
 
         message.innerHTML =
-            "❌ This employee has been disabled.<br>" +
-            "Please contact your administrator.";
+            "❌ This employee has been disabled."
+            +
+            "<br>Please contact your administrator.";
 
         return null;
+
     }
 
-    if (!validatePin(employee)) {
+    if (
+        !validatePin(
+            employee
+        )
+    ) {
+
         return null;
+
     }
 
     return employee;
+
+}
+
+
+// =====================================================
+// Escape HTML
+// =====================================================
+
+function escapeHtml(
+    value
+) {
+
+    return String(
+        value ??
+        ""
+    )
+        .replaceAll(
+            "&",
+            "&amp;"
+        )
+        .replaceAll(
+            "<",
+            "&lt;"
+        )
+        .replaceAll(
+            ">",
+            "&gt;"
+        )
+        .replaceAll(
+            '"',
+            "&quot;"
+        )
+        .replaceAll(
+            "'",
+            "&#039;"
+        );
+
 }
