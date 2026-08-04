@@ -62,6 +62,16 @@ const OFFICE_BOUNDARY = [
 const TEST_MODE =
     true;
 
+// =====================================================
+// Location Tolerance
+// =====================================================
+
+const OFFICE_BUFFER_METRES =
+    25;
+
+const MAX_GPS_ACCURACY_METRES =
+    50;
+
 
 // =====================================================
 // Page Elements
@@ -760,20 +770,33 @@ async function checkIn() {
                 location.longitude
             );
 
+        if (
+    locationStatus ===
+    "Outside Office"
+    &&
+    distanceMetres <=
+    OFFICE_BUFFER_METRES
+) {
+
+    locationStatus =
+        "At Office";
+
+}
+
 
         // =================================================
         // GPS Accuracy
         // =================================================
 
         if (
-            location.accuracy >
-            15
-        ) {
+    location.accuracy >
+    MAX_GPS_ACCURACY_METRES
+) {
 
-            locationStatus =
-                "Location Uncertain";
+    locationStatus =
+        "Location Uncertain";
 
-        }
+}
 
 
         // =================================================
