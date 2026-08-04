@@ -99,6 +99,7 @@ const rolePermissions = {
 
         attendance: true,
         reports: true,
+        disciplinary: true,
 
         settings: true,
         administrators: true,
@@ -115,10 +116,11 @@ const rolePermissions = {
 
         attendance: true,
         reports: true,
+        disciplinary: true,
 
         settings: false,
-        administrators: true,
-        auditLog: true
+        administrators: false,
+        auditLog: false
 
     },
 
@@ -131,6 +133,7 @@ const rolePermissions = {
 
         attendance: true,
         reports: true,
+        disciplinary: true,
 
         settings: false,
         administrators: false,
@@ -147,6 +150,7 @@ const rolePermissions = {
 
         attendance: true,
         reports: true,
+        disciplinary: false,
 
         settings: false,
         administrators: false,
