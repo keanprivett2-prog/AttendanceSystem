@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        R-E-D Attendance | Disciplinary
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="css/admin-v2.css"
+    >
+
+</head>
+
+<body>
+
+    <div class="app">
+
+        <!-- =====================================
+             Sidebar
+        ====================================== -->
+
+        <aside class="sidebar">
+
+            <div class="sidebar-brand">
+
+                <div class="brand-logo">
+                    R
+                </div>
+
+                <div>
+
+                    <h2>
+                        R-E-D
+                    </h2>
+
+                    <span>
+                        Attendance
+                    </span>
+
+                </div>
+
+            </div>
+
+            <nav class="sidebar-menu">
+
+                <a
+                    href="admin-v2.html"
+                    class="menu-link"
+                >
+                    Dashboard
+                </a>
+
+                <a
+                    href="employees.html"
+                    class="menu-link"
+                    data-permission="employees"
+                >
+                    Employees
+                </a>
+
+                <a
+                    href="attendance-management.html"
+                    class="menu-link"
+                    data-permission="attendance"
+                >
+                    Attendance Management
+                </a>
+
+                <a
+                    href="reports.html"
+                    class="menu-link"
+                    data-permission="reports"
+                >
+                    Reports
+                </a>
+
+                <a
+                    href="disciplinary.html"
+                    class="menu-link active"
+                    data-permission="disciplinary"
+                >
+                    Disciplinary
+                </a>
+
+                <a
+                    href="settings.html"
+                    class="menu-link"
+                    data-permission="settings"
+                >
+                    Settings
+                </a>
+
+                <a
+                    href="administrators.html"
+                    class="menu-link"
+                    data-permission="administrators"
+                >
+                    Administrators
+                </a>
+
+                <a
+                    href="audit-log.html"
+                    class="menu-link"
+                    data-permission="auditLog"
+                >
+                    Audit Log
+                </a>
+
+            </nav>
+
+            <div class="sidebar-footer">
+
+                <span>
+                    R-E-D Attendance
+                </span>
+
+                <small>
+                    Enterprise Edition
+                </small>
+
+            </div>
+
+        </aside>
+
+
+        <!-- =====================================
+             Main Content
+        ====================================== -->
+
+        <main class="content">
+
+            <header class="topbar">
+
+                <div>
+
+                    <h1>
+                        Disciplinary
+                    </h1>
+
+                    <p>
+                        Assign and review employee warnings.
+                    </p>
+
+                </div>
+
+                <div class="topbar-right">
+
+                    <button
+                        type="button"
+                        class="logout-btn"
+                        id="logoutButton"
+                    >
+                        Logout
+                    </button>
+
+                </div>
+
+            </header>
+
+
+            <!-- =====================================
+                 Page Actions
+            ====================================== -->
+
+            <section class="employee-actions">
+
+                <div>
+
+                    <h2>
+                        Disciplinary Management
+                    </h2>
+
+                    <p>
+                        Record warnings issued to employees.
+                    </p>
+
+                </div>
+
+                <button
+                    type="button"
+                    class="refresh-btn"
+                    id="assignWarningButton"
+                >
+                    Assign Warning
+                </button>
+
+            </section>
+
+
+            <!-- =====================================
+                 Warning History
+            ====================================== -->
+
+            <section class="employee-table-section">
+
+                <div class="table-header">
+
+                    <h2>
+                        Warning History
+                    </h2>
+
+                </div>
+
+                <div class="employee-table-container">
+
+                    <table class="attendance-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Date
+                                </th>
+
+                                <th>
+                                    Employee
+                                </th>
+
+                                <th>
+                                    Employee No.
+                                </th>
+
+                                <th>
+                                    Department
+                                </th>
+
+                                <th>
+                                    Warning Type
+                                </th>
+
+                                <th>
+                                    Reason / Notes
+                                </th>
+
+                                <th>
+                                    Assigned By
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="disciplinaryTableBody">
+
+                            <tr>
+
+                                <td
+                                    colspan="7"
+                                    class="empty-row"
+                                >
+                                    No disciplinary warnings have been recorded.
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+
+    <!-- =====================================
+         Assign Warning Modal
+    ====================================== -->
+
+    <div
+        class="modal-overlay"
+        id="warningModal"
+    >
+
+        <div class="employee-modal">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <h2>
+                        Assign Warning
+                    </h2>
+
+                    <p>
+                        Record a disciplinary warning against an employee.
+                    </p>
+
+                </div>
+
+                <button
+                    type="button"
+                    class="modal-close"
+                    id="closeWarningModalButton"
+                    aria-label="Close warning form"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+            <form id="warningForm">
+
+                <div class="form-grid">
+
+                    <!-- Employee -->
+
+                    <div class="form-group">
+
+                        <label for="warningEmployee">
+                            Employee
+                        </label>
+
+                        <select
+                            id="warningEmployee"
+                            required
+                        >
+
+                            <option value="">
+                                Select employee
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- Warning Type -->
+
+                    <div class="form-group">
+
+                        <label for="warningType">
+                            Warning Type
+                        </label>
+
+                        <select
+                            id="warningType"
+                            required
+                        >
+
+                            <option value="">
+                                Select warning type
+                            </option>
+
+                            <option value="Verbal Warning">
+                                Verbal Warning
+                            </option>
+
+                            <option value="Written Warning">
+                                Written Warning
+                            </option>
+
+                            <option value="Final Written Warning">
+                                Final Written Warning
+                            </option>
+
+                            <option value="Disciplinary Hearing">
+                                Disciplinary Hearing
+                            </option>
+
+                            <option value="Suspension">
+                                Suspension
+                            </option>
+
+                            <option value="Other">
+                                Other
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- Warning Date -->
+
+                    <div class="form-group">
+
+                        <label for="warningDate">
+                            Warning Date
+                        </label>
+
+                        <input
+                            type="date"
+                            id="warningDate"
+                            required
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <!-- Reason / Notes -->
+
+                <div class="form-group">
+
+                    <label for="warningReason">
+                        Reason / Notes
+                    </label>
+
+                    <textarea
+                        id="warningReason"
+                        rows="5"
+                        maxlength="1000"
+                        placeholder="Enter the reason or notes for this warning"
+                    ></textarea>
+
+                </div>
+
+
+                <div class="modal-actions">
+
+                    <button
+                        type="button"
+                        class="cancel-btn"
+                        id="cancelWarningButton"
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="save-employee-btn"
+                        id="saveWarningButton"
+                    >
+                        Save Warning
+                    </button>
+
+                </div>
+
+                <p
+                    id="warningMessage"
+                    aria-live="polite"
+                ></p>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================
+         Notification
+    ====================================== -->
+
+    <div
+        id="notification"
+        class="notification"
+        aria-live="polite"
+    >
+
+        <span id="notificationMessage"></span>
+
+        <div class="notification-progress"></div>
+
+    </div>
+
+
+    <script
+        type="module"
+        src="js/disciplinary.js"
+    ></script>
+
+</body>
+
+</html>
