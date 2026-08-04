@@ -2,51 +2,172 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employee Attendance</title>
 
-    <link rel="stylesheet" href="css/style.css">
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Employee Attendance
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+
 </head>
 
 <body>
 
     <div class="login-card">
 
-        <h1>Employee Attendance</h1>
+        <h1>
+            Employee Attendance
+        </h1>
 
         <p>
             Please enter your Employee Number and PIN
         </p>
 
-        <label>Employee Number</label>
+
+        <!-- =====================================
+             Employee Number
+        ====================================== -->
+
+        <label for="employeeNumber">
+            Employee Number
+        </label>
 
         <input
             type="text"
             id="employeeNumber"
-            placeholder="Employee Number">
+            placeholder="Employee Number"
+            autocomplete="off"
+        >
 
-        <label>PIN</label>
+
+        <!-- =====================================
+             PIN
+        ====================================== -->
+
+        <label for="pin">
+            PIN
+        </label>
 
         <input
             type="password"
             id="pin"
-            placeholder="PIN">
+            placeholder="PIN"
+            autocomplete="off"
+        >
 
-        <button id="checkInButton">
+
+        <!-- =====================================
+             Check In Button
+        ====================================== -->
+
+        <button
+            type="button"
+            id="checkInButton"
+        >
             Check In
         </button>
 
+
+        <!-- =====================================
+             Main Message
+        ====================================== -->
+
         <div id="message"></div>
+
+
+        <!-- =====================================
+             Late Reason Section
+        ====================================== -->
+
+        <div
+            id="lateReasonSection"
+            class="late-reason-section"
+            hidden
+        >
+
+            <h2>
+                Late Check-In
+            </h2>
+
+            <p id="lateReasonIntro">
+                You are checking in after the allowed start time.
+            </p>
+
+            <p>
+                Your original scan time:
+                <strong id="lateScanTime">
+                    --
+                </strong>
+            </p>
+
+            <label for="lateReason">
+                Reason for being late
+            </label>
+
+            <textarea
+                id="lateReason"
+                rows="4"
+                maxlength="500"
+                placeholder="Please enter the reason for your late arrival"
+                required
+            ></textarea>
+
+            <div class="late-reason-actions">
+
+                <button
+                    type="button"
+                    id="submitLateReasonButton"
+                >
+                    Submit Late Check-In
+                </button>
+
+                <button
+                    type="button"
+                    id="cancelLateReasonButton"
+                >
+                    Cancel
+                </button>
+
+            </div>
+
+            <p id="lateReasonMessage"></p>
+
+        </div>
+
+
+        <!-- =====================================
+             Live Clock
+        ====================================== -->
 
         <div id="clock"></div>
 
     </div>
 
+
+    <!-- =====================================
+         Supporting Scripts
+    ====================================== -->
+
     <script src="js/employeeData.js"></script>
-<script src="js/attendanceManager.js"></script>
-<script src="js/deviceManager.js"></script>
-<script type="module" src="js/checkin.js?v=5"></script>
+
+    <script src="js/attendanceManager.js"></script>
+
+    <script src="js/deviceManager.js"></script>
+
+    <script
+        type="module"
+        src="js/checkin.js?v=6"
+    ></script>
 
 </body>
 
