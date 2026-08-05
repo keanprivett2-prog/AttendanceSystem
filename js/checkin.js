@@ -13,6 +13,7 @@ import {
     addDoc,
     getDocs,
     getDoc,
+    updateDoc,
     query,
     where,
     runTransaction,
@@ -137,6 +138,55 @@ const lateReasonMessage =
         "lateReasonMessage"
     );
 
+    // =====================================================
+// Early Exit Elements
+// =====================================================
+
+const earlyExitSection =
+    document.getElementById(
+        "earlyExitSection"
+    );
+
+const scheduledEndTime =
+    document.getElementById(
+        "scheduledEndTime"
+    );
+
+const earlyExitScanTime =
+    document.getElementById(
+        "earlyExitScanTime"
+    );
+
+const earlyExitReason =
+    document.getElementById(
+        "earlyExitReason"
+    );
+
+const earlyExitOtherSection =
+    document.getElementById(
+        "earlyExitOtherSection"
+    );
+
+const earlyExitNote =
+    document.getElementById(
+        "earlyExitNote"
+    );
+
+const submitEarlyExitButton =
+    document.getElementById(
+        "submitEarlyExitButton"
+    );
+
+const cancelEarlyExitButton =
+    document.getElementById(
+        "cancelEarlyExitButton"
+    );
+
+const earlyExitMessage =
+    document.getElementById(
+        "earlyExitMessage"
+    );
+
 
 // =====================================================
 // QR Scan State
@@ -158,6 +208,18 @@ let originalScanTime =
 
 let pendingLateCheckIn =
     null;
+
+    // Holds an early check-out while the employee
+// selects the reason for leaving early.
+
+let pendingEarlyCheckOut =
+    null;
+
+
+// Five-minute grace period before scheduled end time.
+
+const EARLY_EXIT_GRACE_MINUTES =
+    5;
 
 
 // =====================================================
@@ -198,6 +260,27 @@ function initializeSystem() {
         cancelLateReason
     );
 
+    earlyExitReason.addEventListener(
+    "change",
+    handleEarlyExitReasonChange
+);
+
+submitEarlyExitButton.addEventListener(
+    "click",
+    submitEarlyExit
+);
+
+cancelEarlyExitButton.addEventListener(
+    "click",
+    cancelEarlyExit
+);
+
+earlyExitSection.hidden =
+    true;
+
+earlyExitOtherSection.hidden =
+    true;
+
     lateReasonSection.hidden =
         true;
 
@@ -205,7 +288,7 @@ function initializeSystem() {
         "#0b5ed7";
 
     message.innerHTML =
-        "Ready for employee check-in.";
+        "Ready for employee attendance.";
 
 }
 
@@ -661,6 +744,57 @@ async function getAttendanceSettings() {
 
 }
 
+// =====================================================
+// Get Today's Attendance Record
+// =====================================================
+
+async function getTodayAttendanceRecord(
+    employee
+) {
+
+    const dateKey =
+        getLocalDateKey(
+            new Date()
+        );
+
+    const attendanceReference =
+        doc(
+            db,
+            "attendance",
+            employee.employeeNumber
+            +
+            "_"
+            +
+            dateKey
+        );
+
+    const attendanceSnapshot =
+        await getDoc(
+            attendanceReference
+        );
+
+    if (
+        !attendanceSnapshot.exists()
+    ) {
+
+        return null;
+
+    }
+
+    return {
+
+        id:
+            attendanceSnapshot.id,
+
+        reference:
+            attendanceReference,
+
+        ...attendanceSnapshot.data()
+
+    };
+
+}
+
 
 // =====================================================
 // Main Check-In
@@ -692,16 +826,74 @@ async function checkIn() {
         // =================================================
 
         const employee =
-            await authenticateEmployee();
+    await authenticateEmployee();
 
-        if (!employee) {
+if (!employee) {
 
-            checkInButton.disabled =
-                false;
+    checkInButton.disabled =
+        false;
 
-            return;
+    return;
 
-        }
+}
+
+
+// =================================================
+// Check Existing Attendance
+// =================================================
+
+const existingAttendance =
+    await getTodayAttendanceRecord(
+        employee
+    );
+
+if (
+    existingAttendance
+    &&
+    !existingAttendance.checkOutTime
+) {
+
+    await beginCheckOut(
+        employee,
+        existingAttendance
+    );
+
+    return;
+
+}
+
+if (
+    existingAttendance
+    &&
+    existingAttendance.checkOutTime
+) {
+
+    message.style.color =
+        "orange";
+
+    message.innerHTML =
+        "⚠️ Your attendance for today is already complete."
+        +
+        "<br>Check In: "
+        +
+        escapeHtml(
+            existingAttendance.time ??
+            "-"
+        )
+        +
+        "<br>Check Out: "
+        +
+        escapeHtml(
+            existingAttendance.checkOutTime ??
+            "-"
+        );
+
+    checkInButton.disabled =
+        false;
+
+    return;
+
+}
 
 
         // =================================================
@@ -983,6 +1175,494 @@ const attendanceStatus =
 
 }
 
+// =====================================================
+// Begin Check-Out
+// =====================================================
+
+async function beginCheckOut(
+    employee,
+    attendanceRecord
+) {
+
+    const checkOutTime =
+        new Date();
+
+
+    // =================================================
+    // Verify Check-Out Location
+    // =================================================
+
+    message.style.color =
+        "#0b5ed7";
+
+    message.innerHTML =
+        "Verifying your check-out location...";
+
+    const location =
+        await getCurrentLocation();
+
+    const distanceMetres =
+        calculateDistanceFromOfficeBoundary(
+            location.latitude,
+            location.longitude
+        );
+
+    let locationStatus =
+        getLocationStatus(
+            location.latitude,
+            location.longitude
+        );
+
+
+    // Allow small GPS boundary tolerance.
+
+    if (
+        locationStatus ===
+        "Outside Office"
+        &&
+        distanceMetres <=
+        OFFICE_BUFFER_METRES
+    ) {
+
+        locationStatus =
+            "At Office";
+
+    }
+
+
+    // GPS accuracy check.
+
+    if (
+        location.accuracy >
+        MAX_GPS_ACCURACY_METRES
+    ) {
+
+        locationStatus =
+            "Location Uncertain";
+
+    }
+
+
+    // =================================================
+    // Reject Invalid Check-Out Location
+    // =================================================
+
+    if (
+        locationStatus !==
+        "At Office"
+    ) {
+
+        message.style.color =
+            "red";
+
+        if (
+            locationStatus ===
+            "Location Uncertain"
+        ) {
+
+            message.innerHTML =
+                "❌ Check-out denied because your GPS location is not accurate enough."
+                +
+                "<br>Please move near a window or outside and try again."
+                +
+                "<br>Current GPS Accuracy: ±"
+                +
+                Math.round(
+                    location.accuracy
+                )
+                +
+                " metres";
+
+        } else {
+
+            message.innerHTML =
+                "❌ Check-out denied."
+                +
+                "<br>You are outside the office boundary.";
+
+        }
+
+        checkInButton.disabled =
+            false;
+
+        return;
+
+    }
+
+
+    // =================================================
+    // Employee Scheduled End Time
+    // =================================================
+
+    const employeeEndTime =
+        employee.endTime
+        ||
+        attendanceRecord.scheduledEndTime
+        ||
+        "";
+
+    if (
+        !employeeEndTime
+    ) {
+
+        message.style.color =
+            "red";
+
+        message.innerHTML =
+            "❌ No scheduled end time is configured for this employee.";
+
+        checkInButton.disabled =
+            false;
+
+        return;
+
+    }
+
+
+    // =================================================
+    // Check For Early Exit
+    // =================================================
+
+    const isEarlyExit =
+        isCheckOutEarly(
+            checkOutTime,
+            employeeEndTime
+        );
+
+    if (
+        isEarlyExit
+    ) {
+
+        pendingEarlyCheckOut = {
+
+            employee:
+                employee,
+
+            attendanceRecord:
+                attendanceRecord,
+
+            checkOutTime:
+                checkOutTime,
+
+            scheduledEndTime:
+                employeeEndTime
+
+        };
+
+        scheduledEndTime.textContent =
+            employeeEndTime;
+
+        earlyExitScanTime.textContent =
+            checkOutTime.toLocaleTimeString(
+                "en-ZA"
+            );
+
+        earlyExitReason.value =
+            "";
+
+        earlyExitNote.value =
+            "";
+
+        earlyExitOtherSection.hidden =
+            true;
+
+        earlyExitMessage.textContent =
+            "";
+
+        earlyExitSection.hidden =
+            false;
+
+        employeeNumberInput.disabled =
+            true;
+
+        pinInput.disabled =
+            true;
+
+        checkInButton.disabled =
+            true;
+
+        message.style.color =
+            "orange";
+
+        message.innerHTML =
+            "⚠️ You are checking out before your scheduled end time."
+            +
+            "<br>Please select a reason before check-out can be completed.";
+
+        return;
+
+    }
+
+
+    // =================================================
+    // Normal Check-Out
+    // =================================================
+
+    await saveCheckOut(
+        employee,
+        attendanceRecord,
+        checkOutTime,
+        false,
+        "",
+        ""
+    );
+
+}
+
+// =====================================================
+// Early Check-Out Check
+// =====================================================
+
+function isCheckOutEarly(
+    checkOutTime,
+    scheduledEndTimeValue
+) {
+
+    const [
+        endHour,
+        endMinute
+    ] =
+        String(
+            scheduledEndTimeValue
+        )
+            .split(":")
+            .map(Number);
+
+    const scheduledEnd =
+        new Date(
+            checkOutTime
+        );
+
+    scheduledEnd.setHours(
+        endHour,
+        endMinute,
+        0,
+        0
+    );
+
+    const graceMilliseconds =
+        EARLY_EXIT_GRACE_MINUTES
+        *
+        60
+        *
+        1000;
+
+    const earlyExitCutoff =
+        new Date(
+            scheduledEnd.getTime()
+            -
+            graceMilliseconds
+        );
+
+    return (
+        checkOutTime <
+        earlyExitCutoff
+    );
+
+}
+
+// =====================================================
+// Early Exit Reason Change
+// =====================================================
+
+function handleEarlyExitReasonChange() {
+
+    const selectedReason =
+        earlyExitReason.value;
+
+    const isOther =
+        selectedReason ===
+        "Other";
+
+    earlyExitOtherSection.hidden =
+        !isOther;
+
+    if (
+        !isOther
+    ) {
+
+        earlyExitNote.value =
+            "";
+
+    }
+
+}
+
+
+// =====================================================
+// Submit Early Exit
+// =====================================================
+
+async function submitEarlyExit() {
+
+    if (
+        !pendingEarlyCheckOut
+    ) {
+
+        earlyExitMessage.style.color =
+            "red";
+
+        earlyExitMessage.textContent =
+            "No pending early check-out was found.";
+
+        return;
+
+    }
+
+    const selectedReason =
+        earlyExitReason.value.trim();
+
+    const note =
+        earlyExitNote.value.trim();
+
+    if (
+        selectedReason ===
+        ""
+    ) {
+
+        earlyExitMessage.style.color =
+            "red";
+
+        earlyExitMessage.textContent =
+            "Please select a reason for leaving early.";
+
+        earlyExitReason.focus();
+
+        return;
+
+    }
+
+    if (
+        selectedReason ===
+        "Other"
+        &&
+        note.length <
+        3
+    ) {
+
+        earlyExitMessage.style.color =
+            "red";
+
+        earlyExitMessage.textContent =
+            "Please provide additional details.";
+
+        earlyExitNote.focus();
+
+        return;
+
+    }
+
+    try {
+
+        submitEarlyExitButton.disabled =
+            true;
+
+        cancelEarlyExitButton.disabled =
+            true;
+
+        submitEarlyExitButton.textContent =
+            "Submitting...";
+
+        earlyExitMessage.style.color =
+            "#0b5ed7";
+
+        earlyExitMessage.textContent =
+            "Saving your check-out...";
+
+        const {
+            employee,
+            attendanceRecord,
+            checkOutTime
+        } =
+            pendingEarlyCheckOut;
+
+        await saveCheckOut(
+            employee,
+            attendanceRecord,
+            checkOutTime,
+            true,
+            selectedReason,
+            note
+        );
+
+        pendingEarlyCheckOut =
+            null;
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Early check-out error:",
+            error
+        );
+
+        earlyExitMessage.style.color =
+            "red";
+
+        earlyExitMessage.textContent =
+            "Check-out could not be completed. Please try again.";
+
+    } finally {
+
+        submitEarlyExitButton.disabled =
+            false;
+
+        cancelEarlyExitButton.disabled =
+            false;
+
+        submitEarlyExitButton.textContent =
+            "Submit Check-Out";
+
+    }
+
+}
+
+
+// =====================================================
+// Cancel Early Exit
+// =====================================================
+
+function cancelEarlyExit() {
+
+    pendingEarlyCheckOut =
+        null;
+
+    earlyExitReason.value =
+        "";
+
+    earlyExitNote.value =
+        "";
+
+    earlyExitMessage.textContent =
+        "";
+
+    earlyExitOtherSection.hidden =
+        true;
+
+    earlyExitSection.hidden =
+        true;
+
+    employeeNumberInput.disabled =
+        false;
+
+    pinInput.disabled =
+        false;
+
+    checkInButton.disabled =
+        false;
+
+    originalScanTime =
+        new Date();
+
+    message.style.color =
+        "#0b5ed7";
+
+    message.innerHTML =
+        "Check-out cancelled.";
+
+}
+
 
 // =====================================================
 // Submit Mandatory Late Reason
@@ -1174,6 +1854,131 @@ function cancelLateReason() {
 
     message.innerHTML =
         "Late check-in cancelled. Attendance was not recorded.";
+
+}
+
+// =====================================================
+// Save Check-Out
+// =====================================================
+
+async function saveCheckOut(
+    employee,
+    attendanceRecord,
+    checkOutTime,
+    earlyExit,
+    earlyExitReasonValue,
+    earlyExitNoteValue
+) {
+
+    const attendanceReference =
+        attendanceRecord.reference;
+
+    if (
+        !attendanceReference
+    ) {
+
+        throw new Error(
+            "ATTENDANCE_REFERENCE_MISSING"
+        );
+
+    }
+
+    const checkOutTimeText =
+        checkOutTime.toLocaleTimeString(
+            "en-ZA"
+        );
+
+    await updateDoc(
+        attendanceReference,
+        {
+
+            checkOutTime:
+                checkOutTimeText,
+
+            checkOutTimestamp:
+                checkOutTime,
+
+            earlyExit:
+                earlyExit,
+
+            earlyExitReason:
+                earlyExit
+                    ?
+                    earlyExitReasonValue
+                    :
+                    "",
+
+            earlyExitNote:
+                earlyExit
+                    ?
+                    earlyExitNoteValue
+                    :
+                    "",
+
+            checkOutMethod:
+                "QR Code",
+
+            updatedAt:
+                serverTimestamp()
+
+        }
+    );
+
+    earlyExitSection.hidden =
+        true;
+
+    message.style.color =
+        "green";
+
+    let resultMessage =
+        "✅ Goodbye, "
+        +
+        escapeHtml(
+            employee.name
+        )
+        +
+        "!<br><br>"
+        +
+        "Check-out recorded successfully."
+        +
+        "<br>Check-Out Time: "
+        +
+        escapeHtml(
+            checkOutTimeText
+        );
+
+    if (
+        earlyExit
+    ) {
+
+        resultMessage +=
+            "<br>Early Exit: Yes"
+            +
+            "<br>Reason: "
+            +
+            escapeHtml(
+                earlyExitReasonValue
+            );
+
+        if (
+            earlyExitNoteValue
+        ) {
+
+            resultMessage +=
+                "<br>Details: "
+                +
+                escapeHtml(
+                    earlyExitNoteValue
+                );
+
+        }
+
+    }
+
+    message.innerHTML =
+        resultMessage;
+
+    resetCheckInForm();
 
 }
 
@@ -1709,6 +2514,24 @@ function resetCheckInForm() {
         null;
 
     // Ready for a future QR/check-in attempt.
+
+    earlyExitReason.value =
+    "";
+
+earlyExitNote.value =
+    "";
+
+earlyExitMessage.textContent =
+    "";
+
+earlyExitOtherSection.hidden =
+    true;
+
+earlyExitSection.hidden =
+    true;
+
+pendingEarlyCheckOut =
+    null;
 
     originalScanTime =
         new Date();

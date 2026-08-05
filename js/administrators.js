@@ -48,12 +48,6 @@ import {
 // Secondary Firebase Application
 // =====================================
 
-// The secondary Firebase application is used
-// when creating another administrator.
-//
-// This prevents Firebase from signing the
-// currently logged-in administrator out.
-
 const administratorCreatorApp =
     initializeApp(
         firebaseConfig,
@@ -352,11 +346,6 @@ async function loadDepartments() {
             </option>
         `;
 
-
-        // =====================================
-        // No Organisation Settings
-        // =====================================
-
         if (
             !organisationSnapshot.exists()
         ) {
@@ -369,11 +358,6 @@ async function loadDepartments() {
 
         }
 
-
-        // =====================================
-        // Read Departments
-        // =====================================
-
         const organisation =
             organisationSnapshot.data();
 
@@ -385,11 +369,6 @@ async function loadDepartments() {
                 organisation.departments
                 :
                 [];
-
-
-        // =====================================
-        // Sort Departments
-        // =====================================
 
         departments.sort(
             (
@@ -407,11 +386,6 @@ async function loadDepartments() {
 
             }
         );
-
-
-        // =====================================
-        // Build Department Dropdown
-        // =====================================
 
         departments.forEach(
             (
@@ -469,6 +443,7 @@ async function loadDepartments() {
     }
 
 }
+
 
 // =====================================
 // Open Add Administrator Modal
@@ -897,11 +872,6 @@ async function openEditAdministrator(
         administratorPasswordInput.placeholder =
             "Password cannot be changed here";
 
-
-        // =====================================
-        // Manager Department
-        // =====================================
-
         handleAdministratorRoleChange();
 
         if (
@@ -914,7 +884,6 @@ async function openEditAdministrator(
                 "";
 
         }
-
 
         administratorMessage.textContent =
             "";
@@ -998,11 +967,6 @@ async function createAdministrator() {
             :
             "";
 
-
-    // =====================================
-    // Validation
-    // =====================================
-
     if (
         fullName ===
         ""
@@ -1076,7 +1040,6 @@ async function createAdministrator() {
 
     }
 
-
     try {
 
         setSaveButtonState(
@@ -1089,11 +1052,6 @@ async function createAdministrator() {
             "info"
         );
 
-
-        // =====================================
-        // Create Firebase Authentication Account
-        // =====================================
-
         const userCredential =
             await createUserWithEmailAndPassword(
                 administratorCreatorAuth,
@@ -1103,11 +1061,6 @@ async function createAdministrator() {
 
         const newAdministrator =
             userCredential.user;
-
-
-        // =====================================
-        // Create Administrator Firestore Record
-        // =====================================
 
         await setDoc(
             doc(
@@ -1144,15 +1097,9 @@ async function createAdministrator() {
             }
         );
 
-
-        // =====================================
-        // Sign Secondary Account Out
-        // =====================================
-
         await signOut(
             administratorCreatorAuth
         );
-
 
         showAdministratorMessage(
             "Administrator created successfully.",
@@ -1248,11 +1195,6 @@ async function updateAdministrator() {
             :
             "";
 
-
-    // =====================================
-    // Validation
-    // =====================================
-
     if (
         fullName ===
         ""
@@ -1311,7 +1253,6 @@ async function updateAdministrator() {
         return;
 
     }
-
 
     try {
 

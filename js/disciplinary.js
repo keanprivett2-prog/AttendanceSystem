@@ -22,6 +22,7 @@ import {
     getDoc,
     doc,
     query,
+    where,
     orderBy,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
@@ -469,13 +470,40 @@ async function loadEmployees() {
 
     try {
 
-        const snapshot =
-            await getDocs(
-                collection(
-                    db,
-                    "employees"
-                )
-            );
+        let employeeQuery;
+
+if (
+    currentAdministratorRole ===
+    "manager"
+) {
+
+    employeeQuery =
+        query(
+            collection(
+                db,
+                "employees"
+            ),
+            where(
+                "department",
+                "==",
+                managerDepartment
+            )
+        );
+
+} else {
+
+    employeeQuery =
+        collection(
+            db,
+            "employees"
+        );
+
+}
+
+const snapshot =
+    await getDocs(
+        employeeQuery
+    );
 
         employees =
             snapshot.docs.map(
@@ -825,17 +853,41 @@ async function loadWarnings() {
 
     try {
 
-        const warningsQuery =
-            query(
-                collection(
-                    db,
-                    "disciplinaryWarnings"
-                ),
-                orderBy(
-                    "warningDate",
-                    "desc"
-                )
-            );
+        let warningsQuery;
+
+if (
+    currentAdministratorRole ===
+    "manager"
+) {
+
+    warningsQuery =
+        query(
+            collection(
+                db,
+                "disciplinaryWarnings"
+            ),
+            where(
+                "department",
+                "==",
+                managerDepartment
+            )
+        );
+
+} else {
+
+    warningsQuery =
+        query(
+            collection(
+                db,
+                "disciplinaryWarnings"
+            ),
+            orderBy(
+                "warningDate",
+                "desc"
+            )
+        );
+
+}
 
         const snapshot =
             await getDocs(
