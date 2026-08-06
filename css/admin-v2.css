@@ -1947,205 +1947,697 @@ line-height: 1.5;
    Attendance Calendar
 ===================================================== */
 
+/* =====================================================
+   Attendance Calendar - Compact Enterprise Design
+===================================================== */
+
 .attendance-calendar {
 
-    background: #ffffff;
+    max-width: 560px;
 
-    border: 1px solid #e5e7eb;
+    margin:
+        18px auto;
 
-    border-radius: 12px;
+    padding:
+        14px 16px 16px;
 
-    padding: 20px;
+    background:
+        #ffffff;
 
-    margin-bottom: 20px;
+    border:
+        1px solid #e2e8f0;
+
+    border-radius:
+        14px;
+
+    box-shadow:
+        0 3px 12px rgba(15, 23, 42, 0.05);
 
 }
+
+
+/* =====================================
+   Calendar Header
+===================================== */
 
 .calendar-header {
 
-    display: flex;
+    display:
+        grid;
 
-    justify-content: space-between;
+    grid-template-columns:
+        110px 1fr 110px;
 
-    align-items: center;
+    align-items:
+        center;
 
-    margin-bottom: 18px;
+    gap:
+        14px;
+
+    margin-bottom:
+        14px;
+
+    padding-bottom:
+        12px;
+
+    border-bottom:
+        1px solid #edf1f5;
 
 }
+
 
 .calendar-header h3 {
 
-    margin: 0;
+    margin:
+        0;
 
-    font-size: 18px;
+    text-align:
+        center;
 
-    color: #1f2937;
+    color:
+        #0b2a4a;
+
+    font-size:
+        17px;
+
+    font-weight:
+        700;
+
+    letter-spacing:
+        -0.2px;
 
 }
+
+
+/* =====================================
+   Previous / Next Buttons
+===================================== */
 
 .calendar-navigation-button {
 
-    background: var(--blue-primary);
+    min-height:
+        34px;
 
-    color: white;
+    padding:
+        7px 12px;
 
-    border: none;
+    border:
+        1px solid #d7e0ea;
 
-    border-radius: 8px;
+    border-radius:
+        7px;
 
-    padding: 8px 14px;
+    background:
+        #f8fafc;
 
-    cursor: pointer;
+    color:
+        #334155;
 
-    font-size: 13px;
+    font-size:
+        12px;
 
-    font-weight: 600;
+    font-weight:
+        600;
+
+    cursor:
+        pointer;
+
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease;
 
 }
+
 
 .calendar-navigation-button:hover {
 
-    opacity: .9;
+    background:
+        #eef5ff;
+
+    border-color:
+        #93b9e8;
+
+    color:
+        #0b5ed7;
 
 }
+
+
+/* =====================================
+   Calendar Grid
+===================================== */
 
 #attendanceCalendarGrid {
 
-    display: grid;
+    display:
+        grid;
 
-    grid-template-columns: repeat(7, 35px);
+    grid-template-columns:
+        repeat(7, minmax(0, 1fr));
 
-    justify-content: center;
+    gap:
+        5px;
 
-    gap: 8px;
+    width:
+        100%;
 
 }
+
+
+/* =====================================
+   Weekday Headings
+===================================== */
 
 .calendar-day-header {
 
-    text-align: center;
+    padding:
+        5px 2px 7px;
 
-    font-weight: 700;
+    text-align:
+        center;
 
-    color: #6b7280;
+    color:
+        #64748b;
 
-    padding: 8px 0;
+    font-size:
+        11px;
 
-    font-size: 13px;
+    font-weight:
+        700;
+
+    text-transform:
+        uppercase;
+
+    letter-spacing:
+        0.4px;
 
 }
+
+
+/* =====================================
+   Calendar Days
+===================================== */
 
 .calendar-day {
 
-    aspect-ratio: 1;
+    width:
+        100%;
 
-    max-width: 35px;
+    height:
+        36px;
 
-    border: 1px solid #e5e7eb;
+    min-width:
+        0;
 
-    border-radius: 10px;
+    display:
+        flex;
 
-    display: flex;
+    align-items:
+        center;
 
-    align-items: center;
+    justify-content:
+        center;
 
-    justify-content: center;
+    padding:
+        3px;
 
-    font-weight: 600;
+    background:
+        #ffffff;
 
-    background: white;
+    border:
+        1px solid #e2e8f0;
 
-    transition: .2s;
-    
+    border-radius:
+        7px;
 
-}
+    color:
+        #334155;
 
-.calendar-today {
+    font-size:
+        12px;
 
-    border: 2px solid var(--blue-primary);
+    cursor:
+        pointer;
 
-    background: #eff6ff;
-
-    color: var(--blue-primary);
-
-}
-
-.calendar-on-time {
-
-    background: #dcfce7;
-    color: #166534;
-    border-color: #22c55e;
-
-}
-
-.calendar-late {
-
-    background: #fef3c7;
-    color: #92400e;
-    border-color: #f59e0b;
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease,
+        transform 0.15s ease;
 
 }
 
-.calendar-absent {
 
-    background: #fee2e2;
-    color: #991b1b;
-    border-color: #ef4444;
+.calendar-day strong {
 
-}
+    font-size:
+        12px;
 
-.calendar-leave {
+    font-weight:
+        650;
 
-    background: #dbeafe;
-    color: #1d4ed8;
-    border-color: #3b82f6;
+    line-height:
+        1;
 
 }
 
-.calendar-work-from-home {
 
-    background: #ede9fe;
-    color: #6d28d9;
-    border-color: #8b5cf6;
+/* =====================================
+   Empty Calendar Spaces
+===================================== */
 
-}
+.calendar-empty {
 
-.calendar-public-holiday {
-
-    background: #f3f4f6;
-    color: #374151;
-    border-color: #6b7280;
+    height:
+        36px;
 
 }
+
+
+/* =====================================
+   Calendar Hover
+===================================== */
 
 .calendar-day:hover {
 
-    transform: scale(1.05);
+    transform:
+        translateY(-1px);
 
-    box-shadow: 0 4px 10px rgba(0,0,0,.08);
+    border-color:
+        #94a3b8;
 
-}
-.calendar-sick-leave {
-
-    background: #fce7f3;
-    color: #9d174d;
-    border-color: #ec4899;
+    box-shadow:
+        0 3px 8px rgba(15, 23, 42, 0.08);
 
 }
+
+
+/* =====================================
+   Today
+===================================== */
+
+.calendar-today {
+
+    border:
+        2px solid #2563eb !important;
+
+    box-shadow:
+        inset 0 0 0 1px rgba(37, 99, 235, 0.08);
+
+}
+
+
+/* =====================================
+   On Time
+===================================== */
+
+.calendar-on-time {
+
+    background:
+        #ecfdf3;
+
+    color:
+        #166534;
+
+    border-color:
+        #86d7a5;
+
+}
+
+
+/* =====================================
+   Late
+===================================== */
+
+.calendar-late {
+
+    background:
+        #fff8e6;
+
+    color:
+        #92400e;
+
+    border-color:
+        #f5c96b;
+
+}
+
+
+/* =====================================
+   Absent
+===================================== */
+
+.calendar-absent {
+
+    background:
+        #fff0f0;
+
+    color:
+        #991b1b;
+
+    border-color:
+        #efa0a0;
+
+}
+
+
+/* =====================================
+   Annual Leave
+===================================== */
 
 .calendar-annual-leave {
 
-    background: #dbeafe;
-    color: #1d4ed8;
-    border-color: #3b82f6;
+    background:
+        #eef5ff;
+
+    color:
+        #1d4ed8;
+
+    border-color:
+        #9fc1f3;
 
 }
 
-.calendar-day.calendar-annual-leave {
 
-    background: #dbeafe !important;
-    color: #1d4ed8 !important;
-    border-color: #3b82f6 !important;
+/* =====================================
+   Sick Leave
+===================================== */
+
+.calendar-sick-leave {
+
+    background:
+        #fdf2f8;
+
+    color:
+        #9d174d;
+
+    border-color:
+        #efb5d0;
+
+}
+
+
+/* =====================================
+   Family Responsibility Leave
+===================================== */
+
+.calendar-family-responsibility-leave {
+
+    background:
+        #f5f3ff;
+
+    color:
+        #6d28d9;
+
+    border-color:
+        #c4b5fd;
+
+}
+
+
+/* =====================================
+   Maternity Leave
+===================================== */
+
+.calendar-maternity-leave {
+
+    background:
+        #fdf2f8;
+
+    color:
+        #9d174d;
+
+    border-color:
+        #f0b4d0;
+
+}
+
+
+/* =====================================
+   Unpaid Leave
+===================================== */
+
+.calendar-unpaid-leave {
+
+    background:
+        #f8fafc;
+
+    color:
+        #475569;
+
+    border-color:
+        #cbd5e1;
+
+}
+
+
+/* =====================================
+   Work From Home
+===================================== */
+
+.calendar-work-from-home {
+
+    background:
+        #f3f0ff;
+
+    color:
+        #6d28d9;
+
+    border-color:
+        #b9a7ee;
+
+}
+
+
+/* =====================================
+   Business Trip
+===================================== */
+
+.calendar-business-trip {
+
+    background:
+        #ecfeff;
+
+    color:
+        #0e7490;
+
+    border-color:
+        #8bd6df;
+
+}
+
+
+/* =====================================
+   Training
+===================================== */
+
+.calendar-training {
+
+    background:
+        #eff6ff;
+
+    color:
+        #1e40af;
+
+    border-color:
+        #a7c4ef;
+
+}
+
+
+/* =====================================
+   Medical Appointment
+===================================== */
+
+.calendar-medical-appointment {
+
+    background:
+        #fff7ed;
+
+    color:
+        #9a3412;
+
+    border-color:
+        #f4b98a;
+
+}
+
+
+/* =====================================
+   Half Day
+===================================== */
+
+.calendar-half-day {
+
+    background:
+        #fffbeb;
+
+    color:
+        #854d0e;
+
+    border-color:
+        #e8cb72;
+
+}
+
+
+/* =====================================
+   Public Holiday
+===================================== */
+
+.calendar-public-holiday {
+
+    background:
+        #f1f5f9;
+
+    color:
+        #475569;
+
+    border-color:
+        #cbd5e1;
+
+}
+
+
+/* =====================================
+   Calendar Responsive
+===================================== */
+
+@media (
+    max-width: 900px
+) {
+
+    .attendance-calendar {
+
+        max-width:
+            100%;
+
+        padding:
+            16px;
+
+    }
+
+
+    .calendar-header {
+
+        grid-template-columns:
+            90px 1fr 90px;
+
+        gap:
+            8px;
+
+    }
+
+
+    .calendar-navigation-button {
+
+        padding:
+            6px 8px;
+
+        font-size:
+            11px;
+
+    }
+
+
+    .calendar-day {
+
+        height:
+            43px;
+
+    }
+
+
+    .calendar-empty {
+
+        height:
+            43px;
+
+    }
+
+}
+
+
+@media (
+    max-width: 600px
+) {
+
+    .attendance-calendar {
+
+        padding:
+            12px;
+
+    }
+
+
+    #attendanceCalendarGrid {
+
+        gap:
+            3px;
+
+    }
+
+
+    .calendar-header {
+
+        grid-template-columns:
+            72px 1fr 72px;
+
+    }
+
+
+    .calendar-header h3 {
+
+        font-size:
+            14px;
+
+    }
+
+
+    .calendar-navigation-button {
+
+        padding:
+            5px;
+
+        font-size:
+            10px;
+
+    }
+
+
+    .calendar-day-header {
+
+        font-size:
+            9px;
+
+    }
+
+
+    .calendar-day {
+
+        height:
+            38px;
+
+        border-radius:
+            5px;
+
+    }
+
+
+    .calendar-day strong {
+
+        font-size:
+            11px;
+
+    }
+
+
+    .calendar-empty {
+
+        height:
+            38px;
+
+    }
 
 }
 /* =====================================
@@ -2766,4 +3258,404 @@ line-height: 1.5;
         width: 100%;
         min-width: 0;
     }
+}
+
+/* =====================================
+   Attendance Status Breakdown
+===================================== */
+
+.status-breakdown {
+    display: grid;
+    gap: 10px;
+}
+
+.status-breakdown-row {
+    display: grid;
+    grid-template-columns: 1fr 80px 80px;
+    gap: 15px;
+    align-items: center;
+
+    padding: 12px 15px;
+
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+
+    background: #ffffff;
+}
+
+.status-breakdown-name {
+    font-weight: 600;
+}
+
+.status-breakdown-count,
+.status-breakdown-percentage {
+    text-align: right;
+    font-weight: 600;
+}
+
+/* =====================================
+   Department Breakdown
+===================================== */
+
+.department-breakdown {
+    display: grid;
+    gap: 10px;
+}
+
+.department-breakdown-row {
+    display: grid;
+    grid-template-columns: 1fr 120px 120px 80px;
+    gap: 15px;
+    align-items: center;
+
+    padding: 12px 15px;
+
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+
+    background: #ffffff;
+}
+
+.department-breakdown-name {
+    font-weight: 600;
+}
+
+.department-breakdown-row span:not(
+    .department-breakdown-name
+) {
+    text-align: right;
+    font-weight: 600;
+}
+
+/* =====================================
+   Employee Performance Summary
+===================================== */
+
+.employee-performance-summary {
+    display: grid;
+    gap: 8px;
+
+    width: 100%;
+    min-width: 0;
+}
+
+
+/* =====================================
+   Employee Performance Row
+===================================== */
+
+.employee-performance-row {
+    display: grid;
+
+    grid-template-columns:
+        1.8fr
+        0.65fr
+        0.65fr
+        0.55fr
+        0.65fr
+        0.8fr
+        0.9fr
+        0.8fr
+        0.75fr
+        0.9fr
+        1fr
+        0.85fr;
+
+    gap: 5px;
+
+    align-items: center;
+
+    width: 100%;
+    min-width: 0;
+
+    box-sizing: border-box;
+
+    padding: 10px 8px;
+
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+
+    background: #ffffff;
+
+    font-size: 11px;
+}
+
+
+/* =====================================
+   Employee Name
+===================================== */
+
+.employee-performance-name {
+    display: flex;
+    flex-direction: column;
+
+    gap: 2px;
+
+    min-width: 0;
+
+    font-weight: 600;
+
+    overflow-wrap: anywhere;
+}
+
+
+/* =====================================
+   Employee Number
+===================================== */
+
+.employee-performance-name small {
+    font-size: 10px;
+    font-weight: 400;
+
+    color: #6b7280;
+}
+
+
+/* =====================================
+   Performance Values
+===================================== */
+
+.employee-performance-row span:not(
+    .employee-performance-name
+) {
+    min-width: 0;
+
+    text-align: center;
+
+    font-weight: 600;
+
+    font-size: 11px;
+}
+
+
+/* =====================================
+   Prevent Overflow
+===================================== */
+
+.employee-performance-row span {
+    min-width: 0;
+}
+
+
+/* =====================================
+   Smaller Screens
+===================================== */
+
+@media (
+    max-width: 1200px
+) {
+
+    .employee-performance-row {
+        gap: 3px;
+
+        padding: 9px 5px;
+
+        font-size: 10px;
+    }
+
+    .employee-performance-row span:not(
+        .employee-performance-name
+    ) {
+        font-size: 10px;
+    }
+
+    .employee-performance-name {
+        font-size: 10px;
+    }
+
+    .employee-performance-name small {
+        font-size: 9px;
+    }
+
+}
+
+/* =====================================
+   Employee Performance Header
+===================================== */
+
+.employee-performance-header {
+    display: grid;
+
+    grid-template-columns:
+        1.8fr
+        0.65fr
+        0.65fr
+        0.55fr
+        0.65fr
+        0.8fr
+        0.9fr
+        0.8fr
+        0.75fr
+        0.9fr
+        1fr
+        0.85fr;
+
+    gap: 5px;
+
+    align-items: center;
+
+    width: 100%;
+    min-width: 0;
+
+    box-sizing: border-box;
+
+    padding: 10px 8px;
+    margin-bottom: 8px;
+
+    border-radius: 8px;
+
+    background: #f3f4f6;
+
+    font-size: 10px;
+    font-weight: 700;
+}
+
+
+/* =====================================
+   Employee Performance Header Columns
+===================================== */
+
+.employee-performance-header span {
+    min-width: 0;
+
+    text-align: center;
+
+    line-height: 1.25;
+
+    overflow-wrap: anywhere;
+}
+
+
+/* =====================================
+   Employee Column Heading
+===================================== */
+
+.employee-performance-header span:first-child {
+    text-align: left;
+}
+
+
+/* =====================================
+   Smaller Screens
+===================================== */
+
+@media (
+    max-width: 1200px
+) {
+
+    .employee-performance-header {
+        gap: 3px;
+
+        padding: 9px 5px;
+
+        font-size: 9px;
+    }
+
+}
+
+/* =====================================
+   Attendance Rate Performance Colours
+===================================== */
+
+.attendance-rate-cell {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: fit-content;
+    min-width: 48px;
+
+    margin: 0 auto;
+
+    padding: 4px 7px;
+
+    border-radius: 6px;
+
+    font-weight: 700;
+}
+
+
+/* Good Attendance - 90%+ */
+
+.attendance-rate-good {
+    background: #dcfce7;
+    color: #166534;
+}
+
+
+/* Watch Attendance - 80% to 89% */
+
+.attendance-rate-watch {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+
+/* Poor Attendance - Below 80% */
+
+.attendance-rate-poor {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* =====================================
+   Employee Performance Warning
+===================================== */
+
+.performance-warning-cell {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: fit-content;
+    min-width: 28px;
+
+    margin: 0 auto;
+
+    padding: 4px 7px;
+
+    border-radius: 6px;
+
+    background: #fef3c7;
+    color: #92400e;
+
+    font-weight: 700;
+}
+
+/* =====================================
+   Collapsible Sections
+===================================== */
+
+.collapsible-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.section-toggle-btn {
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    color: #111827;
+
+    padding: 7px 12px;
+
+    border-radius: 6px;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+.section-toggle-btn:hover {
+    background: #f3f4f6;
+}
+
+.collapsible-content {
+    display: block;
+}
+
+.collapsible-content.collapsed {
+    display: none;
 }

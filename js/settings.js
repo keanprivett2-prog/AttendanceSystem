@@ -1,5 +1,6 @@
 import "./admin-session.js";
 
+
 // =====================================
 // R-E-D Attendance
 // Settings
@@ -32,7 +33,7 @@ import {
 
 
 // =====================================
-// Page Elements
+// Main Page Elements
 // =====================================
 
 const settingsForm =
@@ -54,6 +55,51 @@ const lateThresholdInput =
     document.getElementById(
         "lateThreshold"
     );
+
+const settingsMessage =
+    document.getElementById(
+        "settingsMessage"
+    );
+
+const logoutButton =
+    document.getElementById(
+        "logoutButton"
+    );
+
+const saveSettingsButton =
+    document.getElementById(
+        "saveSettingsButton"
+    );
+
+
+// =====================================
+// Company Logo Elements
+// =====================================
+
+const companyLogoInput =
+    document.getElementById(
+        "companyLogo"
+    );
+
+const companyLogoPreview =
+    document.getElementById(
+        "companyLogoPreview"
+    );
+
+const noCompanyLogoMessage =
+    document.getElementById(
+        "noCompanyLogoMessage"
+    );
+
+const removeCompanyLogoButton =
+    document.getElementById(
+        "removeCompanyLogoButton"
+    );
+
+
+// =====================================
+// Working Week Elements
+// =====================================
 
 const workMonday =
     document.getElementById(
@@ -90,39 +136,64 @@ const workSunday =
         "workSunday"
     );
 
-const settingsMessage =
+
+// =====================================
+// Attendance Behaviour Trend Elements
+// =====================================
+
+const consecutiveLateThresholdInput =
     document.getElementById(
-        "settingsMessage"
+        "consecutiveLateThreshold"
     );
 
-const logoutButton =
+const frequentEarlyExitThresholdInput =
     document.getElementById(
-        "logoutButton"
+        "frequentEarlyExitThreshold"
     );
 
-const companyLogoInput =
+const weekdayPatternMinRecordsInput =
     document.getElementById(
-        "companyLogo"
+        "weekdayPatternMinRecords"
     );
 
-const companyLogoPreview =
+const weekdayPatternPercentageInput =
     document.getElementById(
-        "companyLogoPreview"
+        "weekdayPatternPercentage"
     );
 
-const noCompanyLogoMessage =
+const mondayFridayMinRecordsInput =
     document.getElementById(
-        "noCompanyLogoMessage"
+        "mondayFridayMinRecords"
     );
 
-const removeCompanyLogoButton =
+const mondayFridayPercentageInput =
     document.getElementById(
-        "removeCompanyLogoButton"
+        "mondayFridayPercentage"
     );
 
-const saveSettingsButton =
+const frequentAbsenceThresholdInput =
     document.getElementById(
-        "saveSettingsButton"
+        "frequentAbsenceThreshold"
+    );
+
+const frequentAbsenceLookbackDaysInput =
+    document.getElementById(
+        "frequentAbsenceLookbackDays"
+    );
+
+const shortWorkdayHoursInput =
+    document.getElementById(
+        "shortWorkdayHours"
+    );
+
+const shortWorkdayThresholdInput =
+    document.getElementById(
+        "shortWorkdayThreshold"
+    );
+
+const shortWorkdayLookbackDaysInput =
+    document.getElementById(
+        "shortWorkdayLookbackDays"
     );
 
 
@@ -158,6 +229,16 @@ const addEmployeeRoleButton =
 const employeeRoleList =
     document.getElementById(
         "employeeRoleList"
+    );
+
+
+// =====================================
+// Collapsible Section Elements
+// =====================================
+
+const sectionToggleButtons =
+    document.querySelectorAll(
+        ".section-toggle-btn"
     );
 
 
@@ -362,7 +443,25 @@ function initializeSettingsPage() {
 
 
     // =====================================
-    // Load Settings
+    // Collapsible Sections
+    // =====================================
+
+    sectionToggleButtons.forEach(
+        function (
+            button
+        ) {
+
+            button.addEventListener(
+                "click",
+                toggleSettingsSection
+            );
+
+        }
+    );
+
+
+    // =====================================
+    // Load Page Data
     // =====================================
 
     loadSettings();
@@ -373,7 +472,56 @@ function initializeSettingsPage() {
 
 
 // =====================================
-// Load Settings
+// Toggle Settings Section
+// =====================================
+
+function toggleSettingsSection(
+    event
+) {
+
+    const button =
+        event.currentTarget;
+
+    const targetId =
+        button.dataset.target;
+
+    const content =
+        document.getElementById(
+            targetId
+        );
+
+    if (
+        !content
+    ) {
+
+        return;
+
+    }
+
+    const isCollapsed =
+        content.classList.toggle(
+            "collapsed"
+        );
+
+    button.textContent =
+        isCollapsed
+            ?
+            "Expand"
+            :
+            "Collapse";
+
+    button.setAttribute(
+        "aria-expanded",
+        String(
+            !isCollapsed
+        )
+    );
+
+}
+
+
+// =====================================
+// Load Attendance Settings
 // =====================================
 
 async function loadSettings() {
@@ -415,6 +563,11 @@ async function loadSettings() {
         const settings =
             settingsSnapshot.data();
 
+
+        // =====================================
+        // Company / Attendance Rules
+        // =====================================
+
         companyNameInput.value =
             settings.companyName ??
             "";
@@ -427,9 +580,68 @@ async function loadSettings() {
             settings.lateThreshold ??
             "08:15";
 
+
+        // =====================================
+        // Attendance Behaviour Trends
+        // =====================================
+
+        consecutiveLateThresholdInput.value =
+            settings.consecutiveLateThreshold ??
+            3;
+
+        frequentEarlyExitThresholdInput.value =
+            settings.frequentEarlyExitThreshold ??
+            3;
+
+        weekdayPatternMinRecordsInput.value =
+            settings.weekdayPatternMinRecords ??
+            3;
+
+        weekdayPatternPercentageInput.value =
+            settings.weekdayPatternPercentage ??
+            50;
+
+        mondayFridayMinRecordsInput.value =
+            settings.mondayFridayMinRecords ??
+            3;
+
+        mondayFridayPercentageInput.value =
+            settings.mondayFridayPercentage ??
+            60;
+
+        frequentAbsenceThresholdInput.value =
+            settings.frequentAbsenceThreshold ??
+            5;
+
+        frequentAbsenceLookbackDaysInput.value =
+            settings.frequentAbsenceLookbackDays ??
+            30;
+
+        shortWorkdayHoursInput.value =
+            settings.shortWorkdayHours ??
+            6;
+
+        shortWorkdayThresholdInput.value =
+            settings.shortWorkdayThreshold ??
+            3;
+
+        shortWorkdayLookbackDaysInput.value =
+            settings.shortWorkdayLookbackDays ??
+            30;
+
+
+        // =====================================
+        // Company Logo
+        // =====================================
+
         loadCompanyLogo(
             settings.companyLogo
         );
+
+
+        // =====================================
+        // Working Week
+        // =====================================
 
         loadWorkingDays(
             settings.workingDays
@@ -583,10 +795,10 @@ async function saveOrganisationStructure() {
 function sortOrganisationStructure() {
 
     departments.sort(
-        (
+        function (
             firstDepartment,
             secondDepartment
-        ) => {
+        ) {
 
             return firstDepartment.localeCompare(
                 secondDepartment
@@ -596,10 +808,10 @@ function sortOrganisationStructure() {
     );
 
     employeeRoles.sort(
-        (
+        function (
             firstRole,
             secondRole
-        ) => {
+        ) {
 
             return firstRole.localeCompare(
                 secondRole
@@ -616,6 +828,14 @@ function sortOrganisationStructure() {
 // =====================================
 
 async function addDepartment() {
+
+    if (
+        !newDepartmentNameInput
+    ) {
+
+        return;
+
+    }
 
     const departmentName =
         newDepartmentNameInput.value
@@ -637,9 +857,9 @@ async function addDepartment() {
 
     const departmentExists =
         departments.some(
-            (
+            function (
                 department
-            ) => {
+            ) {
 
                 return (
                     department
@@ -698,9 +918,9 @@ async function addDepartment() {
 
         departments =
             departments.filter(
-                (
+                function (
                     department
-                ) => {
+                ) {
 
                     return (
                         department !==
@@ -788,9 +1008,9 @@ async function removeDepartment(
 
         departments =
             departments.filter(
-                (
+                function (
                     department
-                ) => {
+                ) {
 
                     return (
                         department !==
@@ -866,9 +1086,9 @@ function renderDepartments() {
     }
 
     departments.forEach(
-        (
+        function (
             department
-        ) => {
+        ) {
 
             const item =
                 document.createElement(
@@ -927,6 +1147,14 @@ function renderDepartments() {
 
 async function addEmployeeRole() {
 
+    if (
+        !newEmployeeRoleNameInput
+    ) {
+
+        return;
+
+    }
+
     const roleName =
         newEmployeeRoleNameInput.value
             .trim();
@@ -947,9 +1175,9 @@ async function addEmployeeRole() {
 
     const roleExists =
         employeeRoles.some(
-            (
+            function (
                 role
-            ) => {
+            ) {
 
                 return (
                     role
@@ -1008,9 +1236,9 @@ async function addEmployeeRole() {
 
         employeeRoles =
             employeeRoles.filter(
-                (
+                function (
                     role
-                ) => {
+                ) {
 
                     return (
                         role !==
@@ -1098,9 +1326,9 @@ async function removeEmployeeRole(
 
         employeeRoles =
             employeeRoles.filter(
-                (
+                function (
                     role
-                ) => {
+                ) {
 
                     return (
                         role !==
@@ -1176,9 +1404,9 @@ function renderEmployeeRoles() {
     }
 
     employeeRoles.forEach(
-        (
+        function (
             role
-        ) => {
+        ) {
 
             const item =
                 document.createElement(
@@ -1467,6 +1695,11 @@ async function saveSettings(
 
     event.preventDefault();
 
+
+    // =====================================
+    // Company / Attendance Settings
+    // =====================================
+
     const companyName =
         companyNameInput.value
             .trim();
@@ -1479,6 +1712,66 @@ async function saveSettings(
 
     const workingDays =
         getSelectedWorkingDays();
+
+
+    // =====================================
+    // Attendance Trend Settings
+    // =====================================
+
+    const consecutiveLateThreshold =
+        Number(
+            consecutiveLateThresholdInput.value
+        );
+
+    const frequentEarlyExitThreshold =
+        Number(
+            frequentEarlyExitThresholdInput.value
+        );
+
+    const weekdayPatternMinRecords =
+        Number(
+            weekdayPatternMinRecordsInput.value
+        );
+
+    const weekdayPatternPercentage =
+        Number(
+            weekdayPatternPercentageInput.value
+        );
+
+    const mondayFridayMinRecords =
+        Number(
+            mondayFridayMinRecordsInput.value
+        );
+
+    const mondayFridayPercentage =
+        Number(
+            mondayFridayPercentageInput.value
+        );
+
+    const frequentAbsenceThreshold =
+        Number(
+            frequentAbsenceThresholdInput.value
+        );
+
+    const frequentAbsenceLookbackDays =
+        Number(
+            frequentAbsenceLookbackDaysInput.value
+        );
+
+    const shortWorkdayHours =
+        Number(
+            shortWorkdayHoursInput.value
+        );
+
+    const shortWorkdayThreshold =
+        Number(
+            shortWorkdayThresholdInput.value
+        );
+
+    const shortWorkdayLookbackDays =
+        Number(
+            shortWorkdayLookbackDaysInput.value
+        );
 
 
     // =====================================
@@ -1543,6 +1836,73 @@ async function saveSettings(
 
 
     // =====================================
+    // Trend Validation
+    // =====================================
+
+    const trendValues =
+        [
+            consecutiveLateThreshold,
+            frequentEarlyExitThreshold,
+            weekdayPatternMinRecords,
+            weekdayPatternPercentage,
+            mondayFridayMinRecords,
+            mondayFridayPercentage,
+            frequentAbsenceThreshold,
+            frequentAbsenceLookbackDays,
+            shortWorkdayHours,
+            shortWorkdayThreshold,
+            shortWorkdayLookbackDays
+        ];
+
+    const hasInvalidTrendValue =
+        trendValues.some(
+            function (
+                value
+            ) {
+
+                return (
+                    !Number.isFinite(
+                        value
+                    )
+                    ||
+                    value <=
+                    0
+                );
+
+            }
+        );
+
+    if (
+        hasInvalidTrendValue
+    ) {
+
+        showMessage(
+            "Please enter valid values for all attendance trend settings.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    if (
+        weekdayPatternPercentage >
+            100 ||
+        mondayFridayPercentage >
+            100
+    ) {
+
+        showMessage(
+            "Trend percentages cannot be greater than 100%.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    // =====================================
     // Save
     // =====================================
 
@@ -1564,24 +1924,58 @@ async function saveSettings(
                 "attendance"
             );
 
-        const settingsData = {
+        const settingsData =
+            {
 
-            companyName:
-                companyName,
+                companyName:
+                    companyName,
 
-            standardStartTime:
-                standardStartTime,
+                standardStartTime:
+                    standardStartTime,
 
-            lateThreshold:
-                lateThreshold,
+                lateThreshold:
+                    lateThreshold,
 
-            workingDays:
-                workingDays,
+                workingDays:
+                    workingDays,
 
-            companyLogo:
-                selectedCompanyLogoData
+                companyLogo:
+                    selectedCompanyLogoData,
 
-        };
+                consecutiveLateThreshold:
+                    consecutiveLateThreshold,
+
+                frequentEarlyExitThreshold:
+                    frequentEarlyExitThreshold,
+
+                weekdayPatternMinRecords:
+                    weekdayPatternMinRecords,
+
+                weekdayPatternPercentage:
+                    weekdayPatternPercentage,
+
+                mondayFridayMinRecords:
+                    mondayFridayMinRecords,
+
+                mondayFridayPercentage:
+                    mondayFridayPercentage,
+
+                frequentAbsenceThreshold:
+                    frequentAbsenceThreshold,
+
+                frequentAbsenceLookbackDays:
+                    frequentAbsenceLookbackDays,
+
+                shortWorkdayHours:
+                    shortWorkdayHours,
+
+                shortWorkdayThreshold:
+                    shortWorkdayThreshold,
+
+                shortWorkdayLookbackDays:
+                    shortWorkdayLookbackDays
+
+            };
 
         await setDoc(
             settingsReference,
@@ -1694,7 +2088,8 @@ function previewCompanyLogo() {
     }
 
     const maximumFileSize =
-        500 * 1024;
+        500 *
+        1024;
 
     if (
         selectedFile.size >

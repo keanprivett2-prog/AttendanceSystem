@@ -20,7 +20,9 @@ import {
     getDocs,
     query,
     where,
-    orderBy
+    orderBy,
+    doc,
+    getDoc
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 import {
@@ -102,14 +104,59 @@ const absentCount =
         "absentCount"
     );
 
+    const currentlyAtWorkCount =
+    document.getElementById(
+        "currentlyAtWorkCount"
+    );
+
+const checkedOutCount =
+    document.getElementById(
+        "checkedOutCount"
+    );
+
+const earlyExitCount =
+    document.getElementById(
+        "earlyExitCount"
+    );
+
+const totalHoursWorked =
+    document.getElementById(
+        "totalHoursWorked"
+    );
+
+const averageHoursPerDay =
+    document.getElementById(
+        "averageHoursPerDay"
+    );
+
 const attendanceRate =
     document.getElementById(
         "attendanceRate"
     );
 
+    const statusBreakdown =
+    document.getElementById(
+        "statusBreakdown"
+    );
+
+    const departmentBreakdown =
+    document.getElementById(
+        "departmentBreakdown"
+    );
+
+    const employeePerformanceSummary =
+    document.getElementById(
+        "employeePerformanceSummary"
+    );
+
 const logoutButton =
     document.getElementById(
         "logoutButton"
+    );
+
+    const sectionToggleButtons =
+    document.querySelectorAll(
+        ".section-toggle-btn"
     );
 
 
@@ -118,6 +165,12 @@ const logoutButton =
 // =====================================
 
 let currentReportRecords = [];
+
+let consecutiveLateThreshold =
+    3;
+
+    let frequentEarlyExitThreshold =
+    3;
 
 
 // =====================================
@@ -139,6 +192,8 @@ function initializeReportsPage() {
     loadEmployeeFilter();
 
     loadDepartmentFilter();
+
+    loadReportSettings();
 
     if (generateReportButton) {
 
@@ -175,6 +230,161 @@ function initializeReportsPage() {
         );
 
     }
+
+}
+
+// =====================================
+// Load Report Settings
+// =====================================
+
+async function loadReportSettings() {
+
+    try {
+
+        const settingsReference =
+            doc(
+                db,
+                "systemSettings",
+                "attendance"
+            );
+
+        const settingsSnapshot =
+            await getDoc(
+                settingsReference
+            );
+
+        if (
+            !settingsSnapshot.exists()
+        ) {
+
+            return;
+
+        }
+
+        const settings =
+            settingsSnapshot.data();
+
+        consecutiveLateThreshold =
+            Number(
+                settings.consecutiveLateThreshold ??
+                3
+            );
+
+            frequentEarlyExitThreshold =
+    Number(
+        settings.frequentEarlyExitThreshold ??
+        3
+    );
+
+        if (
+            !Number.isFinite(
+                consecutiveLateThreshold
+            )
+            ||
+            consecutiveLateThreshold <
+            1
+        ) {
+
+            consecutiveLateThreshold =
+                3;
+
+        }
+
+        if (
+    !Number.isFinite(
+        frequentEarlyExitThreshold
+    )
+    ||
+    frequentEarlyExitThreshold <
+    1
+) {
+
+    frequentEarlyExitThreshold =
+        3;
+
+}
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Unable to load report settings:",
+            error
+        );
+
+        consecutiveLateThreshold =
+            3;
+
+    }
+
+}
+
+// =====================================
+// Collapsible Sections
+// =====================================
+
+sectionToggleButtons.forEach(
+    function (
+        button
+    ) {
+
+        button.addEventListener(
+            "click",
+            toggleReportSection
+        );
+
+    }
+);
+
+
+
+
+// =====================================
+// Toggle Report Section
+// =====================================
+
+function toggleReportSection(
+    event
+) {
+
+    const button =
+        event.currentTarget;
+
+    const targetId =
+        button.dataset.target;
+
+    const content =
+        document.getElementById(
+            targetId
+        );
+
+    if (
+        !content
+    ) {
+
+        return;
+
+    }
+
+    const isCollapsed =
+        content.classList.toggle(
+            "collapsed"
+        );
+
+    button.textContent =
+        isCollapsed
+            ?
+            "Expand"
+            :
+            "Collapse";
+
+    button.setAttribute(
+        "aria-expanded",
+        String(
+            !isCollapsed
+        )
+    );
 
 }
 
@@ -626,17 +836,288 @@ function setGenerateButtonState(
 
 }
 
+// =====================================
+// Calculate Worked Minutes
+// =====================================
+
+function calculateReportWorkedMinutes(
+    record
+) {
+
+    if (
+        !record.checkOutTime
+    ) {
+
+        return null;
+
+    }
+
+    const checkInTimestamp =
+        record.scanTimestamp;
+
+    const checkOutTimestamp =
+        record.checkOutTimestamp;
+
+
+    // =====================================
+    // Preferred Firebase Timestamp Method
+    // =====================================
+
+    if (
+        checkInTimestamp &&
+        checkOutTimestamp &&
+        typeof checkInTimestamp.toDate ===
+            "function" &&
+        typeof checkOutTimestamp.toDate ===
+            "function"
+    ) {
+
+        const checkInDate =
+            checkInTimestamp.toDate();
+
+        const checkOutDate =
+            checkOutTimestamp.toDate();
+
+        const differenceMilliseconds =
+            checkOutDate.getTime()
+            -
+            checkInDate.getTime();
+
+        if (
+            differenceMilliseconds >=
+            0
+        ) {
+
+            return Math.floor(
+                differenceMilliseconds /
+                60000
+            );
+
+        }
+
+    }
+
+
+    // =====================================
+    // Fallback To Stored Times
+    // =====================================
+
+    if (
+        record.time &&
+        record.checkOutTime
+    ) {
+
+        const checkInParts =
+            String(
+                record.time
+            )
+                .split(":")
+                .map(Number);
+
+        const checkOutParts =
+            String(
+                record.checkOutTime
+            )
+                .split(":")
+                .map(Number);
+
+        if (
+            checkInParts.length >=
+                2 &&
+            checkOutParts.length >=
+                2
+        ) {
+
+            const checkInMinutes =
+                (
+                    checkInParts[0] *
+                    60
+                )
+                +
+                checkInParts[1];
+
+            const checkOutMinutes =
+                (
+                    checkOutParts[0] *
+                    60
+                )
+                +
+                checkOutParts[1];
+
+            const totalMinutes =
+                checkOutMinutes -
+                checkInMinutes;
+
+            if (
+                totalMinutes >=
+                0
+            ) {
+
+                return totalMinutes;
+
+            }
+
+        }
+
+    }
+
+    return null;
+
+}
+
+
+// =====================================
+// Format Minutes As Hours
+// =====================================
+
+function formatMinutesAsHours(
+    totalMinutes
+) {
+
+    if (
+        !Number.isFinite(
+            totalMinutes
+        )
+        ||
+        totalMinutes <
+        0
+    ) {
+
+        return "0h 00m";
+
+    }
+
+    const hours =
+        Math.floor(
+            totalMinutes /
+            60
+        );
+
+    const minutes =
+        Math.round(
+            totalMinutes %
+            60
+        );
+
+    return (
+        hours
+        +
+        "h "
+        +
+        String(
+            minutes
+        ).padStart(
+            2,
+            "0"
+        )
+        +
+        "m"
+    );
+
+}
+
+// =====================================
+// Calculate Hours Worked
+// =====================================
+
+function calculateReportHoursWorked(
+    record
+) {
+
+    if (
+        !record.checkOutTime
+    ) {
+
+        return "In progress";
+
+    }
+
+    const checkInTimestamp =
+        record.scanTimestamp;
+
+    const checkOutTimestamp =
+        record.checkOutTimestamp;
+
+    if (
+        checkInTimestamp &&
+        checkOutTimestamp &&
+        typeof checkInTimestamp.toDate ===
+            "function" &&
+        typeof checkOutTimestamp.toDate ===
+            "function"
+    ) {
+
+        const checkInDate =
+            checkInTimestamp.toDate();
+
+        const checkOutDate =
+            checkOutTimestamp.toDate();
+
+        const differenceMilliseconds =
+            checkOutDate.getTime()
+            -
+            checkInDate.getTime();
+
+        if (
+            differenceMilliseconds >=
+            0
+        ) {
+
+            const totalMinutes =
+                Math.floor(
+                    differenceMilliseconds /
+                    60000
+                );
+
+            const hours =
+                Math.floor(
+                    totalMinutes /
+                    60
+                );
+
+            const minutes =
+                totalMinutes %
+                60;
+
+            return (
+                hours
+                +
+                "h "
+                +
+                String(
+                    minutes
+                ).padStart(
+                    2,
+                    "0"
+                )
+                +
+                "m"
+            );
+
+        }
+
+    }
+
+    return "Not available";
+
+}
+
 
 // =====================================
 // Display Report
 // =====================================
 
-function displayReport(records) {
+function displayReport(
+    records
+) {
 
     reportTableBody.innerHTML =
         "";
 
-    if (records.length === 0) {
+    if (
+        records.length ===
+        0
+    ) {
 
         showTableMessage(
             "No attendance records were found for that date range."
@@ -661,7 +1142,31 @@ function displayReport(records) {
                     record.status
                 );
 
+            const checkInTime =
+                record.time ??
+                "-";
+
+            const checkOutTime =
+                record.checkOutTime ??
+                "Still at work";
+
+            const hoursWorked =
+                calculateReportHoursWorked(
+                    record
+                );
+
+            const isLate =
+                normalizeStatus(
+                    record.status
+                ) ===
+                "late";
+
+            const isEarlyExit =
+                record.earlyExit ===
+                true;
+
             row.innerHTML = `
+
                 <td>
                     ${escapeHtml(
                         formatReportDate(
@@ -694,8 +1199,19 @@ function displayReport(records) {
 
                 <td>
                     ${escapeHtml(
-                        record.time ??
-                        "-"
+                        checkInTime
+                    )}
+                </td>
+
+                <td>
+                    ${escapeHtml(
+                        checkOutTime
+                    )}
+                </td>
+
+                <td>
+                    ${escapeHtml(
+                        hoursWorked
                     )}
                 </td>
 
@@ -712,19 +1228,46 @@ function displayReport(records) {
 
                 </td>
 
-<td>
-    ${
-        normalizeStatus(
-            record.status
-        ) === "late"
-            ? escapeHtml(
-                record.lateReason ??
-                "No reason recorded"
-            )
-            : "-"
-    }
-</td>
-                
+                <td>
+                    ${
+                        isLate
+                            ?
+                            escapeHtml(
+                                record.lateReason ??
+                                "No reason recorded"
+                            )
+                            :
+                            "-"
+                    }
+                </td>
+
+                <td>
+                    ${
+                        record.checkOutTime
+                            ?
+                            isEarlyExit
+                                ?
+                                "Yes"
+                                :
+                                "No"
+                            :
+                            "-"
+                    }
+                </td>
+
+                <td>
+                    ${
+                        isEarlyExit
+                            ?
+                            escapeHtml(
+                                record.earlyExitReason ??
+                                "No reason recorded"
+                            )
+                            :
+                            "-"
+                    }
+                </td>
+
             `;
 
             reportTableBody.appendChild(
@@ -738,6 +1281,18 @@ function displayReport(records) {
         records
     );
 
+    updateStatusBreakdown(
+    records
+);
+
+updateDepartmentBreakdown(
+    records
+);
+
+updateEmployeePerformanceSummary(
+    records
+);
+
 }
 
 
@@ -745,50 +1300,209 @@ function displayReport(records) {
 // Update Summary Cards
 // =====================================
 
-function updateSummaryCards(records) {
+function updateSummaryCards(
+    records
+) {
 
     const total =
         records.length;
 
+
+    // =====================================
+    // Attendance Status Counts
+    // =====================================
+
     const onTime =
         records.filter(
-            (record) =>
-                normalizeStatus(
-                    record.status
-                ) ===
-                "on time"
+            function (
+                record
+            ) {
+
+                return (
+                    normalizeStatus(
+                        record.status
+                    ) ===
+                    "on time"
+                );
+
+            }
         ).length;
+
 
     const late =
         records.filter(
-            (record) =>
-                normalizeStatus(
-                    record.status
-                ) ===
-                "late"
+            function (
+                record
+            ) {
+
+                return (
+                    normalizeStatus(
+                        record.status
+                    ) ===
+                    "late"
+                );
+
+            }
         ).length;
+
 
     const absent =
         records.filter(
-            (record) =>
-                normalizeStatus(
-                    record.status
-                ) ===
-                "absent"
+            function (
+                record
+            ) {
+
+                return (
+                    normalizeStatus(
+                        record.status
+                    ) ===
+                    "absent"
+                );
+
+            }
         ).length;
 
+
+    // =====================================
+    // Check-Out Information
+    // =====================================
+
+    const checkedOut =
+        records.filter(
+            function (
+                record
+            ) {
+
+                return Boolean(
+                    record.checkOutTime
+                );
+
+            }
+        ).length;
+
+
+    const currentlyAtWork =
+        records.filter(
+            function (
+                record
+            ) {
+
+                const status =
+                    normalizeStatus(
+                        record.status
+                    );
+
+                const attendanceStatus =
+                    (
+                        status ===
+                            "on time" ||
+                        status ===
+                            "late" ||
+                        status ===
+                            "checked in"
+                    );
+
+                return (
+                    attendanceStatus &&
+                    !record.checkOutTime
+                );
+
+            }
+        ).length;
+
+
+    const earlyExits =
+        records.filter(
+            function (
+                record
+            ) {
+
+                return (
+                    record.earlyExit ===
+                    true
+                );
+
+            }
+        ).length;
+
+
+    // =====================================
+    // Hours Worked
+    // =====================================
+
+    let totalWorkedMinutes =
+        0;
+
+    let completedWorkdays =
+        0;
+
+    records.forEach(
+        function (
+            record
+        ) {
+
+            const workedMinutes =
+                calculateReportWorkedMinutes(
+                    record
+                );
+
+            if (
+                workedMinutes ===
+                null
+            ) {
+
+                return;
+
+            }
+
+            totalWorkedMinutes +=
+                workedMinutes;
+
+            completedWorkdays++;
+
+        }
+    );
+
+
+    const averageWorkedMinutes =
+        completedWorkdays ===
+            0
+            ?
+            0
+            :
+            Math.round(
+                totalWorkedMinutes /
+                completedWorkdays
+            );
+
+
+    // =====================================
+    // Attendance Rate
+    // =====================================
+
     const attended =
-        onTime + late;
+        onTime +
+        late;
 
     const rate =
-        total === 0
-            ? 0
-            : Math.round(
+        total ===
+            0
+            ?
+            0
+            :
+            Math.round(
                 (
                     attended /
                     total
-                ) * 100
+                )
+                *
+                100
             );
+
+
+    // =====================================
+    // Display Values
+    // =====================================
 
     totalRecords.textContent =
         total;
@@ -802,12 +1516,873 @@ function updateSummaryCards(records) {
     absentCount.textContent =
         absent;
 
+    currentlyAtWorkCount.textContent =
+        currentlyAtWork;
+
+    checkedOutCount.textContent =
+        checkedOut;
+
+    earlyExitCount.textContent =
+        earlyExits;
+
+    totalHoursWorked.textContent =
+        formatMinutesAsHours(
+            totalWorkedMinutes
+        );
+
+    averageHoursPerDay.textContent =
+        formatMinutesAsHours(
+            averageWorkedMinutes
+        );
+
     attendanceRate.textContent =
         `${rate}%`;
 
 }
 
+// =====================================
+// Update Status Breakdown
+// =====================================
 
+function updateStatusBreakdown(
+    records
+) {
+
+    if (
+        !statusBreakdown
+    ) {
+
+        return;
+
+    }
+
+    statusBreakdown.innerHTML =
+        "";
+
+    if (
+        records.length ===
+        0
+    ) {
+
+        statusBreakdown.innerHTML = `
+            <p class="empty-row">
+                No attendance records available.
+            </p>
+        `;
+
+        return;
+
+    }
+
+    const statusCounts =
+        {};
+
+    records.forEach(
+        function (
+            record
+        ) {
+
+            const rawStatus =
+                String(
+                    record.status ??
+                    "Unknown"
+                ).trim();
+
+            const status =
+                rawStatus ===
+                    ""
+                    ?
+                    "Unknown"
+                    :
+                    rawStatus;
+
+            if (
+                !statusCounts[
+                    status
+                ]
+            ) {
+
+                statusCounts[
+                    status
+                ] = 0;
+
+            }
+
+            statusCounts[
+                status
+            ]++;
+
+        }
+    );
+
+    const sortedStatuses =
+        Object.entries(
+            statusCounts
+        ).sort(
+            function (
+                first,
+                second
+            ) {
+
+                return (
+                    second[1] -
+                    first[1]
+                );
+
+            }
+        );
+
+    sortedStatuses.forEach(
+        function (
+            statusEntry
+        ) {
+
+            const [
+                status,
+                count
+            ] =
+                statusEntry;
+
+            const percentage =
+                (
+                    count /
+                    records.length
+                )
+                *
+                100;
+
+            const breakdownRow =
+                document.createElement(
+                    "div"
+                );
+
+            breakdownRow.className =
+                "status-breakdown-row";
+
+            breakdownRow.innerHTML = `
+
+                <span class="status-breakdown-name">
+                    ${escapeHtml(
+                        status
+                    )}
+                </span>
+
+                <span class="status-breakdown-count">
+                    ${count}
+                </span>
+
+                <span class="status-breakdown-percentage">
+                    ${percentage.toFixed(
+                        1
+                    )}%
+                </span>
+
+            `;
+
+            statusBreakdown.appendChild(
+                breakdownRow
+            );
+
+        }
+    );
+
+}
+
+// =====================================
+// Update Department Breakdown
+// =====================================
+
+function updateDepartmentBreakdown(
+    records
+) {
+
+    if (
+        !departmentBreakdown
+    ) {
+
+        return;
+
+    }
+
+    departmentBreakdown.innerHTML =
+        "";
+
+    if (
+        records.length ===
+        0
+    ) {
+
+        departmentBreakdown.innerHTML = `
+            <p class="empty-row">
+                No department data available.
+            </p>
+        `;
+
+        return;
+
+    }
+
+    const departmentData =
+        {};
+
+    records.forEach(
+        function (
+            record
+        ) {
+
+            const department =
+                String(
+                    record.department ??
+                    "Unassigned"
+                ).trim() ||
+                "Unassigned";
+
+            if (
+                !departmentData[
+                    department
+                ]
+            ) {
+
+                departmentData[
+                    department
+                ] = {
+
+                    total:
+                        0,
+
+                    attended:
+                        0
+
+                };
+
+            }
+
+            departmentData[
+                department
+            ].total++;
+
+            const status =
+                normalizeStatus(
+                    record.status
+                );
+
+            if (
+                status ===
+                    "on time" ||
+                status ===
+                    "late"
+            ) {
+
+                departmentData[
+                    department
+                ].attended++;
+
+            }
+
+        }
+    );
+
+    const departments =
+        Object.entries(
+            departmentData
+        ).sort(
+            function (
+                first,
+                second
+            ) {
+
+                return first[0]
+                    .localeCompare(
+                        second[0]
+                    );
+
+            }
+        );
+
+    departments.forEach(
+        function (
+            departmentEntry
+        ) {
+
+            const [
+                department,
+                data
+            ] =
+                departmentEntry;
+
+
+                
+            const attendancePercentage =
+                data.total ===
+                    0
+                    ?
+                    0
+                    :
+                    Math.round(
+                        (
+                            data.attended /
+                            data.total
+                        )
+                        *
+                        100
+                    );
+
+            const row =
+                document.createElement(
+                    "div"
+                );
+
+            row.className =
+                "department-breakdown-row";
+
+            row.innerHTML = `
+
+                <span class="department-breakdown-name">
+                    ${escapeHtml(
+                        department
+                    )}
+                </span>
+
+                <span>
+                    ${data.total} records
+                </span>
+
+                <span>
+                    ${data.attended} attended
+                </span>
+
+                <span>
+                    ${attendancePercentage}%
+                </span>
+
+            `;
+
+            departmentBreakdown.appendChild(
+                row
+            );
+
+        }
+    );
+
+}
+
+// =====================================
+// Update Employee Performance Summary
+// =====================================
+
+function updateEmployeePerformanceSummary(
+    records
+) {
+
+    if (
+        !employeePerformanceSummary
+    ) {
+
+        return;
+
+    }
+
+    employeePerformanceSummary.innerHTML =
+        "";
+
+    if (
+        records.length ===
+        0
+    ) {
+
+        employeePerformanceSummary.innerHTML = `
+            <p class="empty-row">
+                No employee performance data available.
+            </p>
+        `;
+
+        return;
+
+    }
+
+
+    // =====================================
+    // Employee Data
+    // =====================================
+
+    const employeeData =
+        {};
+
+
+    records.forEach(
+        function (
+            record
+        ) {
+
+            const employeeNumber =
+                String(
+                    record.employeeNumber ??
+                    "Unknown"
+                );
+
+            const employeeName =
+                String(
+                    record.name ??
+                    "Unknown Employee"
+                );
+
+            const employeeKey =
+                employeeNumber;
+
+
+            // =====================================
+            // Create Employee Summary
+            // =====================================
+
+            if (
+                !employeeData[
+                    employeeKey
+                ]
+            ) {
+
+                employeeData[
+                    employeeKey
+                ] = {
+
+                    employeeNumber:
+                        employeeNumber,
+
+                    employeeName:
+                        employeeName,
+
+                    total:
+                        0,
+
+                    onTime:
+                        0,
+
+                    late:
+                        0,
+
+                    absent:
+                        0,
+
+                    sickLeave:
+                        0,
+
+                    annualLeave:
+                        0,
+
+                    otherLeave:
+                        0,
+
+                    earlyExits:
+                        0,
+
+                    workedMinutes:
+                        0
+
+                };
+
+            }
+
+
+            const data =
+                employeeData[
+                    employeeKey
+                ];
+
+
+            // =====================================
+            // Total Records
+            // =====================================
+
+            data.total++;
+
+
+            // =====================================
+            // Status
+            // =====================================
+
+            const status =
+                normalizeStatus(
+                    record.status
+                );
+
+
+            // =====================================
+            // On Time
+            // =====================================
+
+            if (
+                status ===
+                "on time"
+            ) {
+
+                data.onTime++;
+
+            }
+
+
+            // =====================================
+            // Late
+            // =====================================
+
+            if (
+                status ===
+                "late"
+            ) {
+
+                data.late++;
+
+            }
+
+
+            // =====================================
+            // Absent
+            // =====================================
+
+            if (
+                status ===
+                "absent"
+            ) {
+
+                data.absent++;
+
+            }
+
+
+            // =====================================
+            // Sick Leave
+            // =====================================
+
+            if (
+                status ===
+                "sick leave"
+            ) {
+
+                data.sickLeave++;
+
+            }
+
+
+            // =====================================
+            // Annual Leave
+            // =====================================
+
+            if (
+                status ===
+                "annual leave"
+            ) {
+
+                data.annualLeave++;
+
+            }
+
+
+            // =====================================
+            // Other Leave
+            // =====================================
+
+            if (
+                status ===
+                    "maternity leave" ||
+                status ===
+                    "family responsibility leave" ||
+                status ===
+                    "unpaid leave" ||
+                status ===
+                    "medical appointment"
+            ) {
+
+                data.otherLeave++;
+
+            }
+
+
+            // =====================================
+            // Early Exits
+            // =====================================
+
+            if (
+                record.earlyExit ===
+                true
+            ) {
+
+                data.earlyExits++;
+
+            }
+
+
+            // =====================================
+            // Hours Worked
+            // =====================================
+
+            const workedMinutes =
+                calculateReportWorkedMinutes(
+                    record
+                );
+
+            if (
+                workedMinutes !==
+                null
+            ) {
+
+                data.workedMinutes +=
+                    workedMinutes;
+
+            }
+
+        }
+    );
+
+
+    // =====================================
+    // Sort Employees
+    // =====================================
+
+    const employees =
+        Object.values(
+            employeeData
+        ).sort(
+            function (
+                first,
+                second
+            ) {
+
+                return first.employeeName
+                    .localeCompare(
+                        second.employeeName
+                    );
+
+            }
+        );
+
+
+    // =====================================
+    // Display Employees
+    // =====================================
+
+    employees.forEach(
+        function (
+            employee
+        ) {
+
+
+            // =====================================
+            // Completed Attendance Days
+            // =====================================
+
+            const completedWorkdays =
+                employee.onTime +
+                employee.late;
+
+
+            // =====================================
+            // Average Hours / Day
+            // =====================================
+
+            const averageWorkedMinutes =
+                completedWorkdays >
+                0
+                    ?
+                    Math.round(
+                        employee.workedMinutes /
+                        completedWorkdays
+                    )
+                    :
+                    0;
+
+
+            // =====================================
+            // Attendance Rate
+            // =====================================
+
+            const attended =
+                employee.onTime +
+                employee.late;
+
+            const attendancePercentage =
+                employee.total ===
+                    0
+                    ?
+                    0
+                    :
+                    Math.round(
+                        (
+                            attended /
+                            employee.total
+                        )
+                        *
+                        100
+                    );
+
+
+            // =====================================
+            // Create Employee Row
+            // =====================================
+
+            const row =
+                document.createElement(
+                    "div"
+                );
+
+            row.className =
+                "employee-performance-row";
+
+
+            row.innerHTML = `
+
+                <span class="employee-performance-name">
+
+                    ${escapeHtml(
+                        employee.employeeName
+                    )}
+
+                    <small>
+                        ${escapeHtml(
+                            employee.employeeNumber
+                        )}
+                    </small>
+
+                </span>
+
+
+                <!-- Records -->
+
+                <span>
+                    ${employee.total}
+                </span>
+
+
+                <!-- On Time -->
+
+                <span>
+                    ${employee.onTime}
+                </span>
+
+
+                <!-- Late -->
+
+<span
+    class="${
+        employee.late >=
+        consecutiveLateThreshold
+            ?
+            "performance-warning-cell"
+            :
+            ""
+    }"
+>
+    ${employee.late}
+</span>
+
+
+                <!-- Absent -->
+
+                <span>
+                    ${employee.absent}
+                </span>
+
+
+                <!-- Sick Leave -->
+
+                <span>
+                    ${employee.sickLeave}
+                </span>
+
+
+                <!-- Annual Leave -->
+
+                <span>
+                    ${employee.annualLeave}
+                </span>
+
+
+                <!-- Other Leave -->
+
+                <span>
+                    ${employee.otherLeave}
+                </span>
+
+
+                <!-- Early Exits -->
+
+                <span>
+                    ${employee.earlyExits}
+                </span>
+
+
+                <!-- Total Hours Worked -->
+
+                <span>
+                    ${escapeHtml(
+                        formatMinutesAsHours(
+                            employee.workedMinutes
+                        )
+                    )}
+                </span>
+
+
+                <!-- Average Hours / Day -->
+
+                <span>
+                    ${escapeHtml(
+                        formatMinutesAsHours(
+                            averageWorkedMinutes
+                        )
+                    )}
+                </span>
+
+
+                <!-- Attendance Rate -->
+
+<span
+    class="attendance-rate-cell ${getAttendanceRateClass(
+        attendancePercentage
+    )}"
+>
+    ${attendancePercentage}%
+</span>
+
+            `;
+
+
+            employeePerformanceSummary.appendChild(
+                row
+            );
+
+        }
+    );
+
+}
+
+// =====================================
+// Attendance Rate Class
+// =====================================
+
+function getAttendanceRateClass(
+    attendancePercentage
+) {
+
+    if (
+        attendancePercentage >=
+        90
+    ) {
+
+        return "attendance-rate-good";
+
+    }
+
+    if (
+        attendancePercentage >=
+        80
+    ) {
+
+        return "attendance-rate-watch";
+
+    }
+
+    return "attendance-rate-poor";
+
+}
+
+    
 // =====================================
 // Reset Summary Cards
 // =====================================
@@ -826,8 +2401,64 @@ function resetSummaryCards() {
     absentCount.textContent =
         "0";
 
+    currentlyAtWorkCount.textContent =
+        "0";
+
+    checkedOutCount.textContent =
+        "0";
+
+    earlyExitCount.textContent =
+        "0";
+
+    totalHoursWorked.textContent =
+        "0h 00m";
+
+    averageHoursPerDay.textContent =
+        "0h 00m";
+
     attendanceRate.textContent =
         "0%";
+
+        if (
+    statusBreakdown
+) {
+
+    statusBreakdown.innerHTML = `
+        <p class="empty-row">
+            Generate a report to view the status breakdown.
+        </p>
+    `;
+
+}
+
+// Reset Department Breakdown
+
+if (
+    departmentBreakdown
+) {
+
+    departmentBreakdown.innerHTML = `
+        <p class="empty-row">
+            Generate a report to view the department breakdown.
+        </p>
+    `;
+
+}
+
+// Reset Employee Performance Summary
+
+if (
+    employeePerformanceSummary
+) {
+
+    employeePerformanceSummary.innerHTML = `
+        <p class="empty-row">
+            Generate a report to view employee performance.
+        </p>
+    `;
+
+}
+
 
 }
 
@@ -910,7 +2541,7 @@ function showTableMessage(message) {
         <tr>
 
             <td
-                colspan="7"
+                colspan="11"
                 class="empty-row"
             >
                 ${escapeHtml(message)}
@@ -946,9 +2577,13 @@ function exportReportToCsv() {
         "Employee Number",
         "Employee Name",
         "Department",
-        "Check-in Time",
+        "Check In",
+        "Check Out",
+        "Hours Worked",
         "Status",
-        "Late Reason"
+        "Late Reason",
+        "Early Exit",
+        "Early Exit Reason"
     ]
 ];
 
@@ -956,32 +2591,63 @@ function exportReportToCsv() {
         (record) => {
 
             csvRows.push([
-                formatReportDate(
-                    record.dateKey ??
-                    record.date
-                ),
 
-                record.employeeNumber ??
-                    "",
+    formatReportDate(
+        record.dateKey ??
+        record.date
+    ),
 
-                record.name ??
-                    "",
+    record.employeeNumber ??
+        "",
 
-                record.department ??
-                    "",
+    record.name ??
+        "",
 
-                record.time ??
-                    "",
+    record.department ??
+        "",
 
-                record.status ??
-    "",
+    record.time ??
+        "",
 
-normalizeStatus(
-    record.status
-) === "late"
-    ? record.lateReason ?? ""
-    : ""
-            ]);
+    record.checkOutTime ??
+        "",
+
+    calculateReportHoursWorked(
+        record
+    ),
+
+    record.status ??
+        "",
+
+    normalizeStatus(
+        record.status
+    ) === "late"
+        ?
+        record.lateReason ??
+        ""
+        :
+        "",
+
+    record.checkOutTime
+        ?
+        record.earlyExit === true
+            ?
+            "Yes"
+            :
+            "No"
+        :
+        "",
+
+    record.earlyExit === true
+        ?
+        record.earlyExitReason ??
+        ""
+        :
+        ""
+
+    ]);
+
+
 
         }
     );

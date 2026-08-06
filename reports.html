@@ -193,76 +193,11 @@
                  Report Summary
             ====================================== -->
 
-            <section class="report-summary">
-
-                <div class="info-card">
-
-                    <span>
-                        Total Records
-                    </span>
-
-                    <strong id="totalRecords">
-                        0
-                    </strong>
-
-                </div>
-
-                <div class="info-card">
-
-                    <span>
-                        On Time
-                    </span>
-
-                    <strong id="onTimeCount">
-                        0
-                    </strong>
-
-                </div>
-
-                <div class="info-card">
-
-                    <span>
-                        Late
-                    </span>
-
-                    <strong id="lateCount">
-                        0
-                    </strong>
-
-                </div>
-
-                <div class="info-card">
-
-                    <span>
-                        Absent
-                    </span>
-
-                    <strong id="absentCount">
-                        0
-                    </strong>
-
-                </div>
-
-                <div class="info-card">
-
-                    <span>
-                        Attendance Rate
-                    </span>
-
-                    <strong id="attendanceRate">
-                        0%
-                    </strong>
-
-                </div>
-
-            </section>
-
-
             <!-- =====================================
-                 Report Filters and Results
-            ====================================== -->
+     Report Summary
+====================================== -->
 
-            <section class="employee-table-section">
+<section class="employee-table-section">
 
                 <div class="report-filters">
 
@@ -447,15 +382,34 @@
                                 </th>
 
                                 <th>
-                                    Check-in Time
+                                    Check In
+                                </th>
+                                
+                                <th>
+                                    Check Out
+                                </th>
+
+                                <th>
+                                    Hours Worked
                                 </th>
 
                                 <th>
                                     Status
                                 </th>
 
-                                <th>Late Reason</th>
+                                <th>
+                                    Late Reason
+                                </th>
 
+                                <th>
+                                    Early Exit
+                                </th>
+
+                                <th>
+                                    Early Exit Reason
+                                </th>
+
+                                
                             </tr>
 
                         </thead>
@@ -465,7 +419,7 @@
                             <tr>
 
                                 <td
-                                    colspan="6"
+                                    colspan="11"
                                     class="empty-row"
                                 >
                                     Select a date range and generate a report.
@@ -480,6 +434,370 @@
                 </div>
 
             </section>
+
+<!-- =====================================
+     Report Summary
+====================================== -->
+
+<section class="employee-table-section collapsible-section">
+
+    <div class="table-header collapsible-header">
+
+        <h2>
+            Report Summary
+        </h2>
+
+        <button
+            type="button"
+            class="section-toggle-btn"
+            data-target="reportSummaryContent"
+            aria-expanded="true"
+        >
+            Expand
+        </button>
+
+    </div>
+
+
+    <div
+        id="reportSummaryContent"
+        class="collapsible-content collapsed"
+    >
+
+        <div class="report-summary">
+
+    <div class="info-card">
+
+        <span>
+            Total Records
+        </span>
+
+        <strong id="totalRecords">
+            0
+        </strong>
+
+    </div>
+
+
+    <div class="info-card">
+
+        <span>
+            On Time
+        </span>
+
+        <strong id="onTimeCount">
+            0
+        </strong>
+
+    </div>
+
+
+    <div class="info-card">
+
+        <span>
+            Late
+        </span>
+
+        <strong id="lateCount">
+            0
+        </strong>
+
+    </div>
+
+
+    <div class="info-card">
+
+        <span>
+            Absent
+        </span>
+
+        <strong id="absentCount">
+            0
+        </strong>
+
+    </div>
+
+
+    <div class="info-card">
+
+        <span>
+            Currently at Work
+        </span>
+
+        <strong id="currentlyAtWorkCount">
+            0
+        </strong>
+
+    </div>
+
+
+    <div class="info-card">
+
+        <span>
+            Checked Out
+        </span>
+
+        <strong id="checkedOutCount">
+            0
+        </strong>
+
+    </div>
+
+
+    <div class="info-card">
+
+        <span>
+            Early Exits
+        </span>
+
+        <strong id="earlyExitCount">
+            0
+        </strong>
+
+    </div>
+
+
+    <div class="info-card">
+
+        <span>
+            Total Hours Worked
+        </span>
+
+        <strong id="totalHoursWorked">
+            0h 00m
+        </strong>
+
+    </div>
+
+
+    <div class="info-card">
+
+        <span>
+            Average Hours / Day
+        </span>
+
+        <strong id="averageHoursPerDay">
+            0h 00m
+        </strong>
+
+    </div>
+
+
+    <div class="info-card">
+
+        <span>
+            Attendance Rate
+        </span>
+
+        <strong id="attendanceRate">
+            0%
+        </strong>
+
+    </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- =====================================
+     Attendance Status Breakdown
+====================================== -->
+
+<section class="employee-table-section collapsible-section">
+
+    <div class="table-header collapsible-header">
+
+        <h2>
+            Attendance Status Breakdown
+        </h2>
+
+        <button
+            type="button"
+            class="section-toggle-btn"
+            data-target="statusBreakdownContent"
+            aria-expanded="true"
+        >
+            Expand
+        </button>
+
+    </div>
+
+
+    <div
+        id="statusBreakdownContent"
+        class="collapsible-content collapsed"
+    >
+
+        <div
+            id="statusBreakdown"
+            class="status-breakdown"
+        >
+
+            <p class="empty-row">
+                Generate a report to view the status breakdown.
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- =====================================
+     Department Breakdown
+====================================== -->
+
+<section class="employee-table-section collapsible-section">
+
+    <div class="table-header collapsible-header">
+
+        <h2>
+            Department Breakdown
+        </h2>
+
+        <button
+            type="button"
+            class="section-toggle-btn"
+            data-target="departmentBreakdownContent"
+            aria-expanded="true"
+        >
+            Expand
+        </button>
+
+    </div>
+
+
+    <div
+        id="departmentBreakdownContent"
+        class="collapsible-content collapsed"
+    >
+
+        <div
+            id="departmentBreakdown"
+            class="department-breakdown"
+        >
+
+            <p class="empty-row">
+                Generate a report to view the department breakdown.
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+
+<!-- =====================================
+     Employee Performance Summary
+====================================== -->
+
+<section class="employee-table-section collapsible-section">
+
+    <div class="table-header collapsible-header">
+
+        <h2>
+            Employee Performance Summary
+        </h2>
+
+        <button
+            type="button"
+            class="section-toggle-btn"
+            data-target="employeePerformanceContent"
+            aria-expanded="true"
+        >
+            Expand
+        </button>
+
+    </div>
+
+
+    <div
+        id="employeePerformanceContent"
+        class="collapsible-content collapsed"
+    >
+
+        <div
+    class="employee-performance-header"
+>
+
+    <span>
+        Employee
+    </span>
+
+    <span>
+        Records
+    </span>
+
+    <span>
+        On Time
+    </span>
+
+    <span>
+        Late
+    </span>
+
+    <span>
+        Absent
+    </span>
+
+    <span>
+        Sick Leave
+    </span>
+
+    <span>
+        Annual Leave
+    </span>
+
+    <span
+    title="Includes Maternity Leave, Family Responsibility Leave, Unpaid Leave and Medical Appointment"
+>
+    Other Leave
+</span>
+
+    <span>
+        Early Exits
+    </span>
+
+    <span>
+    Hours Worked
+</span>
+
+<span>
+    Average Hours / Day
+</span>
+
+<span>
+    Attendance Rate
+</span>
+
+</div>
+
+
+        <div
+            id="employeePerformanceSummary"
+            class="employee-performance-summary"
+        >
+
+            <p class="empty-row">
+                Generate a report to view employee performance.
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+            <!-- =====================================
+                 Report Filters and Results
+            ====================================== -->
+
+            
 
         </main>
 

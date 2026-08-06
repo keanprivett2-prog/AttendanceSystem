@@ -78,9 +78,14 @@ const totalEmployeesElement =
         "totalEmployees"
     );
 
-const checkedInElement =
+const currentlyAtWorkElement =
     document.getElementById(
-        "checkedIn"
+        "currentlyAtWork"
+    );
+
+const checkedOutTodayElement =
+    document.getElementById(
+        "checkedOutToday"
     );
 
 const lateTodayElement =
@@ -88,9 +93,19 @@ const lateTodayElement =
         "lateToday"
     );
 
+const earlyExitsTodayElement =
+    document.getElementById(
+        "earlyExitsToday"
+    );
+
 const absentTodayElement =
     document.getElementById(
         "absentToday"
+    );
+
+const totalHoursTodayElement =
+    document.getElementById(
+        "totalHoursToday"
     );
 
 const logoutButton =
@@ -445,7 +460,8 @@ function displayRecentActivity(
         "";
 
     if (
-        attendanceRecords.length === 0
+        attendanceRecords.length ===
+        0
     ) {
 
         recentActivity.innerHTML = `
@@ -458,15 +474,106 @@ function displayRecentActivity(
 
     }
 
-    const sortedRecords =
-        [...attendanceRecords].sort(
-            compareAttendanceTimesDescending
-        );
+    const activityRecords =
+        [];
 
-    sortedRecords
-        .slice(0, 10)
+    attendanceRecords.forEach(
+        (record) => {
+
+            if (
+                record.time
+            ) {
+
+                let checkInDescription =
+                    "Checked in";
+
+                if (
+                    normalizeStatus(
+                        record.status
+                    ) ===
+                    "late"
+                ) {
+
+                    checkInDescription =
+                        "Checked in late";
+
+                }
+
+                activityRecords.push({
+
+                    time:
+                        record.time,
+
+                    name:
+                        record.name ??
+                        "Unknown Employee",
+
+                    description:
+                        checkInDescription
+
+                });
+
+            }
+
+            if (
+                record.checkOutTime
+            ) {
+
+                let checkOutDescription =
+                    "Checked out";
+
+                if (
+                    record.earlyExit ===
+                    true
+                ) {
+
+                    checkOutDescription =
+                        "Checked out early";
+
+                }
+
+                activityRecords.push({
+
+                    time:
+                        record.checkOutTime,
+
+                    name:
+                        record.name ??
+                        "Unknown Employee",
+
+                    description:
+                        checkOutDescription
+
+                });
+
+            }
+
+        }
+    );
+
+    activityRecords.sort(
+        (firstActivity, secondActivity) => {
+
+            return String(
+                secondActivity.time ??
+                ""
+            ).localeCompare(
+                String(
+                    firstActivity.time ??
+                    ""
+                )
+            );
+
+        }
+    );
+
+    activityRecords
+        .slice(
+            0,
+            10
+        )
         .forEach(
-            (record) => {
+            (activity) => {
 
                 const activityItem =
                     document.createElement(
@@ -477,19 +584,27 @@ function displayRecentActivity(
                     "activity-item";
 
                 activityItem.innerHTML = `
+
                     <strong>
                         ${escapeHtml(
-                            record.time ??
-                            "--:--"
+                            activity.time
                         )}
                     </strong>
 
                     <br>
 
                     ${escapeHtml(
-                        record.name ??
-                        "Unknown Employee"
+                        activity.name
                     )}
+
+                    <br>
+
+                    <span>
+                        ${escapeHtml(
+                            activity.description
+                        )}
+                    </span>
+
                 `;
 
                 recentActivity.appendChild(
@@ -521,6 +636,180 @@ function compareAttendanceTimesDescending(
 
 }
 
+// =====================================
+// Calculate Hours Worked
+// =====================================
+
+function calculateHoursWorked(
+    record
+) {
+
+    if (
+        !record.checkOutTime
+    ) {
+
+        return "In progress";
+
+    }
+
+
+    // Use Firestore timestamps where available.
+
+    const checkInTimestamp =
+        record.scanTimestamp;
+
+    const checkOutTimestamp =
+        record.checkOutTimestamp;
+
+    if (
+        checkInTimestamp &&
+        checkOutTimestamp &&
+        typeof checkInTimestamp.toDate ===
+            "function" &&
+        typeof checkOutTimestamp.toDate ===
+            "function"
+    ) {
+
+        const checkInDate =
+            checkInTimestamp.toDate();
+
+        const checkOutDate =
+            checkOutTimestamp.toDate();
+
+        const differenceMilliseconds =
+            checkOutDate.getTime()
+            -
+            checkInDate.getTime();
+
+        if (
+            differenceMilliseconds >=
+            0
+        ) {
+
+            const totalMinutes =
+                Math.floor(
+                    differenceMilliseconds /
+                    60000
+                );
+
+            const hours =
+                Math.floor(
+                    totalMinutes /
+                    60
+                );
+
+            const minutes =
+                totalMinutes %
+                60;
+
+            return (
+                hours
+                +
+                "h "
+                +
+                String(
+                    minutes
+                ).padStart(
+                    2,
+                    "0"
+                )
+                +
+                "m"
+            );
+
+        }
+
+    }
+
+
+    // Fallback for older records.
+
+    if (
+        record.time &&
+        record.checkOutTime
+    ) {
+
+        const checkInParts =
+            String(
+                record.time
+            )
+                .split(":")
+                .map(Number);
+
+        const checkOutParts =
+            String(
+                record.checkOutTime
+            )
+                .split(":")
+                .map(Number);
+
+        if (
+            checkInParts.length >=
+            2 &&
+            checkOutParts.length >=
+            2
+        ) {
+
+            const checkInMinutes =
+                (
+                    checkInParts[0] *
+                    60
+                )
+                +
+                checkInParts[1];
+
+            const checkOutMinutes =
+                (
+                    checkOutParts[0] *
+                    60
+                )
+                +
+                checkOutParts[1];
+
+            const totalMinutes =
+                checkOutMinutes -
+                checkInMinutes;
+
+            if (
+                totalMinutes >=
+                0
+            ) {
+
+                const hours =
+                    Math.floor(
+                        totalMinutes /
+                        60
+                    );
+
+                const minutes =
+                    totalMinutes %
+                    60;
+
+                return (
+                    hours
+                    +
+                    "h "
+                    +
+                    String(
+                        minutes
+                    ).padStart(
+                        2,
+                        "0"
+                    )
+                    +
+                    "m"
+                );
+
+            }
+
+        }
+
+    }
+
+    return "Not available";
+
+}
+
 
 // =====================================
 // Display Attendance Table
@@ -530,22 +819,27 @@ function displayAttendanceTable(
     attendanceRecords
 ) {
 
-    if (!attendanceTableBody) {
+    if (
+        !attendanceTableBody
+    ) {
+
         return;
+
     }
 
     attendanceTableBody.innerHTML =
         "";
 
     if (
-        attendanceRecords.length === 0
+        attendanceRecords.length ===
+        0
     ) {
 
         attendanceTableBody.innerHTML = `
             <tr>
 
                 <td
-                    colspan="5"
+                    colspan="8"
                     class="empty-row"
                 >
                     No attendance records yet.
@@ -576,7 +870,38 @@ function displayAttendanceTable(
                     record.status
                 );
 
+            const checkInTime =
+                record.time ??
+                "-";
+
+            const checkOutTime =
+                record.checkOutTime ??
+                "Still at work";
+
+            const hoursWorked =
+                calculateHoursWorked(
+                    record
+                );
+
+            let earlyExitDisplay =
+                "-";
+
+            if (
+                record.checkOutTime
+            ) {
+
+                earlyExitDisplay =
+                    record.earlyExit ===
+                    true
+                        ?
+                        "Yes"
+                        :
+                        "No";
+
+            }
+
             row.innerHTML = `
+
                 <td>
                     ${escapeHtml(
                         record.name ??
@@ -600,8 +925,25 @@ function displayAttendanceTable(
 
                 <td>
                     ${escapeHtml(
-                        record.time ??
-                        "-"
+                        checkInTime
+                    )}
+                </td>
+
+                <td>
+                    ${escapeHtml(
+                        checkOutTime
+                    )}
+                </td>
+
+                <td>
+                    ${escapeHtml(
+                        hoursWorked
+                    )}
+                </td>
+
+                <td>
+                    ${escapeHtml(
+                        earlyExitDisplay
                     )}
                 </td>
 
@@ -617,6 +959,7 @@ function displayAttendanceTable(
                     </span>
 
                 </td>
+
             `;
 
             attendanceTableBody.appendChild(
@@ -624,6 +967,102 @@ function displayAttendanceTable(
             );
 
         }
+    );
+
+}
+
+// =====================================
+// Calculate Total Worked Minutes
+// =====================================
+
+function calculateWorkedMinutes(
+    record
+) {
+
+    if (
+        !record.checkOutTime
+    ) {
+
+        return 0;
+
+    }
+
+    const checkInTimestamp =
+        record.scanTimestamp;
+
+    const checkOutTimestamp =
+        record.checkOutTimestamp;
+
+    if (
+        checkInTimestamp &&
+        checkOutTimestamp &&
+        typeof checkInTimestamp.toDate ===
+            "function" &&
+        typeof checkOutTimestamp.toDate ===
+            "function"
+    ) {
+
+        const checkInDate =
+            checkInTimestamp.toDate();
+
+        const checkOutDate =
+            checkOutTimestamp.toDate();
+
+        const differenceMilliseconds =
+            checkOutDate.getTime()
+            -
+            checkInDate.getTime();
+
+        if (
+            differenceMilliseconds >=
+            0
+        ) {
+
+            return Math.floor(
+                differenceMilliseconds /
+                60000
+            );
+
+        }
+
+    }
+
+    return 0;
+
+}
+
+
+// =====================================
+// Format Worked Minutes
+// =====================================
+
+function formatWorkedMinutes(
+    totalMinutes
+) {
+
+    const hours =
+        Math.floor(
+            totalMinutes /
+            60
+        );
+
+    const minutes =
+        totalMinutes %
+        60;
+
+    return (
+        hours
+        +
+        "h "
+        +
+        String(
+            minutes
+        ).padStart(
+            2,
+            "0"
+        )
+        +
+        "m"
     );
 
 }
@@ -638,57 +1077,161 @@ function updateDashboardStatistics(
     employeeRecords
 ) {
 
-    const checkedInCount =
+    const currentlyAtWorkCount =
         attendanceRecords.filter(
-            (record) =>
-                isPresentStatus(
-                    record.status
-                )
+            (record) => {
+
+                return (
+                    isPresentStatus(
+                        record.status
+                    )
+                    &&
+                    !record.checkOutTime
+                );
+
+            }
+        ).length;
+
+    const checkedOutCount =
+        attendanceRecords.filter(
+            (record) => {
+
+                return Boolean(
+                    record.checkOutTime
+                );
+
+            }
         ).length;
 
     const lateCount =
         attendanceRecords.filter(
-            (record) =>
-                normalizeStatus(
-                    record.status
-                ) === "late"
+            (record) => {
+
+                return (
+                    normalizeStatus(
+                        record.status
+                    ) ===
+                    "late"
+                );
+
+            }
+        ).length;
+
+    const earlyExitCount =
+        attendanceRecords.filter(
+            (record) => {
+
+                return (
+                    record.earlyExit ===
+                    true
+                );
+
+            }
         ).length;
 
     const absentCount =
         attendanceRecords.filter(
-            (record) =>
-                normalizeStatus(
-                    record.status
-                ) === "absent"
+            (record) => {
+
+                return (
+                    normalizeStatus(
+                        record.status
+                    ) ===
+                    "absent"
+                );
+
+            }
         ).length;
 
-    if (totalEmployeesElement) {
+        const totalWorkedMinutes =
+    attendanceRecords.reduce(
+        (
+            total,
+            record
+        ) => {
+
+            return (
+                total
+                +
+                calculateWorkedMinutes(
+                    record
+                )
+            );
+
+        },
+        0
+    );
+
+
+    if (
+        totalEmployeesElement
+    ) {
 
         totalEmployeesElement.textContent =
             employeeRecords.length;
 
     }
 
-    if (checkedInElement) {
 
-        checkedInElement.textContent =
-            checkedInCount;
+    if (
+        currentlyAtWorkElement
+    ) {
+
+        currentlyAtWorkElement.textContent =
+            currentlyAtWorkCount;
 
     }
 
-    if (lateTodayElement) {
+
+    if (
+        checkedOutTodayElement
+    ) {
+
+        checkedOutTodayElement.textContent =
+            checkedOutCount;
+
+    }
+
+
+    if (
+        lateTodayElement
+    ) {
 
         lateTodayElement.textContent =
             lateCount;
 
     }
 
-    if (absentTodayElement) {
+
+    if (
+        earlyExitsTodayElement
+    ) {
+
+        earlyExitsTodayElement.textContent =
+            earlyExitCount;
+
+    }
+
+
+    if (
+        absentTodayElement
+    ) {
 
         absentTodayElement.textContent =
             absentCount;
 
     }
+
+    if (
+    totalHoursTodayElement
+) {
+
+    totalHoursTodayElement.textContent =
+        formatWorkedMinutes(
+            totalWorkedMinutes
+        );
+
+}
 
 }
 
@@ -782,7 +1325,7 @@ function showDashboardLoadingState() {
             <tr>
 
                 <td
-                    colspan="5"
+                    colspan="8"
                     class="empty-row"
                 >
                     Loading today's attendance...
@@ -828,7 +1371,7 @@ function showDashboardErrorState() {
             <tr>
 
                 <td
-                    colspan="5"
+                    colspan="8"
                     class="empty-row"
                 >
                     Attendance data could not be loaded.

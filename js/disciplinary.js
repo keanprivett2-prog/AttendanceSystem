@@ -102,6 +102,11 @@ const disciplinaryTableBody =
         "disciplinaryTableBody"
     );
 
+const attendanceTrends =
+    document.getElementById(
+        "attendanceTrends"
+    );
+
 const notification =
     document.getElementById(
         "notification"
@@ -129,6 +134,44 @@ let managerDepartment =
 
 let currentAdministratorProfile =
     null;
+
+
+// =====================================
+// Trend Settings
+// =====================================
+
+let CONSECUTIVE_LATE_THRESHOLD =
+    3;
+
+let FREQUENT_EARLY_EXIT_THRESHOLD =
+    3;
+
+let WEEKDAY_PATTERN_MIN_RECORDS =
+    3;
+
+let WEEKDAY_PATTERN_PERCENTAGE =
+    50;
+
+let MONDAY_FRIDAY_MIN_RECORDS =
+    3;
+
+let MONDAY_FRIDAY_PERCENTAGE =
+    60;
+
+let FREQUENT_ABSENCE_THRESHOLD =
+    5;
+
+let FREQUENT_ABSENCE_LOOKBACK_DAYS =
+    30;
+
+let SHORT_WORKDAY_HOURS =
+    6;
+
+let SHORT_WORKDAY_THRESHOLD =
+    3;
+
+let SHORT_WORKDAY_LOOKBACK_DAYS =
+    30;
 
 
 // =====================================
@@ -192,7 +235,9 @@ function initializeDisciplinaryPage() {
 
         warningModal.addEventListener(
             "click",
-            function (event) {
+            function (
+                event
+            ) {
 
                 if (
                     event.target ===
@@ -234,6 +279,7 @@ function initializeDisciplinaryPage() {
 
 }
 
+
 // =====================================
 // Load Disciplinary Data
 // =====================================
@@ -242,7 +288,11 @@ async function loadDisciplinaryData() {
 
     await loadCurrentAdministratorProfile();
 
+    await loadTrendSettings();
+
     await loadEmployees();
+
+    await loadAttendanceTrends();
 
     await loadWarnings();
 
@@ -250,7 +300,7 @@ async function loadDisciplinaryData() {
 
 
 // =====================================
-// Load Current Administrator Profile
+// Administrator Profile
 // =====================================
 
 async function loadCurrentAdministratorProfile() {
@@ -317,12 +367,131 @@ async function loadCurrentAdministratorProfile() {
 
 }
 
+// =====================================
+// Load Trend Settings
+// =====================================
+
+async function loadTrendSettings() {
+
+    try {
+
+        const settingsReference =
+            doc(
+                db,
+                "systemSettings",
+                "attendance"
+            );
+
+        const settingsSnapshot =
+            await getDoc(
+                settingsReference
+            );
+
+        if (
+            !settingsSnapshot.exists()
+        ) {
+
+            return;
+
+        }
+
+        const settings =
+            settingsSnapshot.data();
+
+
+        CONSECUTIVE_LATE_THRESHOLD =
+            Number(
+                settings.consecutiveLateThreshold ??
+                3
+            );
+
+        FREQUENT_EARLY_EXIT_THRESHOLD =
+            Number(
+                settings.frequentEarlyExitThreshold ??
+                3
+            );
+
+        WEEKDAY_PATTERN_MIN_RECORDS =
+            Number(
+                settings.weekdayPatternMinRecords ??
+                3
+            );
+
+        WEEKDAY_PATTERN_PERCENTAGE =
+            Number(
+                settings.weekdayPatternPercentage ??
+                50
+            );
+
+        MONDAY_FRIDAY_MIN_RECORDS =
+            Number(
+                settings.mondayFridayMinRecords ??
+                3
+            );
+
+        MONDAY_FRIDAY_PERCENTAGE =
+            Number(
+                settings.mondayFridayPercentage ??
+                60
+            );
+
+        FREQUENT_ABSENCE_THRESHOLD =
+            Number(
+                settings.frequentAbsenceThreshold ??
+                5
+            );
+
+        FREQUENT_ABSENCE_LOOKBACK_DAYS =
+            Number(
+                settings.frequentAbsenceLookbackDays ??
+                30
+            );
+
+        SHORT_WORKDAY_HOURS =
+            Number(
+                settings.shortWorkdayHours ??
+                6
+            );
+
+        SHORT_WORKDAY_THRESHOLD =
+            Number(
+                settings.shortWorkdayThreshold ??
+                3
+            );
+
+        SHORT_WORKDAY_LOOKBACK_DAYS =
+            Number(
+                settings.shortWorkdayLookbackDays ??
+                30
+            );
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Load trend settings error:",
+            error
+        );
+
+    }
+
+}
+
 
 // =====================================
 // Default Warning Date
 // =====================================
 
 function setDefaultWarningDate() {
+
+    if (
+        !warningDate
+    ) {
+
+        return;
+
+    }
 
     const today =
         new Date();
@@ -428,14 +597,29 @@ function showNotification(
 
 function openWarningModal() {
 
+    if (
+        !warningForm ||
+        !warningModal
+    ) {
+
+        return;
+
+    }
+
     warningForm.reset();
 
     setDefaultWarningDate();
 
     populateEmployeeDropdown();
 
-    warningMessage.textContent =
-        "";
+    if (
+        warningMessage
+    ) {
+
+        warningMessage.textContent =
+            "";
+
+    }
 
     warningModal.classList.add(
         "active"
@@ -450,14 +634,32 @@ function openWarningModal() {
 
 function closeWarningModal() {
 
-    warningModal.classList.remove(
-        "active"
-    );
+    if (
+        warningModal
+    ) {
 
-    warningForm.reset();
+        warningModal.classList.remove(
+            "active"
+        );
 
-    warningMessage.textContent =
-        "";
+    }
+
+    if (
+        warningForm
+    ) {
+
+        warningForm.reset();
+
+    }
+
+    if (
+        warningMessage
+    ) {
+
+        warningMessage.textContent =
+            "";
+
+    }
 
 }
 
@@ -472,38 +674,38 @@ async function loadEmployees() {
 
         let employeeQuery;
 
-if (
-    currentAdministratorRole ===
-    "manager"
-) {
+        if (
+            currentAdministratorRole ===
+            "manager"
+        ) {
 
-    employeeQuery =
-        query(
-            collection(
-                db,
-                "employees"
-            ),
-            where(
-                "department",
-                "==",
-                managerDepartment
-            )
-        );
+            employeeQuery =
+                query(
+                    collection(
+                        db,
+                        "employees"
+                    ),
+                    where(
+                        "department",
+                        "==",
+                        managerDepartment
+                    )
+                );
 
-} else {
+        } else {
 
-    employeeQuery =
-        collection(
-            db,
-            "employees"
-        );
+            employeeQuery =
+                collection(
+                    db,
+                    "employees"
+                );
 
-}
+        }
 
-const snapshot =
-    await getDocs(
-        employeeQuery
-    );
+        const snapshot =
+            await getDocs(
+                employeeQuery
+            );
 
         employees =
             snapshot.docs.map(
@@ -524,42 +726,42 @@ const snapshot =
             );
 
         employees =
-    employees.filter(
-        function (
-            employee
-        ) {
+            employees.filter(
+                function (
+                    employee
+                ) {
 
-            const isActive =
-                employee.active !==
-                false;
+                    const isActive =
+                        employee.active !==
+                        false;
 
-            if (
-                !isActive
-            ) {
+                    if (
+                        !isActive
+                    ) {
 
-                return false;
+                        return false;
 
-            }
+                    }
 
-            if (
-                currentAdministratorRole ===
-                "manager"
-            ) {
+                    if (
+                        currentAdministratorRole ===
+                        "manager"
+                    ) {
 
-                return (
-                    String(
-                        employee.department ??
-                        ""
-                    ).trim() ===
-                    managerDepartment
-                );
+                        return (
+                            String(
+                                employee.department ??
+                                ""
+                            ).trim() ===
+                            managerDepartment
+                        );
 
-            }
+                    }
 
-            return true;
+                    return true;
 
-        }
-    );
+                }
+            );
 
         employees.sort(
             function (
@@ -582,7 +784,9 @@ const snapshot =
 
         populateEmployeeDropdown();
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Unable to load employees:",
@@ -595,6 +799,1290 @@ const snapshot =
         );
 
     }
+
+}
+
+
+// =====================================
+// Load Attendance Trends
+// =====================================
+
+async function loadAttendanceTrends() {
+
+    if (
+        !attendanceTrends
+    ) {
+
+        return;
+
+    }
+
+    attendanceTrends.innerHTML = `
+        <p class="empty-row">
+            Analysing attendance trends...
+        </p>
+    `;
+
+    try {
+
+        let attendanceQuery;
+
+        if (
+            currentAdministratorRole ===
+            "manager"
+        ) {
+
+            attendanceQuery =
+                query(
+                    collection(
+                        db,
+                        "attendance"
+                    ),
+                    where(
+                        "department",
+                        "==",
+                        managerDepartment
+                    )
+                );
+
+        } else {
+
+            attendanceQuery =
+                collection(
+                    db,
+                    "attendance"
+                );
+
+        }
+
+        const attendanceSnapshot =
+            await getDocs(
+                attendanceQuery
+            );
+
+        const attendanceRecords =
+            attendanceSnapshot.docs.map(
+                function (
+                    attendanceDocument
+                ) {
+
+                    return {
+
+                        id:
+                            attendanceDocument.id,
+
+                        ...attendanceDocument.data()
+
+                    };
+
+                }
+            );
+
+        const trendFlags =
+            [];
+
+        employees.forEach(
+            function (
+                employee
+            ) {
+
+                const employeeRecords =
+                    attendanceRecords
+                        .filter(
+                            function (
+                                record
+                            ) {
+
+                                return (
+                                    String(
+                                        record.employeeNumber ??
+                                        ""
+                                    ) ===
+                                    String(
+                                        employee.employeeNumber ??
+                                        ""
+                                    )
+                                );
+
+                            }
+                        )
+                        .sort(
+                            function (
+                                firstRecord,
+                                secondRecord
+                            ) {
+
+                                return String(
+                                    firstRecord.dateKey ??
+                                    firstRecord.date ??
+                                    ""
+                                ).localeCompare(
+                                    String(
+                                        secondRecord.dateKey ??
+                                        secondRecord.date ??
+                                        ""
+                                    )
+                                );
+
+                            }
+                        );
+
+
+                // =====================================
+                // Consecutive Lateness
+                // =====================================
+
+                const consecutiveLateDays =
+                    calculateConsecutiveLateDays(
+                        employeeRecords
+                    );
+
+
+                // =====================================
+                // Early Exit Data
+                // =====================================
+
+                const earlyExitRecords =
+                    employeeRecords.filter(
+                        function (
+                            record
+                        ) {
+
+                            return (
+                                record.earlyExit ===
+                                true
+                            );
+
+                        }
+                    );
+
+                const earlyExitCount =
+                    earlyExitRecords.length;
+
+                const earlyExitDayPattern =
+                    detectWeekdayPattern(
+                        earlyExitRecords
+                    );
+
+
+                // =====================================
+                // Sick Leave Data
+                // =====================================
+
+                const sickLeaveRecords =
+                    employeeRecords.filter(
+                        function (
+                            record
+                        ) {
+
+                            return (
+                                normalizeStatus(
+                                    record.status
+                                ) ===
+                                "sick leave"
+                            );
+
+                        }
+                    );
+
+                const sickDayPattern =
+                    detectWeekdayPattern(
+                        sickLeaveRecords
+                    );
+
+
+                // =====================================
+                // Absence Related Data
+                // =====================================
+
+                const absenceRelatedRecords =
+                    employeeRecords.filter(
+                        function (
+                            record
+                        ) {
+
+                            const status =
+                                normalizeStatus(
+                                    record.status
+                                );
+
+                            return (
+                                status ===
+                                    "absent" ||
+                                status ===
+                                    "sick leave" ||
+                                status ===
+                                    "unpaid leave" ||
+                                status ===
+                                    "family responsibility leave" ||
+                                status ===
+                                    "medical appointment"
+                            );
+
+                        }
+                    );
+
+                const mondayFridayPattern =
+                    detectMondayFridayPattern(
+                        absenceRelatedRecords
+                    );
+
+                const recentAbsenceCount =
+                    countRecordsWithinLastDays(
+                        absenceRelatedRecords,
+                        FREQUENT_ABSENCE_LOOKBACK_DAYS
+                    );
+
+
+                // =====================================
+                // Short Working Days
+                // =====================================
+
+                const shortWorkdayCount =
+                    countShortWorkdaysWithinLastDays(
+                        employeeRecords,
+                        SHORT_WORKDAY_LOOKBACK_DAYS,
+                        SHORT_WORKDAY_HOURS
+                    );
+
+
+                // =====================================
+                // Consecutive Late Flag
+                // =====================================
+
+                if (
+                    consecutiveLateDays >=
+                    CONSECUTIVE_LATE_THRESHOLD
+                ) {
+
+                    trendFlags.push({
+
+                        employee:
+                            employee,
+
+                        type:
+                            "Consecutive Lateness",
+
+                        detail:
+                            "Late "
+                            +
+                            consecutiveLateDays
+                            +
+                            " attendance days in a row."
+
+                    });
+
+                }
+
+
+                // =====================================
+                // Frequent Early Exit Flag
+                // =====================================
+
+                if (
+                    earlyExitCount >=
+                    FREQUENT_EARLY_EXIT_THRESHOLD
+                ) {
+
+                    trendFlags.push({
+
+                        employee:
+                            employee,
+
+                        type:
+                            "Frequent Early Exits",
+
+                        detail:
+                            earlyExitCount
+                            +
+                            " early exits have been recorded."
+
+                    });
+
+                }
+
+
+                // =====================================
+                // Early Exit Weekday Pattern
+                // =====================================
+
+                if (
+                    earlyExitDayPattern
+                ) {
+
+                    trendFlags.push({
+
+                        employee:
+                            employee,
+
+                        type:
+                            "Early Exit Pattern",
+
+                        detail:
+                            earlyExitDayPattern.count
+                            +
+                            " of "
+                            +
+                            earlyExitDayPattern.total
+                            +
+                            " early exits occurred on "
+                            +
+                            earlyExitDayPattern.dayName
+                            +
+                            "s ("
+                            +
+                            earlyExitDayPattern.percentage
+                            +
+                            "%)."
+
+                    });
+
+                }
+
+
+                // =====================================
+                // Sick Leave Weekday Pattern
+                // =====================================
+
+                if (
+                    sickDayPattern
+                ) {
+
+                    trendFlags.push({
+
+                        employee:
+                            employee,
+
+                        type:
+                            "Sick-Day Pattern",
+
+                        detail:
+                            sickDayPattern.count
+                            +
+                            " of "
+                            +
+                            sickDayPattern.total
+                            +
+                            " sick leave records occurred on "
+                            +
+                            sickDayPattern.dayName
+                            +
+                            "s ("
+                            +
+                            sickDayPattern.percentage
+                            +
+                            "%)."
+
+                    });
+
+                }
+
+
+                // =====================================
+                // Monday / Friday Absence Pattern
+                // =====================================
+
+                if (
+                    mondayFridayPattern
+                ) {
+
+                    trendFlags.push({
+
+                        employee:
+                            employee,
+
+                        type:
+                            "Monday / Friday Absence Pattern",
+
+                        detail:
+                            mondayFridayPattern.edgeOfWeekCount
+                            +
+                            " of "
+                            +
+                            mondayFridayPattern.total
+                            +
+                            " absence-related records occurred on "
+                            +
+                            "Mondays or Fridays ("
+                            +
+                            mondayFridayPattern.percentage
+                            +
+                            "%)."
+
+                    });
+
+                }
+
+
+                // =====================================
+                // Frequent Absence Flag
+                // =====================================
+
+                if (
+                    recentAbsenceCount >=
+                    FREQUENT_ABSENCE_THRESHOLD
+                ) {
+
+                    trendFlags.push({
+
+                        employee:
+                            employee,
+
+                        type:
+                            "Frequent Absence",
+
+                        detail:
+                            recentAbsenceCount
+                            +
+                            " absence-related records have been recorded "
+                            +
+                            "in the last "
+                            +
+                            FREQUENT_ABSENCE_LOOKBACK_DAYS
+                            +
+                            " days."
+
+                    });
+
+                }
+
+
+                // =====================================
+                // Short Working Day Flag
+                // =====================================
+
+                if (
+                    shortWorkdayCount >=
+                    SHORT_WORKDAY_THRESHOLD
+                ) {
+
+                    trendFlags.push({
+
+                        employee:
+                            employee,
+
+                        type:
+                            "Repeated Short Working Days",
+
+                        detail:
+                            shortWorkdayCount
+                            +
+                            " completed working days in the last "
+                            +
+                            SHORT_WORKDAY_LOOKBACK_DAYS
+                            +
+                            " days were shorter than "
+                            +
+                            SHORT_WORKDAY_HOURS
+                            +
+                            " hours."
+
+                    });
+
+                }
+
+            }
+        );
+
+        displayAttendanceTrends(
+            trendFlags
+        );
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Attendance trends error:",
+            error
+        );
+
+        attendanceTrends.innerHTML = `
+            <p class="empty-row">
+                Attendance trends could not be analysed.
+            </p>
+        `;
+
+    }
+
+}
+
+
+// =====================================
+// Calculate Consecutive Late Days
+// =====================================
+
+function calculateConsecutiveLateDays(
+    records
+) {
+
+    let currentStreak =
+        0;
+
+    let longestStreak =
+        0;
+
+    records.forEach(
+        function (
+            record
+        ) {
+
+            const status =
+                normalizeStatus(
+                    record.status
+                );
+
+            if (
+                status ===
+                "late"
+            ) {
+
+                currentStreak++;
+
+                if (
+                    currentStreak >
+                    longestStreak
+                ) {
+
+                    longestStreak =
+                        currentStreak;
+
+                }
+
+            } else {
+
+                currentStreak =
+                    0;
+
+            }
+
+        }
+    );
+
+    return longestStreak;
+
+}
+
+
+// =====================================
+// Detect Weekday Pattern
+// =====================================
+
+function detectWeekdayPattern(
+    records
+) {
+
+    if (
+        records.length <
+        WEEKDAY_PATTERN_MIN_RECORDS
+    ) {
+
+        return null;
+
+    }
+
+    const weekdayCounts =
+        {};
+
+    let validRecordCount =
+        0;
+
+    records.forEach(
+        function (
+            record
+        ) {
+
+            const dateKey =
+                record.dateKey ??
+                record.date;
+
+            if (
+                !dateKey
+            ) {
+
+                return;
+
+            }
+
+            const date =
+                new Date(
+                    `${dateKey}T00:00:00`
+                );
+
+            if (
+                Number.isNaN(
+                    date.getTime()
+                )
+            ) {
+
+                return;
+
+            }
+
+            const dayName =
+                date.toLocaleDateString(
+                    "en-ZA",
+                    {
+                        weekday:
+                            "long"
+                    }
+                );
+
+            if (
+                !weekdayCounts[
+                    dayName
+                ]
+            ) {
+
+                weekdayCounts[
+                    dayName
+                ] = 0;
+
+            }
+
+            weekdayCounts[
+                dayName
+            ]++;
+
+            validRecordCount++;
+
+        }
+    );
+
+    if (
+        validRecordCount <
+        WEEKDAY_PATTERN_MIN_RECORDS
+    ) {
+
+        return null;
+
+    }
+
+    const entries =
+        Object.entries(
+            weekdayCounts
+        );
+
+    if (
+        entries.length ===
+        0
+    ) {
+
+        return null;
+
+    }
+
+    entries.sort(
+        function (
+            first,
+            second
+        ) {
+
+            return (
+                second[1] -
+                first[1]
+            );
+
+        }
+    );
+
+    const [
+        dayName,
+        count
+    ] =
+        entries[0];
+
+    const percentage =
+        Math.round(
+            (
+                count /
+                validRecordCount
+            )
+            *
+            100
+        );
+
+    if (
+        percentage <
+        WEEKDAY_PATTERN_PERCENTAGE
+    ) {
+
+        return null;
+
+    }
+
+    return {
+
+        dayName:
+            dayName,
+
+        count:
+            count,
+
+        total:
+            validRecordCount,
+
+        percentage:
+            percentage
+
+    };
+
+}
+
+
+// =====================================
+// Detect Monday / Friday Pattern
+// =====================================
+
+function detectMondayFridayPattern(
+    records
+) {
+
+    if (
+        records.length <
+        MONDAY_FRIDAY_MIN_RECORDS
+    ) {
+
+        return null;
+
+    }
+
+    let edgeOfWeekCount =
+        0;
+
+    let validRecordCount =
+        0;
+
+    records.forEach(
+        function (
+            record
+        ) {
+
+            const dateKey =
+                record.dateKey ??
+                record.date;
+
+            if (
+                !dateKey
+            ) {
+
+                return;
+
+            }
+
+            const date =
+                new Date(
+                    `${dateKey}T00:00:00`
+                );
+
+            if (
+                Number.isNaN(
+                    date.getTime()
+                )
+            ) {
+
+                return;
+
+            }
+
+            validRecordCount++;
+
+            const day =
+                date.getDay();
+
+            if (
+                day === 1 ||
+                day === 5
+            ) {
+
+                edgeOfWeekCount++;
+
+            }
+
+        }
+    );
+
+    if (
+        validRecordCount <
+        MONDAY_FRIDAY_MIN_RECORDS
+    ) {
+
+        return null;
+
+    }
+
+    const percentage =
+        Math.round(
+            (
+                edgeOfWeekCount /
+                validRecordCount
+            )
+            *
+            100
+        );
+
+    if (
+        percentage <
+        MONDAY_FRIDAY_PERCENTAGE
+    ) {
+
+        return null;
+
+    }
+
+    return {
+
+        edgeOfWeekCount:
+            edgeOfWeekCount,
+
+        total:
+            validRecordCount,
+
+        percentage:
+            percentage
+
+    };
+
+}
+
+
+// =====================================
+// Count Records Within Last Days
+// =====================================
+
+function countRecordsWithinLastDays(
+    records,
+    numberOfDays
+) {
+
+    const today =
+        new Date();
+
+    today.setHours(
+        23,
+        59,
+        59,
+        999
+    );
+
+    const startDate =
+        new Date(
+            today
+        );
+
+    startDate.setDate(
+        startDate.getDate()
+        -
+        numberOfDays
+        +
+        1
+    );
+
+    startDate.setHours(
+        0,
+        0,
+        0,
+        0
+    );
+
+    return records.filter(
+        function (
+            record
+        ) {
+
+            const dateKey =
+                record.dateKey ??
+                record.date;
+
+            if (
+                !dateKey
+            ) {
+
+                return false;
+
+            }
+
+            const recordDate =
+                new Date(
+                    `${dateKey}T00:00:00`
+                );
+
+            if (
+                Number.isNaN(
+                    recordDate.getTime()
+                )
+            ) {
+
+                return false;
+
+            }
+
+            return (
+                recordDate >=
+                startDate
+                &&
+                recordDate <=
+                today
+            );
+
+        }
+    ).length;
+
+}
+
+
+// =====================================
+// Count Short Workdays
+// =====================================
+
+function countShortWorkdaysWithinLastDays(
+    records,
+    numberOfDays,
+    shortDayHours
+) {
+
+    const today =
+        new Date();
+
+    today.setHours(
+        23,
+        59,
+        59,
+        999
+    );
+
+    const startDate =
+        new Date(
+            today
+        );
+
+    startDate.setDate(
+        startDate.getDate()
+        -
+        numberOfDays
+        +
+        1
+    );
+
+    startDate.setHours(
+        0,
+        0,
+        0,
+        0
+    );
+
+    return records.filter(
+        function (
+            record
+        ) {
+
+            if (
+                !record.checkOutTime
+            ) {
+
+                return false;
+
+            }
+
+            const status =
+                normalizeStatus(
+                    record.status
+                );
+
+            if (
+                status !== "on time" &&
+                status !== "late" &&
+                status !== "checked in"
+            ) {
+
+                return false;
+
+            }
+
+            const dateKey =
+                record.dateKey ??
+                record.date;
+
+            if (
+                !dateKey
+            ) {
+
+                return false;
+
+            }
+
+            const recordDate =
+                new Date(
+                    `${dateKey}T00:00:00`
+                );
+
+            if (
+                Number.isNaN(
+                    recordDate.getTime()
+                )
+            ) {
+
+                return false;
+
+            }
+
+            if (
+                recordDate <
+                startDate ||
+                recordDate >
+                today
+            ) {
+
+                return false;
+
+            }
+
+            const workedMinutes =
+                calculateWorkedMinutesForTrend(
+                    record
+                );
+
+            if (
+                workedMinutes ===
+                null
+            ) {
+
+                return false;
+
+            }
+
+            return (
+                workedMinutes <
+                shortDayHours *
+                60
+            );
+
+        }
+    ).length;
+
+}
+
+
+// =====================================
+// Calculate Worked Minutes
+// =====================================
+
+function calculateWorkedMinutesForTrend(
+    record
+) {
+
+    const checkInTimestamp =
+        record.scanTimestamp;
+
+    const checkOutTimestamp =
+        record.checkOutTimestamp;
+
+    if (
+        checkInTimestamp &&
+        checkOutTimestamp &&
+        typeof checkInTimestamp.toDate ===
+            "function" &&
+        typeof checkOutTimestamp.toDate ===
+            "function"
+    ) {
+
+        const checkInDate =
+            checkInTimestamp.toDate();
+
+        const checkOutDate =
+            checkOutTimestamp.toDate();
+
+        const differenceMilliseconds =
+            checkOutDate.getTime()
+            -
+            checkInDate.getTime();
+
+        if (
+            differenceMilliseconds >=
+            0
+        ) {
+
+            return Math.floor(
+                differenceMilliseconds /
+                60000
+            );
+
+        }
+
+    }
+
+
+    // =====================================
+    // Fallback to stored times
+    // =====================================
+
+    if (
+        record.time &&
+        record.checkOutTime
+    ) {
+
+        const checkInParts =
+            String(
+                record.time
+            )
+                .split(":")
+                .map(
+                    Number
+                );
+
+        const checkOutParts =
+            String(
+                record.checkOutTime
+            )
+                .split(":")
+                .map(
+                    Number
+                );
+
+        if (
+            checkInParts.length >= 2 &&
+            checkOutParts.length >= 2
+        ) {
+
+            const checkInMinutes =
+                (
+                    checkInParts[0] *
+                    60
+                )
+                +
+                checkInParts[1];
+
+            const checkOutMinutes =
+                (
+                    checkOutParts[0] *
+                    60
+                )
+                +
+                checkOutParts[1];
+
+            const totalMinutes =
+                checkOutMinutes -
+                checkInMinutes;
+
+            if (
+                totalMinutes >=
+                0
+            ) {
+
+                return totalMinutes;
+
+            }
+
+        }
+
+    }
+
+    return null;
+
+}
+
+
+// =====================================
+// Normalize Status
+// =====================================
+
+function normalizeStatus(
+    status
+) {
+
+    return String(
+        status ??
+        ""
+    )
+        .trim()
+        .toLowerCase();
+
+}
+
+
+// =====================================
+// Display Attendance Trends
+// =====================================
+
+function displayAttendanceTrends(
+    trendFlags
+) {
+
+    if (
+        !attendanceTrends
+    ) {
+
+        return;
+
+    }
+
+    attendanceTrends.innerHTML =
+        "";
+
+    if (
+        trendFlags.length ===
+        0
+    ) {
+
+        attendanceTrends.innerHTML = `
+            <p class="empty-row">
+                No attendance behaviour trends currently require review.
+            </p>
+        `;
+
+        return;
+
+    }
+
+    trendFlags.forEach(
+        function (
+            trend
+        ) {
+
+            const trendCard =
+                document.createElement(
+                    "div"
+                );
+
+            trendCard.className =
+                "attendance-trend-card";
+
+            trendCard.innerHTML = `
+
+                <strong>
+                    ${escapeHtml(
+                        trend.employee.name ??
+                        "Unknown Employee"
+                    )}
+                </strong>
+
+                <span>
+                    ${escapeHtml(
+                        trend.employee.employeeNumber ??
+                        "-"
+                    )}
+                </span>
+
+                <p>
+                    ⚠ ${escapeHtml(
+                        trend.type
+                    )}
+                </p>
+
+                <p>
+                    ${escapeHtml(
+                        trend.detail
+                    )}
+                </p>
+
+            `;
+
+            attendanceTrends.appendChild(
+                trendCard
+            );
+
+        }
+    );
 
 }
 
@@ -808,7 +2296,9 @@ async function saveWarning(
 
         await loadWarnings();
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Save warning error:",
@@ -840,14 +2330,24 @@ async function saveWarning(
 
 async function loadWarnings() {
 
+    if (
+        !disciplinaryTableBody
+    ) {
+
+        return;
+
+    }
+
     disciplinaryTableBody.innerHTML = `
         <tr>
+
             <td
                 colspan="7"
                 class="empty-row"
             >
                 Loading disciplinary warnings...
             </td>
+
         </tr>
     `;
 
@@ -855,39 +2355,39 @@ async function loadWarnings() {
 
         let warningsQuery;
 
-if (
-    currentAdministratorRole ===
-    "manager"
-) {
+        if (
+            currentAdministratorRole ===
+            "manager"
+        ) {
 
-    warningsQuery =
-        query(
-            collection(
-                db,
-                "disciplinaryWarnings"
-            ),
-            where(
-                "department",
-                "==",
-                managerDepartment
-            )
-        );
+            warningsQuery =
+                query(
+                    collection(
+                        db,
+                        "disciplinaryWarnings"
+                    ),
+                    where(
+                        "department",
+                        "==",
+                        managerDepartment
+                    )
+                );
 
-} else {
+        } else {
 
-    warningsQuery =
-        query(
-            collection(
-                db,
-                "disciplinaryWarnings"
-            ),
-            orderBy(
-                "warningDate",
-                "desc"
-            )
-        );
+            warningsQuery =
+                query(
+                    collection(
+                        db,
+                        "disciplinaryWarnings"
+                    ),
+                    orderBy(
+                        "warningDate",
+                        "desc"
+                    )
+                );
 
-}
+        }
 
         const snapshot =
             await getDocs(
@@ -903,12 +2403,14 @@ if (
 
             disciplinaryTableBody.innerHTML = `
                 <tr>
+
                     <td
                         colspan="7"
                         class="empty-row"
                     >
                         No disciplinary warnings have been recorded.
                     </td>
+
                 </tr>
             `;
 
@@ -916,28 +2418,62 @@ if (
 
         }
 
-        snapshot.forEach(
+        const warnings =
+            snapshot.docs.map(
+                function (
+                    warningDocument
+                ) {
+
+                    return {
+
+                        id:
+                            warningDocument.id,
+
+                        ...warningDocument.data()
+
+                    };
+
+                }
+            );
+
+        warnings.sort(
             function (
-                warningDocument
+                firstWarning,
+                secondWarning
             ) {
 
-                const warning =
-                    warningDocument.data();
+                return String(
+                    secondWarning.warningDate ??
+                    ""
+                ).localeCompare(
+                    String(
+                        firstWarning.warningDate ??
+                        ""
+                    )
+                );
+
+            }
+        );
+
+        warnings.forEach(
+            function (
+                warning
+            ) {
 
                 if (
-    currentAdministratorRole ===
-    "manager"
-    &&
-    String(
-        warning.department ??
-        ""
-    ).trim() !==
-    managerDepartment
-) {
+                    currentAdministratorRole ===
+                    "manager"
+                    &&
+                    String(
+                        warning.department ??
+                        ""
+                    ).trim() !==
+                    managerDepartment
+                ) {
 
-    return;
+                    return;
 
-}
+                }
 
                 const row =
                     document.createElement(
@@ -1005,7 +2541,9 @@ if (
             }
         );
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Unable to load warnings:",
@@ -1014,12 +2552,14 @@ if (
 
         disciplinaryTableBody.innerHTML = `
             <tr>
+
                 <td
                     colspan="7"
                     class="empty-row"
                 >
                     Unable to load disciplinary warnings.
                 </td>
+
             </tr>
         `;
 
@@ -1112,11 +2652,17 @@ async function logoutAdministrator() {
 
     try {
 
-        logoutButton.disabled =
-            true;
+        if (
+            logoutButton
+        ) {
 
-        logoutButton.textContent =
-            "Logging out...";
+            logoutButton.disabled =
+                true;
+
+            logoutButton.textContent =
+                "Logging out...";
+
+        }
 
         await signOut(
             auth
@@ -1128,18 +2674,26 @@ async function logoutAdministrator() {
             "admin-login.html"
         );
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Logout error:",
             error
         );
 
-        logoutButton.disabled =
-            false;
+        if (
+            logoutButton
+        ) {
 
-        logoutButton.textContent =
-            "Logout";
+            logoutButton.disabled =
+                false;
+
+            logoutButton.textContent =
+                "Logout";
+
+        }
 
         alert(
             "Unable to log out. Please try again."

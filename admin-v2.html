@@ -168,50 +168,85 @@
 
             </header>
 
-            <section class="stats-grid">
+          <section class="stats-grid">
 
-                <div class="stat-card">
+    <div class="stat-card">
 
-                    <h3>Total Employees</h3>
+        <h3>Total Employees</h3>
 
-                    <span id="totalEmployees">
-                        0
-                    </span>
+        <span id="totalEmployees">
+            0
+        </span>
 
-                </div>
+    </div>
 
-                <div class="stat-card">
 
-                    <h3>Checked In</h3>
+    <div class="stat-card">
 
-                    <span id="checkedIn">
-                        0
-                    </span>
+        <h3>Currently at Work</h3>
 
-                </div>
+        <span id="currentlyAtWork">
+            0
+        </span>
 
-                <div class="stat-card">
+    </div>
 
-                    <h3>Late Today</h3>
 
-                    <span id="lateToday">
-                        0
-                    </span>
+    <div class="stat-card">
 
-                </div>
+        <h3>Checked Out Today</h3>
 
-                <div class="stat-card">
+        <span id="checkedOutToday">
+            0
+        </span>
 
-                    <h3>Absent</h3>
+    </div>
 
-                    <span id="absentToday">
-                        0
-                    </span>
 
-                </div>
+    <div class="stat-card">
 
-            </section>
+        <h3>Late Today</h3>
 
+        <span id="lateToday">
+            0
+        </span>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <h3>Early Exits Today</h3>
+
+        <span id="earlyExitsToday">
+            0
+        </span>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <h3>Absent</h3>
+
+        <span id="absentToday">
+            0
+        </span>
+
+    </div>
+
+
+    <div class="stat-card">
+
+        <h3>Total Hours Today</h3>
+
+        <span id="totalHoursToday">
+            0h 00m
+        </span>
+
+    </div>
+
+</section>
             <section class="dashboard-grid">
 
                 <div class="dashboard-card">
@@ -280,13 +315,16 @@
 
                         <tr>
 
-                            <th>Employee</th>
-                            <th>Employee No.</th>
-                            <th>Department</th>
-                            <th>Check In</th>
-                            <th>Status</th>
+    <th>Employee</th>
+    <th>Employee No.</th>
+    <th>Department</th>
+    <th>Check In</th>
+    <th>Check Out</th>
+    <th>Hours Worked</th>
+    <th>Early Exit</th>
+    <th>Status</th>
 
-                        </tr>
+</tr>
 
                     </thead>
 
@@ -295,7 +333,7 @@
                         <tr>
 
                             <td
-                                colspan="5"
+                                colspan="8"
                                 class="empty-row"
                             >
                                 No attendance records yet.

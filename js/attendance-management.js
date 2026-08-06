@@ -665,6 +665,35 @@ const isLate =
         attendance.status ?? ""
     ).trim() === "Late";
 
+    const checkInTime =
+    attendance.time ??
+    "Not recorded";
+
+const checkOutTime =
+    attendance.checkOutTime ??
+    "Still at work";
+
+const hoursWorked =
+    calculateHoursWorked(
+        attendance
+    );
+
+const earlyExit =
+    attendance.earlyExit ===
+    true;
+
+const earlyExitReason =
+    String(
+        attendance.earlyExitReason ??
+        ""
+    ).trim();
+
+const earlyExitNote =
+    String(
+        attendance.earlyExitNote ??
+        ""
+    ).trim();
+
                 const historyCard =
                     document.createElement(
                         "details"
@@ -700,7 +729,13 @@ const isLate =
                                         attendance.time ??
                                         "Time not recorded"
                                     )}
-                                </span>
+                                <span>
+    In:
+    ${escapeHtml(checkInTime)}
+    &nbsp; | &nbsp;
+    Out:
+    ${escapeHtml(checkOutTime)}
+</span>
 
                             </div>
 
@@ -713,6 +748,108 @@ const isLate =
                     </summary>
 
                     <div class="history-expanded">
+
+                    <div class="history-detail-row">
+
+    <span class="history-label">
+        Check In
+    </span>
+
+    <p>
+        ${escapeHtml(checkInTime)}
+    </p>
+
+</div>
+
+
+<div class="history-detail-row">
+
+    <span class="history-label">
+        Check Out
+    </span>
+
+    <p>
+        ${escapeHtml(checkOutTime)}
+    </p>
+
+</div>
+
+
+<div class="history-detail-row">
+
+    <span class="history-label">
+        Hours Worked
+    </span>
+
+    <p>
+        ${escapeHtml(hoursWorked)}
+    </p>
+
+</div>
+
+
+<div class="history-detail-row">
+
+    <span class="history-label">
+        Early Exit
+    </span>
+
+    <p>
+        ${
+            attendance.checkOutTime
+                ? earlyExit
+                    ? "Yes"
+                    : "No"
+                : "-"
+        }
+    </p>
+
+</div>
+
+
+${
+    earlyExit
+        ? `
+            <div class="history-detail-row">
+
+                <span class="history-label">
+                    Early Exit Reason
+                </span>
+
+                <p>
+                    ${
+                        earlyExitReason
+                            ? escapeHtml(
+                                earlyExitReason
+                            )
+                            : "No reason recorded."
+                    }
+                </p>
+
+            </div>
+
+            ${
+                earlyExitNote
+                    ? `
+                        <div class="history-detail-row">
+
+                            <span class="history-label">
+                                Early Exit Details
+                            </span>
+
+                            <p>
+                                ${escapeHtml(
+                                    earlyExitNote
+                                )}
+                            </p>
+
+                        </div>
+                    `
+                    : ""
+            }
+        `
+        : ""
+}
 
     ${
         isLate
@@ -897,6 +1034,173 @@ function resetAttendanceSummary() {
 
     summaryLeave.textContent =
         "0";
+
+}
+
+// =====================================
+// Calculate Hours Worked
+// =====================================
+
+function calculateHoursWorked(
+    attendance
+) {
+
+    if (
+        !attendance.checkOutTime
+    ) {
+
+        return "In progress";
+
+    }
+
+    const checkInTimestamp =
+        attendance.checkInTimestamp;
+
+    const checkOutTimestamp =
+        attendance.checkOutTimestamp;
+
+    if (
+        checkInTimestamp &&
+        checkOutTimestamp &&
+        typeof checkInTimestamp.toDate ===
+            "function" &&
+        typeof checkOutTimestamp.toDate ===
+            "function"
+    ) {
+
+        const checkInDate =
+            checkInTimestamp.toDate();
+
+        const checkOutDate =
+            checkOutTimestamp.toDate();
+
+        const differenceMilliseconds =
+            checkOutDate.getTime()
+            -
+            checkInDate.getTime();
+
+        if (
+            differenceMilliseconds < 0
+        ) {
+
+            return "Unable to calculate";
+
+        }
+
+        const totalMinutes =
+            Math.floor(
+                differenceMilliseconds /
+                60000
+            );
+
+        const hours =
+            Math.floor(
+                totalMinutes / 60
+            );
+
+        const minutes =
+            totalMinutes % 60;
+
+        return (
+            hours
+            +
+            "h "
+            +
+            String(minutes).padStart(
+                2,
+                "0"
+            )
+            +
+            "m"
+        );
+
+    }
+
+
+    // =================================
+    // Fallback for older records
+    // =================================
+
+    if (
+        attendance.time &&
+        attendance.checkOutTime
+    ) {
+
+        const checkInParts =
+            String(
+                attendance.time
+            )
+                .split(":")
+                .map(Number);
+
+        const checkOutParts =
+            String(
+                attendance.checkOutTime
+            )
+                .split(":")
+                .map(Number);
+
+        if (
+            checkInParts.length >= 2 &&
+            checkOutParts.length >= 2
+        ) {
+
+            const checkInMinutes =
+                (
+                    checkInParts[0] *
+                    60
+                )
+                +
+                checkInParts[1];
+
+            const checkOutMinutes =
+                (
+                    checkOutParts[0] *
+                    60
+                )
+                +
+                checkOutParts[1];
+
+            const totalMinutes =
+                checkOutMinutes -
+                checkInMinutes;
+
+            if (
+                totalMinutes >= 0
+            ) {
+
+                const hours =
+                    Math.floor(
+                        totalMinutes /
+                        60
+                    );
+
+                const minutes =
+                    totalMinutes %
+                    60;
+
+                return (
+                    hours
+                    +
+                    "h "
+                    +
+                    String(
+                        minutes
+                    ).padStart(
+                        2,
+                        "0"
+                    )
+                    +
+                    "m"
+                );
+
+            }
+
+        }
+
+    }
+
+    return "Not available";
 
 }
 
