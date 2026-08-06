@@ -172,6 +172,9 @@ let consecutiveLateThreshold =
     let frequentEarlyExitThreshold =
     3;
 
+    let shortWorkdayHours =
+    6;
+
 
 // =====================================
 // Initialize Reports Page
@@ -290,6 +293,12 @@ async function loadReportSettings() {
 
         }
 
+        shortWorkdayHours =
+    Number(
+        settings.shortWorkdayHours ??
+        6
+    );
+
         if (
     !Number.isFinite(
         frequentEarlyExitThreshold
@@ -304,19 +313,39 @@ async function loadReportSettings() {
 
 }
 
+if (
+    !Number.isFinite(
+        shortWorkdayHours
+    )
+    ||
+    shortWorkdayHours <=
+    0
+) {
+
+    shortWorkdayHours =
+        6;
+
+}
+
     } catch (
+    error
+) {
+
+    console.error(
+        "Unable to load report settings:",
         error
-    ) {
+    );
 
-        console.error(
-            "Unable to load report settings:",
-            error
-        );
+    consecutiveLateThreshold =
+        3;
 
-        consecutiveLateThreshold =
-            3;
+    frequentEarlyExitThreshold =
+        3;
 
-    }
+    shortWorkdayHours =
+        6;
+
+}
 
 }
 
@@ -2275,9 +2304,18 @@ function updateEmployeePerformanceSummary(
 
                 <!-- Absent -->
 
-                <span>
-                    ${employee.absent}
-                </span>
+<span
+    class="${
+        employee.absent >
+        0
+            ?
+            "performance-danger-cell"
+            :
+            ""
+    }"
+>
+    ${employee.absent}
+</span>
 
 
                 <!-- Sick Leave -->
@@ -2303,9 +2341,18 @@ function updateEmployeePerformanceSummary(
 
                 <!-- Early Exits -->
 
-                <span>
-                    ${employee.earlyExits}
-                </span>
+<span
+    class="${
+        employee.earlyExits >=
+        frequentEarlyExitThreshold
+            ?
+            "performance-warning-cell"
+            :
+            ""
+    }"
+>
+    ${employee.earlyExits}
+</span>
 
 
                 <!-- Total Hours Worked -->
@@ -2321,13 +2368,26 @@ function updateEmployeePerformanceSummary(
 
                 <!-- Average Hours / Day -->
 
-                <span>
-                    ${escapeHtml(
-                        formatMinutesAsHours(
-                            averageWorkedMinutes
-                        )
-                    )}
-                </span>
+<span
+    class="${
+        employee.total > 0 &&
+        averageWorkedMinutes <
+        (
+            shortWorkdayHours *
+            60
+        )
+            ?
+            "performance-warning-cell"
+            :
+            ""
+    }"
+>
+    ${escapeHtml(
+        formatMinutesAsHours(
+            averageWorkedMinutes
+        )
+    )}
+</span>
 
 
                 <!-- Attendance Rate -->

@@ -3623,6 +3623,30 @@ line-height: 1.5;
 }
 
 /* =====================================
+   Employee Performance Danger
+===================================== */
+
+.performance-danger-cell {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: fit-content;
+    min-width: 28px;
+
+    margin: 0 auto;
+
+    padding: 4px 7px;
+
+    border-radius: 6px;
+
+    background: #fee2e2;
+    color: #991b1b;
+
+    font-weight: 700;
+}
+
+/* =====================================
    Collapsible Sections
 ===================================== */
 
