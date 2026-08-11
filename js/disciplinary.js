@@ -468,6 +468,12 @@ async function loadTrendSettings() {
                 30
             );
 
+            STANDARD_WORK_START_TIME =
+    String(
+        settings.standardStartTime ??
+        "08:00"
+    ).trim();
+
     } catch (
         error
     ) {
@@ -1889,16 +1895,43 @@ function calculateWorkedMinutesForTrend(
             "function"
     ) {
 
-        const checkInDate =
-            checkInTimestamp.toDate();
+        const actualCheckInDate =
+    checkInTimestamp.toDate();
 
-        const checkOutDate =
-            checkOutTimestamp.toDate();
+const checkOutDate =
+    checkOutTimestamp.toDate();
 
-        const differenceMilliseconds =
-            checkOutDate.getTime()
-            -
-            checkInDate.getTime();
+const standardStartParts =
+    String(
+        STANDARD_WORK_START_TIME
+    )
+        .split(":")
+        .map(Number);
+
+const standardStartDate =
+    new Date(
+        actualCheckInDate
+    );
+
+standardStartDate.setHours(
+    standardStartParts[0],
+    standardStartParts[1],
+    0,
+    0
+);
+
+const effectiveCheckInDate =
+    actualCheckInDate <
+    standardStartDate
+        ?
+        standardStartDate
+        :
+        actualCheckInDate;
+
+const differenceMilliseconds =
+    checkOutDate.getTime()
+    -
+    effectiveCheckInDate.getTime();
 
         if (
             differenceMilliseconds >=
@@ -1947,13 +1980,34 @@ function calculateWorkedMinutesForTrend(
             checkOutParts.length >= 2
         ) {
 
-            const checkInMinutes =
-                (
-                    checkInParts[0] *
-                    60
-                )
-                +
-                checkInParts[1];
+            const actualCheckInMinutes =
+    (
+        checkInParts[0] *
+        60
+    )
+    +
+    checkInParts[1];
+
+const standardStartParts =
+    String(
+        STANDARD_WORK_START_TIME
+    )
+        .split(":")
+        .map(Number);
+
+const standardStartMinutes =
+    (
+        standardStartParts[0] *
+        60
+    )
+    +
+    standardStartParts[1];
+
+const checkInMinutes =
+    Math.max(
+        actualCheckInMinutes,
+        standardStartMinutes
+    );
 
             const checkOutMinutes =
                 (
