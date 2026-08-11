@@ -2,51 +2,36 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employee Attendance</title>
 
-    <link rel="stylesheet" href="css/style.css">
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>R-E-D Attendance</title>
+
+    <meta
+        http-equiv="refresh"
+        content="0; url=admin-login.html"
+    >
+
 </head>
 
 <body>
 
-    <div class="login-card">
+    <p>
+        Redirecting to Administrator Login...
+    </p>
 
-        <h1>Employee Attendance</h1>
+    <script>
 
-        <p>
-            Please enter your Employee Number and PIN
-        </p>
+        window.location.replace(
+            "admin-login.html"
+        );
 
-        <label>Employee Number</label>
-
-        <input
-            type="text"
-            id="employeeNumber"
-            placeholder="Employee Number">
-
-        <label>PIN</label>
-
-        <input
-            type="password"
-            id="pin"
-            placeholder="PIN">
-
-        <button id="checkInButton">
-            Check In
-        </button>
-
-        <div id="message"></div>
-
-        <div id="clock"></div>
-
-    </div>
-
-    <script src="js/employeeData.js"></script>
-<script src="js/attendanceManager.js"></script>
-<script src="js/deviceManager.js"></script>
-<script type="module" src="js/checkin.js"></script>
+    </script>
 
 </body>
 

@@ -1696,6 +1696,187 @@ line-height: 1.5;
     line-height: 1.5;
 
 }
+
+/* =====================================
+   Clean Attendance History Details
+===================================== */
+
+.history-expanded-clean {
+    padding: 16px;
+
+    border-top: 1px solid #e5e7eb;
+
+    background: #ffffff;
+}
+
+
+/* =====================================
+   Time Summary Grid
+===================================== */
+
+.history-time-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+    gap: 12px;
+
+    margin-bottom: 16px;
+}
+
+.history-time-item {
+    padding: 12px;
+
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+
+    background: #f8fafc;
+
+    text-align: center;
+}
+
+.history-time-label {
+    display: block;
+
+    margin-bottom: 5px;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    color: #6b7280;
+
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.history-time-item strong {
+    font-size: 15px;
+
+    color: #111827;
+}
+
+
+/* =====================================
+   Detail Rows
+===================================== */
+
+.history-clean-row {
+    display: grid;
+
+    grid-template-columns:
+        minmax(150px, 0.8fr)
+        minmax(0, 2fr);
+
+    gap: 14px;
+
+    align-items: center;
+
+    padding: 11px 0;
+
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.history-clean-row:last-child {
+    border-bottom: none;
+}
+
+.history-clean-label {
+    font-size: 12px;
+    font-weight: 700;
+
+    color: #6b7280;
+
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.history-clean-value {
+    font-size: 13px;
+    font-weight: 600;
+
+    color: #1f2937;
+}
+
+
+/* =====================================
+   Value Badges
+===================================== */
+
+.history-value-badge {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    width: fit-content;
+
+    min-width: 42px;
+
+    padding: 4px 8px;
+
+    border-radius: 999px;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.history-value-warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.history-value-normal {
+    background: #dcfce7;
+    color: #166534;
+}
+
+
+/* =====================================
+   Late Row
+===================================== */
+
+.history-late-row {
+    background: #fff7ed;
+
+    margin: 0 -8px;
+
+    padding: 11px 8px;
+
+    border-radius: 6px;
+}
+
+
+/* =====================================
+   Notes Row
+===================================== */
+
+.history-notes-row {
+    align-items: start;
+}
+
+
+/* =====================================
+   Responsive Layout
+===================================== */
+
+@media (
+    max-width: 800px
+) {
+
+    .history-time-grid {
+        grid-template-columns:
+            1fr;
+    }
+
+    .history-clean-row {
+        grid-template-columns:
+            1fr;
+
+        gap: 5px;
+    }
+
+}
 /* =====================================================
    Attendance Status Badges
 ===================================================== */

@@ -51,6 +51,11 @@ const standardStartTimeInput =
         "standardStartTime"
     );
 
+    const standardEndTimeInput =
+    document.getElementById(
+        "standardEndTime"
+    );
+
 const lateThresholdInput =
     document.getElementById(
         "lateThreshold"
@@ -575,6 +580,10 @@ async function loadSettings() {
         standardStartTimeInput.value =
             settings.standardStartTime ??
             "08:00";
+
+            standardEndTimeInput.value =
+    settings.standardEndTime ??
+    "17:00";
 
         lateThresholdInput.value =
             settings.lateThreshold ??
@@ -1707,6 +1716,35 @@ async function saveSettings(
     const standardStartTime =
         standardStartTimeInput.value;
 
+        const standardEndTime =
+    standardEndTimeInput.value;
+
+    if (
+    !standardStartTime ||
+    !standardEndTime
+) {
+
+    showMessage(
+        "Please enter both the standard start and end times.",
+        "error"
+    );
+
+    return;
+}
+
+if (
+    standardEndTime <=
+    standardStartTime
+) {
+
+    showMessage(
+        "Standard Work End Time must be later than Standard Start Time.",
+        "error"
+    );
+
+    return;
+}
+
     const lateThreshold =
         lateThresholdInput.value;
 
@@ -1932,6 +1970,9 @@ async function saveSettings(
 
                 standardStartTime:
                     standardStartTime,
+
+                    standardEndTime:
+    standardEndTime,
 
                 lateThreshold:
                     lateThreshold,

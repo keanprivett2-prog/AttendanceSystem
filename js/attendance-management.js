@@ -1,5 +1,6 @@
 import "./admin-session.js";
 
+
 // =====================================
 // R-E-D Attendance
 // Attendance Management
@@ -129,6 +130,14 @@ const logoutButton =
 
 
 // =====================================
+// Attendance Settings
+// =====================================
+
+let standardWorkStartTime =
+    "08:00";
+
+
+// =====================================
 // Calendar State
 // =====================================
 
@@ -145,10 +154,16 @@ let calendarYear =
 
 initializeAttendanceManagementPage();
 
-function initializeAttendanceManagementPage() {
+async function initializeAttendanceManagementPage() {
 
-    if (!protectPage("attendance")) {
+    if (
+        !protectPage(
+            "attendance"
+        )
+    ) {
+
         return;
+
     }
 
     applySidebarPermissions();
@@ -183,7 +198,9 @@ function initializeAttendanceManagementPage() {
         showNextMonth
     );
 
-    if (logoutButton) {
+    if (
+        logoutButton
+    ) {
 
         logoutButton.addEventListener(
             "click",
@@ -192,9 +209,104 @@ function initializeAttendanceManagementPage() {
 
     }
 
-    loadEmployees();
 
-    buildCalendar();
+    // =====================================
+    // Load Settings First
+    // =====================================
+
+    await loadAttendanceSettings();
+
+
+    // =====================================
+    // Load Page Data
+    // =====================================
+
+    await loadEmployees();
+
+    await buildCalendar();
+
+}
+
+
+// =====================================
+// Load Attendance Settings
+// =====================================
+
+async function loadAttendanceSettings() {
+
+    try {
+
+        const settingsReference =
+            doc(
+                db,
+                "systemSettings",
+                "attendance"
+            );
+
+        const settingsSnapshot =
+            await getDoc(
+                settingsReference
+            );
+
+        if (
+            !settingsSnapshot.exists()
+        ) {
+
+            standardWorkStartTime =
+                "08:00";
+
+            return;
+
+        }
+
+        const settings =
+            settingsSnapshot.data();
+
+        standardWorkStartTime =
+            String(
+                settings.standardStartTime ??
+                "08:00"
+            ).trim();
+
+
+        // =====================================
+        // Validate Time
+        // =====================================
+
+        const timeParts =
+            standardWorkStartTime
+                .split(":")
+                .map(Number);
+
+        if (
+            timeParts.length <
+                2 ||
+            !Number.isFinite(
+                timeParts[0]
+            ) ||
+            !Number.isFinite(
+                timeParts[1]
+            )
+        ) {
+
+            standardWorkStartTime =
+                "08:00";
+
+        }
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Unable to load attendance settings:",
+            error
+        );
+
+        standardWorkStartTime =
+            "08:00";
+
+    }
 
 }
 
@@ -225,8 +337,12 @@ function showMessage(
     color
 ) {
 
-    if (!attendanceMessage) {
+    if (
+        !attendanceMessage
+    ) {
+
         return;
+
     }
 
     attendanceMessage.textContent =
@@ -242,22 +358,33 @@ function showMessage(
 // Format Local Date
 // =====================================
 
-function formatLocalDate(date) {
+function formatLocalDate(
+    date
+) {
 
     const year =
         date.getFullYear();
 
     const month =
         String(
-            date.getMonth() + 1
-        ).padStart(2, "0");
+            date.getMonth() +
+            1
+        ).padStart(
+            2,
+            "0"
+        );
 
     const day =
         String(
             date.getDate()
-        ).padStart(2, "0");
+        ).padStart(
+            2,
+            "0"
+        );
 
-    return `${year}-${month}-${day}`;
+    return (
+        `${year}-${month}-${day}`
+    );
 
 }
 
@@ -296,21 +423,30 @@ async function loadEmployees() {
 
         const employees =
             employeeSnapshot.docs.map(
-                (employeeDocument) => ({
+                (
+                    employeeDocument
+                ) => ({
+
                     id:
                         employeeDocument.id,
 
                     ...employeeDocument.data()
+
                 })
             );
 
         employees.sort(
-            (firstEmployee, secondEmployee) =>
+            (
+                firstEmployee,
+                secondEmployee
+            ) =>
                 String(
-                    firstEmployee.name ?? ""
+                    firstEmployee.name ??
+                    ""
                 ).localeCompare(
                     String(
-                        secondEmployee.name ?? ""
+                        secondEmployee.name ??
+                        ""
                     )
                 )
         );
@@ -322,7 +458,9 @@ async function loadEmployees() {
         `;
 
         employees.forEach(
-            (employee) => {
+            function (
+                employee
+            ) {
 
                 const option =
                     document.createElement(
@@ -336,13 +474,16 @@ async function loadEmployees() {
                     `${employee.name ?? "Unnamed Employee"} (${employee.employeeNumber ?? "-"})`;
 
                 option.dataset.employeeNumber =
-                    employee.employeeNumber ?? "";
+                    employee.employeeNumber ??
+                    "";
 
                 option.dataset.name =
-                    employee.name ?? "";
+                    employee.name ??
+                    "";
 
                 option.dataset.department =
-                    employee.department ?? "";
+                    employee.department ??
+                    "";
 
                 employeeSelect.appendChild(
                     option
@@ -351,7 +492,9 @@ async function loadEmployees() {
             }
         );
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Unable to load employees:",
@@ -383,8 +526,12 @@ async function getSelectedEmployee() {
     const employeeId =
         employeeSelect.value;
 
-    if (!employeeId) {
+    if (
+        !employeeId
+    ) {
+
         return null;
+
     }
 
     const employeeReference =
@@ -399,15 +546,21 @@ async function getSelectedEmployee() {
             employeeReference
         );
 
-    if (!employeeSnapshot.exists()) {
+    if (
+        !employeeSnapshot.exists()
+    ) {
+
         return null;
+
     }
 
     return {
+
         id:
             employeeSnapshot.id,
 
         ...employeeSnapshot.data()
+
     };
 
 }
@@ -447,7 +600,9 @@ async function loadExistingAttendance() {
         const employee =
             await getSelectedEmployee();
 
-        if (!employee) {
+        if (
+            !employee
+        ) {
 
             showMessage(
                 "Employee not found.",
@@ -481,37 +636,43 @@ async function loadExistingAttendance() {
                 attendanceSnapshot.data();
 
             attendanceStatus.value =
-    attendance.status ?? "";
+                attendance.status ??
+                "";
 
-const existingNotes =
-    String(
-        attendance.notes ?? ""
-    ).trim();
+            const existingNotes =
+                String(
+                    attendance.notes ??
+                    ""
+                ).trim();
 
-const existingLateReason =
-    String(
-        attendance.lateReason ?? ""
-    ).trim();
+            const existingLateReason =
+                String(
+                    attendance.lateReason ??
+                    ""
+                ).trim();
 
-if (
-    attendance.status === "Late" &&
-    existingLateReason
-) {
+            if (
+                attendance.status ===
+                    "Late" &&
+                existingLateReason
+            ) {
 
-    attendanceNotes.value =
-        existingNotes
-            ? existingNotes
-                + "\n\nReason for Lateness: "
-                + existingLateReason
-            : "Reason for Lateness: "
-                + existingLateReason;
+                attendanceNotes.value =
+                    existingNotes
+                        ?
+                        existingNotes +
+                        "\n\nReason for Lateness: " +
+                        existingLateReason
+                        :
+                        "Reason for Lateness: " +
+                        existingLateReason;
 
-} else {
+            } else {
 
-    attendanceNotes.value =
-        existingNotes;
+                attendanceNotes.value =
+                    existingNotes;
 
-}
+            }
 
             showMessage(
                 "Existing attendance record loaded.",
@@ -533,7 +694,9 @@ if (
 
         }
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Unable to load attendance:",
@@ -556,7 +719,9 @@ if (
 
 async function loadAttendanceHistory() {
 
-    if (!employeeSelect.value) {
+    if (
+        !employeeSelect.value
+    ) {
 
         attendanceHistory.innerHTML = `
             <p class="empty-state">
@@ -579,7 +744,9 @@ async function loadAttendanceHistory() {
         const employee =
             await getSelectedEmployee();
 
-        if (!employee) {
+        if (
+            !employee
+        ) {
 
             attendanceHistory.innerHTML = `
                 <p class="empty-state">
@@ -606,7 +773,9 @@ async function loadAttendanceHistory() {
                     "dateKey",
                     "desc"
                 ),
-                limit(10)
+                limit(
+                    10
+                )
             );
 
         const historySnapshot =
@@ -614,7 +783,9 @@ async function loadAttendanceHistory() {
                 historyQuery
             );
 
-        if (historySnapshot.empty) {
+        if (
+            historySnapshot.empty
+        ) {
 
             attendanceHistory.innerHTML = `
                 <p class="empty-state">
@@ -630,7 +801,9 @@ async function loadAttendanceHistory() {
             "";
 
         historySnapshot.forEach(
-            (attendanceDocument) => {
+            function (
+                attendanceDocument
+            ) {
 
                 const attendance =
                     attendanceDocument.data();
@@ -650,49 +823,53 @@ async function loadAttendanceHistory() {
                     "Unknown";
 
                 const notes =
-    String(
-        attendance.notes ?? ""
-    ).trim() ||
-    "No additional notes.";
+                    String(
+                        attendance.notes ??
+                        ""
+                    ).trim() ||
+                    "No additional notes.";
 
-const lateReason =
-    String(
-        attendance.lateReason ?? ""
-    ).trim();
+                const lateReason =
+                    String(
+                        attendance.lateReason ??
+                        ""
+                    ).trim();
 
-const isLate =
-    String(
-        attendance.status ?? ""
-    ).trim() === "Late";
+                const isLate =
+                    String(
+                        attendance.status ??
+                        ""
+                    ).trim() ===
+                    "Late";
 
-    const checkInTime =
-    attendance.time ??
-    "Not recorded";
+                const checkInTime =
+                    attendance.time ??
+                    "Not recorded";
 
-const checkOutTime =
-    attendance.checkOutTime ??
-    "Still at work";
+                const checkOutTime =
+                    attendance.checkOutTime ??
+                    "Still at work";
 
-const hoursWorked =
-    calculateHoursWorked(
-        attendance
-    );
+                const hoursWorked =
+                    calculateHoursWorked(
+                        attendance
+                    );
 
-const earlyExit =
-    attendance.earlyExit ===
-    true;
+                const earlyExit =
+                    attendance.earlyExit ===
+                    true;
 
-const earlyExitReason =
-    String(
-        attendance.earlyExitReason ??
-        ""
-    ).trim();
+                const earlyExitReason =
+                    String(
+                        attendance.earlyExitReason ??
+                        ""
+                    ).trim();
 
-const earlyExitNote =
-    String(
-        attendance.earlyExitNote ??
-        ""
-    ).trim();
+                const earlyExitNote =
+                    String(
+                        attendance.earlyExitNote ??
+                        ""
+                    ).trim();
 
                 const historyCard =
                     document.createElement(
@@ -703,190 +880,251 @@ const earlyExitNote =
                     "attendance-history-card";
 
                 historyCard.innerHTML = `
-                    <summary class="history-summary">
 
-                        <div class="history-summary-main">
+    <summary class="history-summary">
 
-                            <span
-                                class="status-badge ${statusClass}"
-                            >
-                                ${escapeHtml(
-                                    attendance.status ??
-                                    "Unknown"
-                                )}
-                            </span>
+        <div class="history-summary-main">
 
-                            <div class="history-summary-date">
+            <span
+                class="status-badge ${statusClass}"
+            >
+                ${escapeHtml(
+                    attendance.status ??
+                    "Unknown"
+                )}
+            </span>
 
-                                <strong>
-                                    ${escapeHtml(
-                                        dateDisplay
-                                    )}
-                                </strong>
+            <div class="history-summary-date">
 
-                                <span>
-                                    ${escapeHtml(
-                                        attendance.time ??
-                                        "Time not recorded"
-                                    )}
-                                <span>
-    In:
-    ${escapeHtml(checkInTime)}
-    &nbsp; | &nbsp;
-    Out:
-    ${escapeHtml(checkOutTime)}
-</span>
+                <strong>
+                    ${escapeHtml(
+                        dateDisplay
+                    )}
+                </strong>
 
-                            </div>
-
-                        </div>
-
-                        <div class="history-summary-method">
-                            ${escapeHtml(method)}
-                        </div>
-
-                    </summary>
-
-                    <div class="history-expanded">
-
-                    <div class="history-detail-row">
-
-    <span class="history-label">
-        Check In
-    </span>
-
-    <p>
-        ${escapeHtml(checkInTime)}
-    </p>
-
-</div>
-
-
-<div class="history-detail-row">
-
-    <span class="history-label">
-        Check Out
-    </span>
-
-    <p>
-        ${escapeHtml(checkOutTime)}
-    </p>
-
-</div>
-
-
-<div class="history-detail-row">
-
-    <span class="history-label">
-        Hours Worked
-    </span>
-
-    <p>
-        ${escapeHtml(hoursWorked)}
-    </p>
-
-</div>
-
-
-<div class="history-detail-row">
-
-    <span class="history-label">
-        Early Exit
-    </span>
-
-    <p>
-        ${
-            attendance.checkOutTime
-                ? earlyExit
-                    ? "Yes"
-                    : "No"
-                : "-"
-        }
-    </p>
-
-</div>
-
-
-${
-    earlyExit
-        ? `
-            <div class="history-detail-row">
-
-                <span class="history-label">
-                    Early Exit Reason
+                <span>
+                    ${escapeHtml(
+                        checkInTime
+                    )}
                 </span>
-
-                <p>
-                    ${
-                        earlyExitReason
-                            ? escapeHtml(
-                                earlyExitReason
-                            )
-                            : "No reason recorded."
-                    }
-                </p>
 
             </div>
 
-            ${
-                earlyExitNote
-                    ? `
-                        <div class="history-detail-row">
+        </div>
 
-                            <span class="history-label">
+        <div class="history-summary-method">
+            ${escapeHtml(
+                method
+            )}
+        </div>
+
+    </summary>
+
+
+    <div class="history-expanded-clean">
+
+
+        <!-- =====================================
+             Time Summary
+        ====================================== -->
+
+        <div class="history-time-grid">
+
+            <div class="history-time-item">
+
+                <span class="history-time-label">
+                    Check In
+                </span>
+
+                <strong>
+                    ${escapeHtml(
+                        checkInTime
+                    )}
+                </strong>
+
+            </div>
+
+
+            <div class="history-time-item">
+
+                <span class="history-time-label">
+                    Check Out
+                </span>
+
+                <strong>
+                    ${escapeHtml(
+                        checkOutTime
+                    )}
+                </strong>
+
+            </div>
+
+
+            <div class="history-time-item">
+
+                <span class="history-time-label">
+                    Hours Worked
+                </span>
+
+                <strong>
+                    ${escapeHtml(
+                        hoursWorked
+                    )}
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================
+             Early Exit
+        ====================================== -->
+
+        <div class="history-clean-row">
+
+            <span class="history-clean-label">
+                Early Exit
+            </span>
+
+            <span
+                class="${
+                    earlyExit
+                        ?
+                        "history-value-badge history-value-warning"
+                        :
+                        "history-value-badge history-value-normal"
+                }"
+            >
+                ${
+                    attendance.checkOutTime
+                        ?
+                        earlyExit
+                            ?
+                            "Yes"
+                            :
+                            "No"
+                        :
+                        "-"
+                }
+            </span>
+
+        </div>
+
+
+        ${
+            earlyExit
+                ?
+                `
+
+                <div class="history-clean-row">
+
+                    <span class="history-clean-label">
+                        Early Exit Reason
+                    </span>
+
+                    <span class="history-clean-value">
+                        ${
+                            earlyExitReason
+                                ?
+                                escapeHtml(
+                                    earlyExitReason
+                                )
+                                :
+                                "No reason recorded."
+                        }
+                    </span>
+
+                </div>
+
+
+                ${
+                    earlyExitNote
+                        ?
+                        `
+
+                        <div class="history-clean-row">
+
+                            <span class="history-clean-label">
                                 Early Exit Details
                             </span>
 
-                            <p>
+                            <span class="history-clean-value">
                                 ${escapeHtml(
                                     earlyExitNote
                                 )}
-                            </p>
+                            </span>
 
                         </div>
-                    `
-                    : ""
-            }
-        `
-        : ""
-}
 
-    ${
-        isLate
-            ? `
-                <div class="history-detail-row late-reason-detail">
+                        `
+                        :
+                        ""
+                }
 
-                    <span class="history-label">
+                `
+                :
+                ""
+        }
+
+
+        <!-- =====================================
+             Late Reason
+        ====================================== -->
+
+        ${
+            isLate
+                ?
+                `
+
+                <div class="history-clean-row history-late-row">
+
+                    <span class="history-clean-label">
                         Reason for Lateness
                     </span>
 
-                    <p>
+                    <span class="history-clean-value">
                         ${
                             lateReason
-                                ? escapeHtml(lateReason)
-                                : "No late reason was recorded."
+                                ?
+                                escapeHtml(
+                                    lateReason
+                                )
+                                :
+                                "No late reason was recorded."
                         }
-                    </p>
+                    </span>
 
                 </div>
-            `
-            : ""
-    }
 
-    <div class="history-detail-row">
+                `
+                :
+                ""
+        }
 
-        <span class="history-label">
-            Notes
-        </span>
 
-        <p>
-            ${escapeHtml(notes)}
-        </p>
+        <!-- =====================================
+             Notes
+        ====================================== -->
+
+        <div class="history-clean-row history-notes-row">
+
+            <span class="history-clean-label">
+                Notes
+            </span>
+
+            <span class="history-clean-value">
+                ${escapeHtml(
+                    notes
+                )}
+            </span>
+
+        </div>
+
 
     </div>
 
-</div>
-                `;
+`;
 
                 attendanceHistory.appendChild(
                     historyCard
@@ -895,7 +1133,9 @@ ${
             }
         );
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Unable to load attendance history:",
@@ -921,8 +1161,12 @@ async function loadAttendanceSummary() {
 
     resetAttendanceSummary();
 
-    if (!employeeSelect.value) {
+    if (
+        !employeeSelect.value
+    ) {
+
         return;
+
     }
 
     try {
@@ -930,8 +1174,12 @@ async function loadAttendanceSummary() {
         const employee =
             await getSelectedEmployee();
 
-        if (!employee) {
+        if (
+            !employee
+        ) {
+
             return;
+
         }
 
         const attendanceQuery =
@@ -952,13 +1200,22 @@ async function loadAttendanceSummary() {
                 attendanceQuery
             );
 
-        let onTime = 0;
-        let late = 0;
-        let absent = 0;
-        let leave = 0;
+        let onTime =
+            0;
+
+        let late =
+            0;
+
+        let absent =
+            0;
+
+        let leave =
+            0;
 
         attendanceSnapshot.forEach(
-            (attendanceDocument) => {
+            function (
+                attendanceDocument
+            ) {
 
                 const attendance =
                     attendanceDocument.data();
@@ -968,24 +1225,40 @@ async function loadAttendanceSummary() {
                 ) {
 
                     case "On Time":
+
                         onTime++;
+
                         break;
+
 
                     case "Late":
+
                         late++;
+
                         break;
+
 
                     case "Absent":
+
                         absent++;
+
                         break;
 
+
                     case "Annual Leave":
+
                     case "Sick Leave":
+
                     case "Family Responsibility Leave":
+
                     case "Maternity Leave":
+
                     case "Unpaid Leave":
+
                     case "Public Holiday":
+
                         leave++;
+
                         break;
 
                 }
@@ -1005,7 +1278,9 @@ async function loadAttendanceSummary() {
         summaryLeave.textContent =
             leave;
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Unable to load attendance summary:",
@@ -1037,6 +1312,7 @@ function resetAttendanceSummary() {
 
 }
 
+
 // =====================================
 // Calculate Hours Worked
 // =====================================
@@ -1053,8 +1329,44 @@ function calculateHoursWorked(
 
     }
 
+
+    // =====================================
+    // Get Standard Start Time
+    // =====================================
+
+    const standardStartParts =
+        String(
+            standardWorkStartTime
+        )
+            .split(":")
+            .map(Number);
+
+    const standardStartHour =
+        Number.isFinite(
+            standardStartParts[0]
+        )
+            ?
+            standardStartParts[0]
+            :
+            8;
+
+    const standardStartMinute =
+        Number.isFinite(
+            standardStartParts[1]
+        )
+            ?
+            standardStartParts[1]
+            :
+            0;
+
+
+    // =====================================
+    // Firebase Timestamp Method
+    // =====================================
+
     const checkInTimestamp =
-        attendance.checkInTimestamp;
+        attendance.checkInTimestamp ??
+        attendance.scanTimestamp;
 
     const checkOutTimestamp =
         attendance.checkOutTimestamp;
@@ -1068,19 +1380,55 @@ function calculateHoursWorked(
             "function"
     ) {
 
-        const checkInDate =
+        const actualCheckInDate =
             checkInTimestamp.toDate();
 
         const checkOutDate =
             checkOutTimestamp.toDate();
 
+
+        // =====================================
+        // Build Scheduled Start Date
+        // =====================================
+
+        const standardStartDate =
+            new Date(
+                actualCheckInDate
+            );
+
+        standardStartDate.setHours(
+            standardStartHour,
+            standardStartMinute,
+            0,
+            0
+        );
+
+
+        // =====================================
+        // Effective Work Start
+        // =====================================
+
+        const effectiveCheckInDate =
+            actualCheckInDate <
+            standardStartDate
+                ?
+                standardStartDate
+                :
+                actualCheckInDate;
+
+
+        // =====================================
+        // Calculate Difference
+        // =====================================
+
         const differenceMilliseconds =
             checkOutDate.getTime()
             -
-            checkInDate.getTime();
+            effectiveCheckInDate.getTime();
 
         if (
-            differenceMilliseconds < 0
+            differenceMilliseconds <
+            0
         ) {
 
             return "Unable to calculate";
@@ -1095,18 +1443,22 @@ function calculateHoursWorked(
 
         const hours =
             Math.floor(
-                totalMinutes / 60
+                totalMinutes /
+                60
             );
 
         const minutes =
-            totalMinutes % 60;
+            totalMinutes %
+            60;
 
         return (
             hours
             +
             "h "
             +
-            String(minutes).padStart(
+            String(
+                minutes
+            ).padStart(
                 2,
                 "0"
             )
@@ -1117,9 +1469,9 @@ function calculateHoursWorked(
     }
 
 
-    // =================================
-    // Fallback for older records
-    // =================================
+    // =====================================
+    // Fallback for Older Records
+    // =====================================
 
     if (
         attendance.time &&
@@ -1141,17 +1493,33 @@ function calculateHoursWorked(
                 .map(Number);
 
         if (
-            checkInParts.length >= 2 &&
-            checkOutParts.length >= 2
+            checkInParts.length >=
+                2 &&
+            checkOutParts.length >=
+                2
         ) {
 
-            const checkInMinutes =
+            const actualCheckInMinutes =
                 (
                     checkInParts[0] *
                     60
                 )
                 +
                 checkInParts[1];
+
+            const standardStartMinutes =
+                (
+                    standardStartHour *
+                    60
+                )
+                +
+                standardStartMinute;
+
+            const effectiveCheckInMinutes =
+                Math.max(
+                    actualCheckInMinutes,
+                    standardStartMinutes
+                );
 
             const checkOutMinutes =
                 (
@@ -1162,11 +1530,13 @@ function calculateHoursWorked(
                 checkOutParts[1];
 
             const totalMinutes =
-                checkOutMinutes -
-                checkInMinutes;
+                checkOutMinutes
+                -
+                effectiveCheckInMinutes;
 
             if (
-                totalMinutes >= 0
+                totalMinutes >=
+                0
             ) {
 
                 const hours =
@@ -1213,8 +1583,12 @@ function formatAttendanceDate(
     dateKey
 ) {
 
-    if (!dateKey) {
+    if (
+        !dateKey
+    ) {
+
         return "Unknown date";
+
     }
 
     const date =
@@ -1225,6 +1599,7 @@ function formatAttendanceDate(
     return date.toLocaleDateString(
         "en-ZA",
         {
+
             day:
                 "2-digit",
 
@@ -1233,6 +1608,7 @@ function formatAttendanceDate(
 
             year:
                 "numeric"
+
         }
     );
 
@@ -1243,12 +1619,17 @@ function formatAttendanceDate(
 // Create Status CSS Class
 // =====================================
 
-function createStatusClass(status) {
+function createStatusClass(
+    status
+) {
 
     return `status-${String(
-        status ?? "unknown"
+        status ??
+        "unknown"
     )
-        .normalize("NFKC")
+        .normalize(
+            "NFKC"
+        )
         .trim()
         .toLowerCase()
         .replace(
@@ -1267,7 +1648,9 @@ function createStatusClass(status) {
 // Save Attendance
 // =====================================
 
-async function saveAttendance(event) {
+async function saveAttendance(
+    event
+) {
 
     event.preventDefault();
 
@@ -1280,7 +1663,9 @@ async function saveAttendance(event) {
     const notes =
         attendanceNotes.value.trim();
 
-    if (!employeeSelect.value) {
+    if (
+        !employeeSelect.value
+    ) {
 
         showMessage(
             "Please select an employee.",
@@ -1291,7 +1676,9 @@ async function saveAttendance(event) {
 
     }
 
-    if (!selectedDate) {
+    if (
+        !selectedDate
+    ) {
 
         showMessage(
             "Please select a date.",
@@ -1302,7 +1689,9 @@ async function saveAttendance(event) {
 
     }
 
-    if (!selectedStatus) {
+    if (
+        !selectedStatus
+    ) {
 
         showMessage(
             "Please select an attendance status.",
@@ -1329,7 +1718,9 @@ async function saveAttendance(event) {
         const employee =
             await getSelectedEmployee();
 
-        if (!employee) {
+        if (
+            !employee
+        ) {
 
             showMessage(
                 "Employee not found.",
@@ -1362,15 +1753,18 @@ async function saveAttendance(event) {
             new Date().toLocaleTimeString(
                 "en-ZA",
                 {
+
                     hour:
                         "2-digit",
 
                     minute:
                         "2-digit"
+
                 }
             );
 
         const attendanceData = {
+
             employeeNumber:
                 employee.employeeNumber,
 
@@ -1401,9 +1795,12 @@ async function saveAttendance(event) {
 
             updatedAt:
                 serverTimestamp()
+
         };
 
-        if (!recordAlreadyExists) {
+        if (
+            !recordAlreadyExists
+        ) {
 
             attendanceData.createdAt =
                 serverTimestamp();
@@ -1414,18 +1811,23 @@ async function saveAttendance(event) {
             attendanceReference,
             attendanceData,
             {
-                merge: true
+                merge:
+                    true
             }
         );
 
         showMessage(
             recordAlreadyExists
-                ? "Attendance record updated."
-                : "Attendance record created.",
+                ?
+                "Attendance record updated."
+                :
+                "Attendance record created.",
 
             recordAlreadyExists
-                ? "var(--orange-primary)"
-                : "var(--green-primary)"
+                ?
+                "var(--orange-primary)"
+                :
+                "var(--green-primary)"
         );
 
         await loadAttendanceHistory();
@@ -1434,7 +1836,9 @@ async function saveAttendance(event) {
 
         await buildCalendar();
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Unable to save attendance:",
@@ -1468,7 +1872,9 @@ async function buildCalendar() {
     calendarGrid.innerHTML =
         "";
 
-    if (!employeeSelect.value) {
+    if (
+        !employeeSelect.value
+    ) {
 
         calendarGrid.innerHTML = `
             <p class="empty-state">
@@ -1503,7 +1909,8 @@ async function buildCalendar() {
         const monthEnd =
             new Date(
                 calendarYear,
-                calendarMonth + 1,
+                calendarMonth +
+                1,
                 0
             );
 
@@ -1545,10 +1952,13 @@ async function buildCalendar() {
                 attendanceQuery
             );
 
-        const attendanceByDate = {};
+        const attendanceByDate =
+            {};
 
         attendanceSnapshot.forEach(
-            (attendanceDocument) => {
+            function (
+                attendanceDocument
+            ) {
 
                 const record =
                     attendanceDocument.data();
@@ -1556,7 +1966,8 @@ async function buildCalendar() {
                 attendanceByDate[
                     record.date ??
                     record.dateKey
-                ] = record;
+                ] =
+                    record;
 
             }
         );
@@ -1565,7 +1976,9 @@ async function buildCalendar() {
             attendanceByDate
         );
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Unable to build attendance calendar:",
@@ -1595,6 +2008,7 @@ function displayCalendar(
         "";
 
     const monthNames = [
+
         "January",
         "February",
         "March",
@@ -1607,9 +2021,11 @@ function displayCalendar(
         "October",
         "November",
         "December"
+
     ];
 
     const dayNames = [
+
         "Sun",
         "Mon",
         "Tue",
@@ -1617,13 +2033,16 @@ function displayCalendar(
         "Thu",
         "Fri",
         "Sat"
+
     ];
 
     calendarTitle.textContent =
         `${monthNames[calendarMonth]} ${calendarYear}`;
 
     dayNames.forEach(
-        (dayName) => {
+        function (
+            dayName
+        ) {
 
             const dayHeading =
                 document.createElement(
@@ -1653,13 +2072,16 @@ function displayCalendar(
     const totalDaysInMonth =
         new Date(
             calendarYear,
-            calendarMonth + 1,
+            calendarMonth +
+            1,
             0
         ).getDate();
 
     for (
-        let blankIndex = 0;
-        blankIndex < firstDayOfMonth;
+        let blankIndex =
+            0;
+        blankIndex <
+            firstDayOfMonth;
         blankIndex++
     ) {
 
@@ -1678,8 +2100,10 @@ function displayCalendar(
     }
 
     for (
-        let day = 1;
-        day <= totalDaysInMonth;
+        let day =
+            1;
+        day <=
+            totalDaysInMonth;
         day++
     ) {
 
@@ -1728,7 +2152,9 @@ function createCalendarDay(
         "calendar-day"
     );
 
-    if (attendanceRecord) {
+    if (
+        attendanceRecord
+    ) {
 
         const statusClass =
             createStatusClass(
@@ -1752,11 +2178,16 @@ function createCalendarDay(
         new Date();
 
     const isToday =
-        day === today.getDate() &&
-        calendarMonth === today.getMonth() &&
-        calendarYear === today.getFullYear();
+        day ===
+            today.getDate() &&
+        calendarMonth ===
+            today.getMonth() &&
+        calendarYear ===
+            today.getFullYear();
 
-    if (isToday) {
+    if (
+        isToday
+    ) {
 
         dayCell.classList.add(
             "calendar-today"
@@ -1775,7 +2206,7 @@ function createCalendarDay(
 
     dayCell.addEventListener(
         "click",
-        async () => {
+        async function () {
 
             attendanceDate.value =
                 currentDateKey;
@@ -1800,9 +2231,13 @@ function showPreviousMonth() {
 
     calendarMonth--;
 
-    if (calendarMonth < 0) {
+    if (
+        calendarMonth <
+        0
+    ) {
 
-        calendarMonth = 11;
+        calendarMonth =
+            11;
 
         calendarYear--;
 
@@ -1821,9 +2256,13 @@ function showNextMonth() {
 
     calendarMonth++;
 
-    if (calendarMonth > 11) {
+    if (
+        calendarMonth >
+        11
+    ) {
 
-        calendarMonth = 0;
+        calendarMonth =
+            0;
 
         calendarYear++;
 
@@ -1838,10 +2277,13 @@ function showNextMonth() {
 // Escape HTML
 // =====================================
 
-function escapeHtml(value) {
+function escapeHtml(
+    value
+) {
 
     return String(
-        value ?? ""
+        value ??
+        ""
     )
         .replaceAll(
             "&",
@@ -1875,7 +2317,9 @@ async function logoutAdministrator() {
 
     try {
 
-        if (logoutButton) {
+        if (
+            logoutButton
+        ) {
 
             logoutButton.disabled =
                 true;
@@ -1885,7 +2329,9 @@ async function logoutAdministrator() {
 
         }
 
-        await signOut(auth);
+        await signOut(
+            auth
+        );
 
         sessionStorage.clear();
 
@@ -1893,14 +2339,18 @@ async function logoutAdministrator() {
             "admin-login.html"
         );
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Logout error:",
             error
         );
 
-        if (logoutButton) {
+        if (
+            logoutButton
+        ) {
 
             logoutButton.disabled =
                 false;

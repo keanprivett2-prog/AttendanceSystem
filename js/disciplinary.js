@@ -173,6 +173,9 @@ let SHORT_WORKDAY_THRESHOLD =
 let SHORT_WORKDAY_LOOKBACK_DAYS =
     30;
 
+    let STANDARD_WORK_START_TIME =
+    "08:00";
+
 
 // =====================================
 // Initialize Page

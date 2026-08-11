@@ -175,6 +175,9 @@ let consecutiveLateThreshold =
     let shortWorkdayHours =
     6;
 
+    let standardWorkStartTime =
+    "08:00";
+
 
 // =====================================
 // Initialize Reports Page
@@ -297,6 +300,12 @@ async function loadReportSettings() {
     Number(
         settings.shortWorkdayHours ??
         6
+    );
+
+    standardWorkStartTime =
+    String(
+        settings.standardStartTime ??
+        "08:00"
     );
 
         if (
@@ -957,13 +966,34 @@ function calculateReportWorkedMinutes(
                 2
         ) {
 
-            const checkInMinutes =
-                (
-                    checkInParts[0] *
-                    60
-                )
-                +
-                checkInParts[1];
+            const actualCheckInMinutes =
+    (
+        checkInParts[0] *
+        60
+    )
+    +
+    checkInParts[1];
+
+const standardStartParts =
+    String(
+        standardWorkStartTime
+    )
+        .split(":")
+        .map(Number);
+
+const standardStartMinutes =
+    (
+        standardStartParts[0] *
+        60
+    )
+    +
+    standardStartParts[1];
+
+const checkInMinutes =
+    Math.max(
+        actualCheckInMinutes,
+        standardStartMinutes
+    );
 
             const checkOutMinutes =
                 (
@@ -1076,16 +1106,47 @@ function calculateReportHoursWorked(
             "function"
     ) {
 
-        const checkInDate =
-            checkInTimestamp.toDate();
+        const actualCheckInDate =
+    checkInTimestamp.toDate();
 
-        const checkOutDate =
-            checkOutTimestamp.toDate();
+const checkOutDate =
+    checkOutTimestamp.toDate();
 
-        const differenceMilliseconds =
-            checkOutDate.getTime()
-            -
-            checkInDate.getTime();
+
+const standardStartParts =
+    String(
+        standardWorkStartTime
+    )
+        .split(":")
+        .map(Number);
+
+
+const standardStartDate =
+    new Date(
+        actualCheckInDate
+    );
+
+standardStartDate.setHours(
+    standardStartParts[0],
+    standardStartParts[1],
+    0,
+    0
+);
+
+
+const effectiveCheckInDate =
+    actualCheckInDate <
+    standardStartDate
+        ?
+        standardStartDate
+        :
+        actualCheckInDate;
+
+
+const differenceMilliseconds =
+    checkOutDate.getTime()
+    -
+    effectiveCheckInDate.getTime();
 
         if (
             differenceMilliseconds >=
