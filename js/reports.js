@@ -159,6 +159,26 @@ const logoutButton =
         ".section-toggle-btn"
     );
 
+    const reportPagination =
+    document.getElementById(
+        "reportPagination"
+    );
+
+const reportPageInfo =
+    document.getElementById(
+        "reportPageInfo"
+    );
+
+const previousReportPageButton =
+    document.getElementById(
+        "previousReportPageButton"
+    );
+
+const nextReportPageButton =
+    document.getElementById(
+        "nextReportPageButton"
+    );
+
 
 // =====================================
 // Current Report Records
@@ -177,6 +197,15 @@ let consecutiveLateThreshold =
 
     let standardWorkStartTime =
     "08:00";
+
+let unpaidBreakMinutes =
+    30;
+
+let currentReportPage =
+    1;
+
+const REPORT_RECORDS_PER_PAGE =
+    6;
 
 
 // =====================================
@@ -237,7 +266,74 @@ function initializeReportsPage() {
 
     }
 
+    
+
+// =====================================
+// Report Pagination Buttons
+// =====================================
+
+if (
+    previousReportPageButton
+) {
+
+    previousReportPageButton.addEventListener(
+        "click",
+        function () {
+
+            if (
+                currentReportPage >
+                1
+            ) {
+
+                currentReportPage--;
+
+                displayReport(
+                    currentReportRecords
+                );
+
+            }
+
+        }
+    );
+
 }
+
+
+if (
+    nextReportPageButton
+) {
+
+    nextReportPageButton.addEventListener(
+        "click",
+        function () {
+
+            const totalPages =
+                Math.ceil(
+                    currentReportRecords.length /
+                    REPORT_RECORDS_PER_PAGE
+                );
+
+            if (
+                currentReportPage <
+                totalPages
+            ) {
+
+                currentReportPage++;
+
+                displayReport(
+                    currentReportRecords
+                );
+
+            }
+
+        }
+    );
+
+}
+
+}
+
+
 
 // =====================================
 // Load Report Settings
@@ -308,6 +404,26 @@ async function loadReportSettings() {
         "08:00"
     );
 
+    unpaidBreakMinutes =
+    Number(
+        settings.unpaidBreakMinutes ??
+        30
+    );
+
+if (
+    !Number.isFinite(
+        unpaidBreakMinutes
+    )
+    ||
+    unpaidBreakMinutes <
+    0
+) {
+
+    unpaidBreakMinutes =
+        30;
+
+}
+
         if (
     !Number.isFinite(
         frequentEarlyExitThreshold
@@ -333,8 +449,11 @@ if (
 
     shortWorkdayHours =
         6;
+        
 
 }
+
+
 
     } catch (
     error
@@ -346,13 +465,19 @@ if (
     );
 
     consecutiveLateThreshold =
-        3;
+    3;
 
-    frequentEarlyExitThreshold =
-        3;
+frequentEarlyExitThreshold =
+    3;
 
-    shortWorkdayHours =
-        6;
+shortWorkdayHours =
+    6;
+
+standardWorkStartTime =
+    "08:00";
+
+unpaidBreakMinutes =
+    30;
 
 }
 
@@ -819,12 +944,14 @@ async function generateReport() {
 
 
         currentReportRecords =
-            records;
+    records;
 
-        displayReport(
-            records
-        );
+currentReportPage =
+    1;
 
+displayReport(
+    records
+);
     } catch (error) {
 
         console.error(
@@ -890,6 +1017,7 @@ function calculateReportWorkedMinutes(
 
     }
 
+
     const checkInTimestamp =
         record.scanTimestamp;
 
@@ -910,26 +1038,85 @@ function calculateReportWorkedMinutes(
             "function"
     ) {
 
-        const checkInDate =
+        const actualCheckInDate =
             checkInTimestamp.toDate();
 
         const checkOutDate =
             checkOutTimestamp.toDate();
 
+
+        const standardStartParts =
+            String(
+                standardWorkStartTime
+            )
+                .split(":")
+                .map(Number);
+
+
+        const standardStartDate =
+            new Date(
+                actualCheckInDate
+            );
+
+        standardStartDate.setHours(
+            standardStartParts[0],
+            standardStartParts[1],
+            0,
+            0
+        );
+
+
+        const effectiveCheckInDate =
+            actualCheckInDate <
+            standardStartDate
+                ?
+                standardStartDate
+                :
+                actualCheckInDate;
+
+
         const differenceMilliseconds =
             checkOutDate.getTime()
             -
-            checkInDate.getTime();
+            effectiveCheckInDate.getTime();
+
 
         if (
             differenceMilliseconds >=
             0
         ) {
 
-            return Math.floor(
-                differenceMilliseconds /
-                60000
-            );
+            const elapsedMinutes =
+                Math.floor(
+                    differenceMilliseconds /
+                    60000
+                );
+
+
+            let totalMinutes =
+                elapsedMinutes;
+
+
+            // =====================================
+            // Deduct Unpaid Break
+            // =====================================
+
+            if (
+                elapsedMinutes >=
+                360
+            ) {
+
+                totalMinutes =
+                    Math.max(
+                        0,
+                        elapsedMinutes -
+                        unpaidBreakMinutes
+                    );
+
+            }
+
+
+            return totalMinutes;
 
         }
 
@@ -959,6 +1146,7 @@ function calculateReportWorkedMinutes(
                 .split(":")
                 .map(Number);
 
+
         if (
             checkInParts.length >=
                 2 &&
@@ -967,33 +1155,37 @@ function calculateReportWorkedMinutes(
         ) {
 
             const actualCheckInMinutes =
-    (
-        checkInParts[0] *
-        60
-    )
-    +
-    checkInParts[1];
+                (
+                    checkInParts[0] *
+                    60
+                )
+                +
+                checkInParts[1];
 
-const standardStartParts =
-    String(
-        standardWorkStartTime
-    )
-        .split(":")
-        .map(Number);
 
-const standardStartMinutes =
-    (
-        standardStartParts[0] *
-        60
-    )
-    +
-    standardStartParts[1];
+            const standardStartParts =
+                String(
+                    standardWorkStartTime
+                )
+                    .split(":")
+                    .map(Number);
 
-const checkInMinutes =
-    Math.max(
-        actualCheckInMinutes,
-        standardStartMinutes
-    );
+
+            const standardStartMinutes =
+                (
+                    standardStartParts[0] *
+                    60
+                )
+                +
+                standardStartParts[1];
+
+
+            const effectiveCheckInMinutes =
+                Math.max(
+                    actualCheckInMinutes,
+                    standardStartMinutes
+                );
+
 
             const checkOutMinutes =
                 (
@@ -1003,14 +1195,39 @@ const checkInMinutes =
                 +
                 checkOutParts[1];
 
-            const totalMinutes =
+
+            const elapsedMinutes =
                 checkOutMinutes -
-                checkInMinutes;
+                effectiveCheckInMinutes;
+
 
             if (
-                totalMinutes >=
+                elapsedMinutes >=
                 0
             ) {
+
+                let totalMinutes =
+                    elapsedMinutes;
+
+
+                // =====================================
+                // Deduct Unpaid Break
+                // =====================================
+
+                if (
+                    elapsedMinutes >=
+                    360
+                ) {
+
+                    totalMinutes =
+                        Math.max(
+                            0,
+                            elapsedMinutes -
+                            unpaidBreakMinutes
+                        );
+
+                }
+
 
                 return totalMinutes;
 
@@ -1019,6 +1236,7 @@ const checkInMinutes =
         }
 
     }
+
 
     return null;
 
@@ -1079,6 +1297,10 @@ function formatMinutesAsHours(
 // Calculate Hours Worked
 // =====================================
 
+// =====================================
+// Calculate Hours Worked
+// =====================================
+
 function calculateReportHoursWorked(
     record
 ) {
@@ -1091,104 +1313,26 @@ function calculateReportHoursWorked(
 
     }
 
-    const checkInTimestamp =
-        record.scanTimestamp;
 
-    const checkOutTimestamp =
-        record.checkOutTimestamp;
+    const workedMinutes =
+        calculateReportWorkedMinutes(
+            record
+        );
+
 
     if (
-        checkInTimestamp &&
-        checkOutTimestamp &&
-        typeof checkInTimestamp.toDate ===
-            "function" &&
-        typeof checkOutTimestamp.toDate ===
-            "function"
+        workedMinutes ===
+        null
     ) {
 
-        const actualCheckInDate =
-    checkInTimestamp.toDate();
-
-const checkOutDate =
-    checkOutTimestamp.toDate();
-
-
-const standardStartParts =
-    String(
-        standardWorkStartTime
-    )
-        .split(":")
-        .map(Number);
-
-
-const standardStartDate =
-    new Date(
-        actualCheckInDate
-    );
-
-standardStartDate.setHours(
-    standardStartParts[0],
-    standardStartParts[1],
-    0,
-    0
-);
-
-
-const effectiveCheckInDate =
-    actualCheckInDate <
-    standardStartDate
-        ?
-        standardStartDate
-        :
-        actualCheckInDate;
-
-
-const differenceMilliseconds =
-    checkOutDate.getTime()
-    -
-    effectiveCheckInDate.getTime();
-
-        if (
-            differenceMilliseconds >=
-            0
-        ) {
-
-            const totalMinutes =
-                Math.floor(
-                    differenceMilliseconds /
-                    60000
-                );
-
-            const hours =
-                Math.floor(
-                    totalMinutes /
-                    60
-                );
-
-            const minutes =
-                totalMinutes %
-                60;
-
-            return (
-                hours
-                +
-                "h "
-                +
-                String(
-                    minutes
-                ).padStart(
-                    2,
-                    "0"
-                )
-                +
-                "m"
-            );
-
-        }
+        return "Not available";
 
     }
 
-    return "Not available";
+
+    return formatMinutesAsHours(
+        workedMinutes
+    );
 
 }
 
@@ -1219,7 +1363,87 @@ function displayReport(
 
     }
 
-    records.forEach(
+    // =====================================
+// Report Pagination
+// =====================================
+
+const totalPages =
+    Math.ceil(
+        records.length /
+        REPORT_RECORDS_PER_PAGE
+    );
+
+
+if (
+    currentReportPage >
+    totalPages
+) {
+
+    currentReportPage =
+        totalPages;
+
+}
+
+
+if (
+    currentReportPage <
+    1
+) {
+
+    currentReportPage =
+        1;
+
+}
+
+// =====================================
+// Update Pagination Controls
+// =====================================
+
+if (
+    reportPagination &&
+    reportPageInfo &&
+    previousReportPageButton &&
+    nextReportPageButton
+) {
+
+    reportPagination.hidden =
+        totalPages <=
+        1;
+
+    reportPageInfo.textContent =
+        `Page ${currentReportPage} of ${totalPages}`;
+
+    previousReportPageButton.disabled =
+        currentReportPage <=
+        1;
+
+    nextReportPageButton.disabled =
+        currentReportPage >=
+        totalPages;
+
+}
+
+
+const startIndex =
+    (
+        currentReportPage -
+        1
+    ) *
+    REPORT_RECORDS_PER_PAGE;
+
+
+const endIndex =
+    startIndex +
+    REPORT_RECORDS_PER_PAGE;
+
+
+const pageRecords =
+    records.slice(
+        startIndex,
+        endIndex
+    );
+
+    pageRecords.forEach(
         (record) => {
 
             const row =
@@ -2302,6 +2526,135 @@ function updateEmployeePerformanceSummary(
                         100
                     );
 
+                    
+// =====================================
+// Performance Status
+// =====================================
+
+let performanceStatus =
+    "Good";
+
+let performanceStatusClass =
+    "performance-status-good";
+
+    const performanceReasons =
+    [];
+
+
+const hasLowAverageHours =
+    employee.total > 0 &&
+    averageWorkedMinutes <
+    (
+        shortWorkdayHours *
+        60
+    );
+
+
+const hasWarning =
+    attendancePercentage <
+        90 ||
+    employee.late >=
+        consecutiveLateThreshold ||
+    employee.earlyExits >=
+        frequentEarlyExitThreshold ||
+    hasLowAverageHours;
+
+
+const needsAttention =
+    attendancePercentage <
+        80 ||
+    employee.absent >
+        0;
+
+        if (
+    attendancePercentage <
+    80
+) {
+
+    performanceReasons.push(
+        "Attendance rate below 80%"
+    );
+
+}
+
+if (
+    employee.absent >
+    0
+) {
+
+    performanceReasons.push(
+        `${employee.absent} absence${employee.absent === 1 ? "" : "s"} recorded`
+    );
+
+}
+
+if (
+    employee.late >=
+    consecutiveLateThreshold
+) {
+
+    performanceReasons.push(
+        `${employee.late} late record${employee.late === 1 ? "" : "s"}`
+    );
+
+}
+
+if (
+    employee.earlyExits >=
+    frequentEarlyExitThreshold
+) {
+
+    performanceReasons.push(
+        `${employee.earlyExits} early exit${employee.earlyExits === 1 ? "" : "s"}`
+    );
+
+}
+
+if (
+    hasLowAverageHours
+) {
+
+    performanceReasons.push(
+        "Average hours below target"
+    );
+
+}
+
+if (
+    attendancePercentage >=
+        80 &&
+    attendancePercentage <
+        90
+) {
+
+    performanceReasons.push(
+        "Attendance rate below 90%"
+    );
+
+}
+
+
+if (
+    needsAttention
+) {
+
+    performanceStatus =
+        "Needs Attention";
+
+    performanceStatusClass =
+        "performance-status-danger";
+
+} else if (
+    hasWarning
+) {
+
+    performanceStatus =
+        "Watch";
+
+    performanceStatusClass =
+        "performance-status-watch";
+
+}
 
             // =====================================
             // Create Employee Row
@@ -2459,6 +2812,52 @@ function updateEmployeePerformanceSummary(
     )}"
 >
     ${attendancePercentage}%
+</span>
+
+<!-- Performance Status -->
+
+<span
+    class="performance-status-wrapper"
+>
+
+    <span
+        class="performance-status-cell ${performanceStatusClass}"
+    >
+        ${performanceStatus}
+    </span>
+
+    <span class="performance-status-tooltip">
+
+        ${
+            performanceReasons.length > 0
+                ?
+                performanceReasons
+                    .map(
+                        function (
+                            reason
+                        ) {
+
+                            return `
+                                <span>
+                                    • ${escapeHtml(
+                                        reason
+                                    )}
+                                </span>
+                            `;
+
+                        }
+                    )
+                    .join("")
+                :
+                `
+                    <span>
+                        No performance concerns detected
+                    </span>
+                `
+        }
+
+    </span>
+
 </span>
 
             `;

@@ -30,9 +30,9 @@ import {
     doc,
     getDoc,
     setDoc,
-    serverTimestamp
+    serverTimestamp,
+    Timestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-
 import {
     applySidebarPermissions,
     protectPage
@@ -135,6 +135,9 @@ const logoutButton =
 
 let standardWorkStartTime =
     "08:00";
+
+    let unpaidBreakMinutes =
+    30;
 
 
 // =====================================
@@ -267,6 +270,26 @@ async function loadAttendanceSettings() {
                 settings.standardStartTime ??
                 "08:00"
             ).trim();
+
+            unpaidBreakMinutes =
+    Number(
+        settings.unpaidBreakMinutes ??
+        30
+    );
+
+if (
+    !Number.isFinite(
+        unpaidBreakMinutes
+    )
+    ||
+    unpaidBreakMinutes <
+    0
+) {
+
+    unpaidBreakMinutes =
+        30;
+
+}
 
 
         // =====================================
@@ -1435,17 +1458,40 @@ function calculateHoursWorked(
 
         }
 
-        const totalMinutes =
-            Math.floor(
-                differenceMilliseconds /
-                60000
-            );
+        const elapsedMinutes =
+    Math.floor(
+        differenceMilliseconds /
+        60000
+    );
 
-        const hours =
-            Math.floor(
-                totalMinutes /
-                60
-            );
+let totalMinutes =
+    elapsedMinutes;
+
+
+// =====================================
+// Deduct Unpaid Break
+// =====================================
+
+if (
+    elapsedMinutes >=
+    360
+) {
+
+    totalMinutes =
+        Math.max(
+            0,
+            elapsedMinutes -
+            unpaidBreakMinutes
+        );
+
+}
+
+
+const hours =
+    Math.floor(
+        totalMinutes /
+        60
+    );
 
         const minutes =
             totalMinutes %
@@ -1529,15 +1575,37 @@ function calculateHoursWorked(
                 +
                 checkOutParts[1];
 
-            const totalMinutes =
-                checkOutMinutes
-                -
-                effectiveCheckInMinutes;
+            const elapsedMinutes =
+    checkOutMinutes
+    -
+    effectiveCheckInMinutes;
 
-            if (
-                totalMinutes >=
-                0
-            ) {
+if (
+    elapsedMinutes >=
+    0
+) {
+
+    let totalMinutes =
+        elapsedMinutes;
+
+
+    // =====================================
+    // Deduct Unpaid Break
+    // =====================================
+
+    if (
+        elapsedMinutes >=
+        360
+    ) {
+
+        totalMinutes =
+            Math.max(
+                0,
+                elapsedMinutes -
+                unpaidBreakMinutes
+            );
+
+    }
 
                 const hours =
                     Math.floor(
@@ -1747,74 +1815,226 @@ async function saveAttendance(
             );
 
         const recordAlreadyExists =
-            existingSnapshot.exists();
+    existingSnapshot.exists();
 
-        const currentTime =
-            new Date().toLocaleTimeString(
-                "en-ZA",
-                {
+const existingAttendance =
+    recordAlreadyExists
+        ?
+        existingSnapshot.data()
+        :
+        null;
 
-                    hour:
-                        "2-digit",
 
-                    minute:
-                        "2-digit"
+// =====================================
+// Current Date / Time
+// =====================================
 
-                }
-            );
+const now =
+    new Date();
 
-        const attendanceData = {
+const currentTime =
+    now.toLocaleTimeString(
+        "en-ZA",
+        {
+            hour:
+                "2-digit",
 
-            employeeNumber:
-                employee.employeeNumber,
+            minute:
+                "2-digit",
 
-            name:
-                employee.name,
+            hour12:
+                false
+        }
+    );
 
-            department:
-                employee.department ??
-                "Unassigned",
 
-            date:
-                selectedDate,
+// =====================================
+// Statuses That End The Working Day
+// =====================================
 
-            dateKey:
-                selectedDate,
+const checkoutStatuses = [
 
-            status:
-                selectedStatus,
+    "Annual Leave",
+    "Sick Leave",
+    "Family Responsibility Leave",
+    "Maternity Leave",
+    "Unpaid Leave",
+    "Medical Appointment",
+    "Half Day"
 
-            notes:
-                notes,
+];
 
-            checkInMethod:
-                "Manual",
 
-            time:
-                currentTime,
+// =====================================
+// Determine Automatic Checkout
+// =====================================
 
-            updatedAt:
-                serverTimestamp()
+const employeeAlreadyCheckedIn =
+    Boolean(
+        existingAttendance &&
+        (
+            existingAttendance.time ||
+            existingAttendance.scanTimestamp ||
+            existingAttendance.checkInTimestamp
+        )
+    );
 
-        };
+const employeeAlreadyCheckedOut =
+    Boolean(
+        existingAttendance &&
+        (
+            existingAttendance.checkOutTime ||
+            existingAttendance.checkOutTimestamp
+        )
+    );
+
+const shouldAutoCheckOut =
+    recordAlreadyExists &&
+    employeeAlreadyCheckedIn &&
+    !employeeAlreadyCheckedOut &&
+    checkoutStatuses.includes(
+        selectedStatus
+    );
+                
+       const attendanceData = {
+
+    employeeNumber:
+        employee.employeeNumber,
+
+    name:
+        employee.name,
+
+    department:
+        employee.department ??
+        "Unassigned",
+
+    date:
+        selectedDate,
+
+    dateKey:
+        selectedDate,
+
+    status:
+        selectedStatus,
+
+    notes:
+        notes,
+
+    updatedAt:
+        serverTimestamp()
+
+};
+
+
+// =====================================
+// New Manual Attendance Record
+// =====================================
+
+if (
+    !recordAlreadyExists
+) {
+
+    attendanceData.checkInMethod =
+        "Manual";
+
+    attendanceData.time =
+        currentTime;
+
+    attendanceData.createdAt =
+        serverTimestamp();
+
+}
+
+
+// =====================================
+// Automatic Checkout For Leave
+// =====================================
+
+if (
+    shouldAutoCheckOut
+) {
+
+    attendanceData.checkOutTime =
+        currentTime;
+
+    attendanceData.checkOutTimestamp =
+        Timestamp.fromDate(
+            now
+        );
+
+    attendanceData.checkOutMethod =
+        "Manual Adjustment";
+
+
+    // =====================================
+    // Determine Early Exit
+    // =====================================
+
+    const employeeEndTime =
+        String(
+            employee.endTime ??
+            ""
+        ).trim();
+
+    if (
+        employeeEndTime
+    ) {
+
+        const endParts =
+            employeeEndTime
+                .split(":")
+                .map(Number);
 
         if (
-            !recordAlreadyExists
+            endParts.length >=
+                2 &&
+            Number.isFinite(
+                endParts[0]
+            ) &&
+            Number.isFinite(
+                endParts[1]
+            )
         ) {
 
-            attendanceData.createdAt =
-                serverTimestamp();
+            const scheduledEndMinutes =
+                (
+                    endParts[0] *
+                    60
+                )
+                +
+                endParts[1];
+
+            const currentMinutes =
+                (
+                    now.getHours() *
+                    60
+                )
+                +
+                now.getMinutes();
+
+            attendanceData.earlyExit =
+                currentMinutes <
+                scheduledEndMinutes;
 
         }
 
-        await setDoc(
-            attendanceReference,
-            attendanceData,
-            {
-                merge:
-                    true
-            }
-        );
+    }
+
+}
+
+
+// =====================================
+// Save Attendance Record
+// =====================================
+
+await setDoc(
+    attendanceReference,
+    attendanceData,
+    {
+        merge:
+            true
+    }
+);
 
         showMessage(
             recordAlreadyExists

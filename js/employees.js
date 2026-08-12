@@ -157,6 +157,86 @@ const notificationMessage =
 const logoutButton =
     document.getElementById("logoutButton");
 
+    const attendanceProfileModal =
+    document.getElementById(
+        "attendanceProfileModal"
+    );
+
+const attendanceProfileName =
+    document.getElementById(
+        "attendanceProfileName"
+    );
+
+const attendanceProfileDetails =
+    document.getElementById(
+        "attendanceProfileDetails"
+    );
+
+const closeAttendanceProfileModalButton =
+    document.getElementById(
+        "closeAttendanceProfileModal"
+    );
+
+const closeAttendanceProfileButton =
+    document.getElementById(
+        "closeAttendanceProfileButton"
+    );
+
+const profileAttendanceHistory =
+    document.getElementById(
+        "profileAttendanceHistory"
+    );
+
+    const profileAttendanceRate =
+    document.getElementById(
+        "profileAttendanceRate"
+    );
+
+const profileAverageHours =
+    document.getElementById(
+        "profileAverageHours"
+    );
+
+const profileLateCount =
+    document.getElementById(
+        "profileLateCount"
+    );
+
+const profileAbsentCount =
+    document.getElementById(
+        "profileAbsentCount"
+    );
+
+const profileEarlyExitCount =
+    document.getElementById(
+        "profileEarlyExitCount"
+    );
+
+const profileTotalHours =
+    document.getElementById(
+        "profileTotalHours"
+    );
+
+const profilePerformanceStatus =
+    document.getElementById(
+        "profilePerformanceStatus"
+    );
+
+const profilePerformanceReasons =
+    document.getElementById(
+        "profilePerformanceReasons"
+    );
+
+    const attendanceProfilePeriod =
+    document.getElementById(
+        "attendanceProfilePeriod"
+    );
+
+const profileExpectedHours =
+    document.getElementById(
+        "profileExpectedHours"
+    );
+
 
 // =====================================
 // Page State
@@ -177,6 +257,17 @@ let employeeToResetPin = null;
 let employeeToChangeStatus = null;
 
 let newEmployeeStatus = null;
+
+let currentAttendanceProfileRecords = [];
+
+let currentAttendanceProfileEmployee =
+    null;
+
+    let standardWorkStartTime =
+    "08:00";
+
+let unpaidBreakMinutes =
+    30;
 
 
 // =====================================
@@ -334,6 +425,75 @@ applySidebarPermissions();
 
     }
 
+    if (
+    attendanceProfilePeriod
+) {
+
+    attendanceProfilePeriod.addEventListener(
+        "change",
+        function () {
+
+            if (
+                !currentAttendanceProfileEmployee
+            ) {
+
+                return;
+
+            }
+
+            refreshAttendanceProfile();
+
+        }
+    );
+
+}
+
+    if (
+    closeAttendanceProfileModalButton
+) {
+
+    closeAttendanceProfileModalButton.addEventListener(
+        "click",
+        closeAttendanceProfile
+    );
+
+}
+
+if (
+    closeAttendanceProfileButton
+) {
+
+    closeAttendanceProfileButton.addEventListener(
+        "click",
+        closeAttendanceProfile
+    );
+
+}
+
+if (
+    attendanceProfileModal
+) {
+
+    attendanceProfileModal.addEventListener(
+        "click",
+        function (
+            event
+        ) {
+
+            if (
+                event.target ===
+                attendanceProfileModal
+            ) {
+
+                closeAttendanceProfile();
+
+            }
+
+        }
+    );
+
+}
+
     if (confirmStatusButton) {
 
         confirmStatusButton.addEventListener(
@@ -359,6 +519,8 @@ applySidebarPermissions();
     }
 
     loadOrganisationStructure();
+
+loadEmployeeAttendanceSettings();
 
 loadEmployees();
 
@@ -1258,6 +1420,14 @@ function displayEmployees(employeeList) {
 
                 <td>
 
+                <button
+    type="button"
+    class="employee-action-btn profile-btn"
+    data-id="${employee.id}"
+>
+    Profile
+</button>
+
                     <button
                         type="button"
                         class="employee-action-btn edit-btn"
@@ -1324,6 +1494,20 @@ function handleEmployeeAction(event) {
 
     const employeeId =
         button.dataset.id;
+
+        if (
+    button.classList.contains(
+        "profile-btn"
+    )
+) {
+
+    openAttendanceProfile(
+        employeeId
+    );
+
+    return;
+
+}
 
     if (
         button.classList.contains(
@@ -1397,6 +1581,1479 @@ function findEmployee(employeeId) {
             );
 
         }
+    );
+
+}
+
+// =====================================
+// Load Attendance Settings
+// =====================================
+
+async function loadEmployeeAttendanceSettings() {
+
+    try {
+
+        const settingsReference =
+            doc(
+                db,
+                "systemSettings",
+                "attendance"
+            );
+
+        const settingsSnapshot =
+            await getDoc(
+                settingsReference
+            );
+
+        if (
+            !settingsSnapshot.exists()
+        ) {
+
+            return;
+
+        }
+
+
+        const settings =
+            settingsSnapshot.data();
+
+
+        standardWorkStartTime =
+            String(
+                settings.standardStartTime ??
+                "08:00"
+            ).trim();
+
+
+        unpaidBreakMinutes =
+            Number(
+                settings.unpaidBreakMinutes ??
+                30
+            );
+
+
+        if (
+            !Number.isFinite(
+                unpaidBreakMinutes
+            )
+            ||
+            unpaidBreakMinutes <
+            0
+        ) {
+
+            unpaidBreakMinutes =
+                30;
+
+        }
+
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Unable to load attendance settings:",
+            error
+        );
+
+        standardWorkStartTime =
+            "08:00";
+
+        unpaidBreakMinutes =
+            30;
+
+    }
+
+}
+
+// =====================================
+// Employee Attendance Profile
+// =====================================
+
+async function openAttendanceProfile(
+    employeeId
+) {
+
+    const employee =
+        findEmployee(
+            employeeId
+        );
+
+    if (
+        !employee
+    ) {
+
+        showNotification(
+            "❌ Employee could not be found.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    currentAttendanceProfileEmployee =
+    employee;
+
+attendanceProfilePeriod.value =
+    "this-month";
+
+
+    attendanceProfileName.textContent =
+        employee.name ??
+        "Employee Attendance Profile";
+
+    attendanceProfileDetails.textContent =
+        `${employee.employeeNumber ?? "-"} • ${employee.department ?? "Unassigned"} • ${employee.role ?? "-"}`;
+
+
+    profileAttendanceHistory.innerHTML = `
+        <tr>
+            <td
+                colspan="5"
+                class="empty-row"
+            >
+                Loading attendance history...
+            </td>
+        </tr>
+    `;
+
+
+    attendanceProfileModal.classList.add(
+        "active"
+    );
+
+
+    try {
+
+        const attendanceQuery =
+            query(
+                collection(
+                    db,
+                    "attendance"
+                ),
+                where(
+                    "employeeNumber",
+                    "==",
+                    employee.employeeNumber
+                )
+            );
+
+        const attendanceSnapshot =
+            await getDocs(
+                attendanceQuery
+            );
+
+        const attendanceRecords =
+            attendanceSnapshot.docs.map(
+                function (
+                    attendanceDocument
+                ) {
+
+                    return {
+
+                        id:
+                            attendanceDocument.id,
+
+                        ...attendanceDocument.data()
+
+                    };
+
+                }
+            );
+
+
+        attendanceRecords.sort(
+            function (
+                firstRecord,
+                secondRecord
+            ) {
+
+                return String(
+                    secondRecord.dateKey ??
+                    secondRecord.date ??
+                    ""
+                ).localeCompare(
+                    String(
+                        firstRecord.dateKey ??
+                        firstRecord.date ??
+                        ""
+                    )
+                );
+
+            }
+        );
+
+
+        currentAttendanceProfileRecords =
+    attendanceRecords;
+
+refreshAttendanceProfile();
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Attendance profile error:",
+            error
+        );
+
+        profileAttendanceHistory.innerHTML = `
+            <tr>
+                <td
+                    colspan="5"
+                    class="empty-row"
+                >
+                    Attendance history could not be loaded.
+                </td>
+            </tr>
+        `;
+
+    }
+
+}
+
+// =====================================
+// Refresh Attendance Profile
+// =====================================
+
+function refreshAttendanceProfile() {
+
+    if (
+        !currentAttendanceProfileEmployee
+    ) {
+
+        return;
+
+    }
+
+
+    const selectedPeriod =
+        attendanceProfilePeriod.value;
+
+
+    const filteredRecords =
+        filterAttendanceProfileRecords(
+            currentAttendanceProfileRecords,
+            selectedPeriod
+        );
+
+
+    displayAttendanceProfileHistory(
+        filteredRecords.slice(
+            0,
+            10
+        )
+    );
+
+
+    updateAttendanceProfileSummary(
+        filteredRecords
+    );
+
+}
+
+// =====================================
+// Calculate Profile Expected Minutes
+// =====================================
+
+function calculateProfileExpectedMinutes() {
+
+    if (
+        !currentAttendanceProfileEmployee
+        ||
+        !attendanceProfilePeriod
+    ) {
+
+        return 0;
+
+    }
+
+
+    const employee =
+        currentAttendanceProfileEmployee;
+
+    const startTime =
+        String(
+            employee.startTime ??
+            "08:00"
+        );
+
+    const endTime =
+        String(
+            employee.endTime ??
+            "17:00"
+        );
+
+
+    const startParts =
+        startTime
+            .split(":")
+            .map(Number);
+
+    const endParts =
+        endTime
+            .split(":")
+            .map(Number);
+
+
+    if (
+        startParts.length < 2
+        ||
+        endParts.length < 2
+        ||
+        startParts.some(
+            Number.isNaN
+        )
+        ||
+        endParts.some(
+            Number.isNaN
+        )
+    ) {
+
+        return 0;
+
+    }
+
+
+    const dailyStartMinutes =
+        (
+            startParts[0] *
+            60
+        )
+        +
+        startParts[1];
+
+    const dailyEndMinutes =
+        (
+            endParts[0] *
+            60
+        )
+        +
+        endParts[1];
+
+
+    const elapsedScheduledMinutes =
+    dailyEndMinutes -
+    dailyStartMinutes;
+
+const scheduledMinutesPerDay =
+    Math.max(
+        0,
+        elapsedScheduledMinutes -
+        unpaidBreakMinutes
+    );
+
+
+    if (
+        scheduledMinutesPerDay <=
+        0
+    ) {
+
+        return 0;
+
+    }
+
+
+    const period =
+        attendanceProfilePeriod.value;
+
+    const today =
+        new Date();
+
+    today.setHours(
+        0,
+        0,
+        0,
+        0
+    );
+
+
+    let periodStart =
+        new Date(
+            today
+        );
+
+    let periodEnd =
+        new Date(
+            today
+        );
+
+
+    switch (
+        period
+    ) {
+
+        case "this-week": {
+
+            const day =
+                today.getDay();
+
+            const daysSinceMonday =
+                day ===
+                0
+                    ?
+                    6
+                    :
+                    day -
+                    1;
+
+            periodStart.setDate(
+                today.getDate() -
+                daysSinceMonday
+            );
+
+            break;
+
+        }
+
+
+        case "this-month":
+
+            periodStart =
+                new Date(
+                    today.getFullYear(),
+                    today.getMonth(),
+                    1
+                );
+
+            break;
+
+
+        case "last-month":
+
+            periodStart =
+                new Date(
+                    today.getFullYear(),
+                    today.getMonth() -
+                    1,
+                    1
+                );
+
+            periodEnd =
+                new Date(
+                    today.getFullYear(),
+                    today.getMonth(),
+                    0
+                );
+
+            break;
+
+
+        case "last-3-months":
+
+            periodStart =
+                new Date(
+                    today
+                );
+
+            periodStart.setMonth(
+                periodStart.getMonth() -
+                3
+            );
+
+            break;
+
+
+        case "this-year":
+
+            periodStart =
+                new Date(
+                    today.getFullYear(),
+                    0,
+                    1
+                );
+
+            break;
+
+
+        case "last-12-months":
+
+            periodStart =
+                new Date(
+                    today
+                );
+
+            periodStart.setFullYear(
+                periodStart.getFullYear() -
+                1
+            );
+
+            break;
+
+
+        case "all-time": {
+
+            /*
+                We cannot reliably calculate expected
+                all-time hours without an employee
+                employment/start date.
+            */
+
+            if (
+                profileExpectedHours
+            ) {
+
+                profileExpectedHours.textContent =
+                    "Expected hours unavailable";
+
+            }
+
+            return 0;
+
+        }
+
+    }
+
+
+    let workingDays =
+        0;
+
+    const currentDate =
+        new Date(
+            periodStart
+        );
+
+
+    while (
+        currentDate <=
+        periodEnd
+    ) {
+
+        const dayOfWeek =
+            currentDate.getDay();
+
+
+        // Monday - Friday only
+
+        if (
+            dayOfWeek !==
+            0
+            &&
+            dayOfWeek !==
+            6
+        ) {
+
+            workingDays++;
+
+        }
+
+
+        currentDate.setDate(
+            currentDate.getDate() +
+            1
+        );
+
+    }
+
+
+    return (
+        workingDays *
+        scheduledMinutesPerDay
+    );
+
+}
+
+// =====================================
+// Filter Attendance Profile Records
+// =====================================
+
+function filterAttendanceProfileRecords(
+    records,
+    selectedPeriod
+) {
+
+    if (
+        selectedPeriod ===
+        "all-time"
+    ) {
+
+        return records;
+
+    }
+
+
+    const today =
+        new Date();
+
+    today.setHours(
+        23,
+        59,
+        59,
+        999
+    );
+
+
+    let startDate =
+        new Date(
+            today
+        );
+
+    let endDate =
+        new Date(
+            today
+        );
+
+
+    switch (
+        selectedPeriod
+    ) {
+
+
+        // =====================================
+        // This Week
+        // =====================================
+
+        case "this-week": {
+
+            const currentDay =
+                today.getDay();
+
+            const daysSinceMonday =
+                currentDay ===
+                0
+                    ?
+                    6
+                    :
+                    currentDay -
+                    1;
+
+            startDate =
+                new Date(
+                    today
+                );
+
+            startDate.setDate(
+                today.getDate()
+                -
+                daysSinceMonday
+            );
+
+            startDate.setHours(
+                0,
+                0,
+                0,
+                0
+            );
+
+            break;
+
+        }
+
+
+        // =====================================
+        // This Month
+        // =====================================
+
+        case "this-month": {
+
+            startDate =
+                new Date(
+                    today.getFullYear(),
+                    today.getMonth(),
+                    1
+                );
+
+            break;
+
+        }
+
+
+        // =====================================
+        // Last Month
+        // =====================================
+
+        case "last-month": {
+
+            startDate =
+                new Date(
+                    today.getFullYear(),
+                    today.getMonth() -
+                    1,
+                    1
+                );
+
+            endDate =
+                new Date(
+                    today.getFullYear(),
+                    today.getMonth(),
+                    0,
+                    23,
+                    59,
+                    59,
+                    999
+                );
+
+            break;
+
+        }
+
+
+        // =====================================
+        // Last 3 Months
+        // =====================================
+
+        case "last-3-months": {
+
+            startDate =
+                new Date(
+                    today
+                );
+
+            startDate.setMonth(
+                startDate.getMonth() -
+                3
+            );
+
+            startDate.setHours(
+                0,
+                0,
+                0,
+                0
+            );
+
+            break;
+
+        }
+
+
+        // =====================================
+        // This Year
+        // =====================================
+
+        case "this-year": {
+
+            startDate =
+                new Date(
+                    today.getFullYear(),
+                    0,
+                    1
+                );
+
+            break;
+
+        }
+
+
+        // =====================================
+        // Last 12 Months
+        // =====================================
+
+        case "last-12-months": {
+
+            startDate =
+                new Date(
+                    today
+                );
+
+            startDate.setFullYear(
+                startDate.getFullYear() -
+                1
+            );
+
+            startDate.setHours(
+                0,
+                0,
+                0,
+                0
+            );
+
+            break;
+
+        }
+
+
+        default: {
+
+            return records;
+
+        }
+
+    }
+
+
+    return records.filter(
+        function (
+            record
+        ) {
+
+            const dateKey =
+                record.dateKey ??
+                record.date;
+
+            if (
+                !dateKey
+            ) {
+
+                return false;
+
+            }
+
+
+            const recordDate =
+                new Date(
+                    `${dateKey}T00:00:00`
+                );
+
+
+            if (
+                Number.isNaN(
+                    recordDate.getTime()
+                )
+            ) {
+
+                return false;
+
+            }
+
+
+            return (
+                recordDate >=
+                startDate
+                &&
+                recordDate <=
+                endDate
+            );
+
+        }
+    );
+
+}
+
+
+function closeAttendanceProfile() {
+
+    if (
+        !attendanceProfileModal
+    ) {
+
+        return;
+
+    }
+
+    attendanceProfileModal.classList.remove(
+        "active"
+    );
+
+}
+
+// =====================================
+// Update Attendance Profile Summary
+// =====================================
+
+function updateAttendanceProfileSummary(
+    records
+) {
+
+    const totalRecords =
+        records.length;
+
+    const lateRecords =
+        records.filter(
+            function (
+                record
+            ) {
+
+                return (
+                    String(
+                        record.status ??
+                        ""
+                    )
+                        .trim()
+                        .toLowerCase() ===
+                    "late"
+                );
+
+            }
+        );
+
+    const absentRecords =
+        records.filter(
+            function (
+                record
+            ) {
+
+                return (
+                    String(
+                        record.status ??
+                        ""
+                    )
+                        .trim()
+                        .toLowerCase() ===
+                    "absent"
+                );
+
+            }
+        );
+
+    const earlyExitRecords =
+        records.filter(
+            function (
+                record
+            ) {
+
+                return (
+                    record.earlyExit ===
+                    true
+                );
+
+            }
+        );
+
+
+    let totalWorkedMinutes =
+        0;
+
+    let workedDayCount =
+        0;
+
+
+    records.forEach(
+        function (
+            record
+        ) {
+
+            const workedMinutes =
+                calculateProfileWorkedMinutes(
+                    record
+                );
+
+            if (
+                workedMinutes ===
+                null
+            ) {
+
+                return;
+
+            }
+
+            totalWorkedMinutes +=
+                workedMinutes;
+
+            workedDayCount++;
+
+        }
+    );
+
+
+    const attendedRecords =
+        records.filter(
+            function (
+                record
+            ) {
+
+                const status =
+                    String(
+                        record.status ??
+                        ""
+                    )
+                        .trim()
+                        .toLowerCase();
+
+                return (
+                    status ===
+                    "on time"
+                    ||
+                    status ===
+                    "late"
+                );
+
+            }
+        ).length;
+
+
+    const attendancePercentage =
+        totalRecords >
+        0
+            ?
+            Math.round(
+                (
+                    attendedRecords /
+                    totalRecords
+                ) *
+                100
+            )
+            :
+            0;
+
+
+    const averageMinutes =
+        workedDayCount >
+        0
+            ?
+            Math.round(
+                totalWorkedMinutes /
+                workedDayCount
+            )
+            :
+            0;
+
+
+    profileAttendanceRate.textContent =
+        `${attendancePercentage}%`;
+
+    profileAverageHours.textContent =
+        formatProfileMinutes(
+            averageMinutes
+        );
+
+    profileLateCount.textContent =
+        lateRecords.length;
+
+    profileAbsentCount.textContent =
+        absentRecords.length;
+
+    profileEarlyExitCount.textContent =
+        earlyExitRecords.length;
+
+    profileTotalHours.textContent =
+        formatProfileMinutes(
+            totalWorkedMinutes
+        );
+
+        // =====================================
+// Expected Hours
+// =====================================
+
+const expectedMinutes =
+    calculateProfileExpectedMinutes();
+
+if (
+    profileExpectedHours
+) {
+
+    profileExpectedHours.textContent =
+        `${formatProfileMinutes(
+            expectedMinutes
+        )} expected`;
+
+}
+
+}
+
+// =====================================
+// Calculate Profile Worked Minutes
+// =====================================
+
+function calculateProfileWorkedMinutes(
+    record
+) {
+
+    const checkInTimestamp =
+        record.scanTimestamp;
+
+    const checkOutTimestamp =
+        record.checkOutTimestamp;
+
+
+    // =====================================
+    // Preferred Firebase Timestamp Method
+    // =====================================
+
+    if (
+        checkInTimestamp &&
+        checkOutTimestamp &&
+        typeof checkInTimestamp.toDate ===
+            "function" &&
+        typeof checkOutTimestamp.toDate ===
+            "function"
+    ) {
+
+        const actualCheckInDate =
+            checkInTimestamp.toDate();
+
+        const checkOutDate =
+            checkOutTimestamp.toDate();
+
+
+        const standardStartParts =
+            String(
+                standardWorkStartTime
+            )
+                .split(":")
+                .map(Number);
+
+
+        const standardStartDate =
+            new Date(
+                actualCheckInDate
+            );
+
+        standardStartDate.setHours(
+            standardStartParts[0],
+            standardStartParts[1],
+            0,
+            0
+        );
+
+
+        const effectiveCheckInDate =
+            actualCheckInDate <
+            standardStartDate
+                ?
+                standardStartDate
+                :
+                actualCheckInDate;
+
+
+        const differenceMilliseconds =
+            checkOutDate.getTime()
+            -
+            effectiveCheckInDate.getTime();
+
+
+        if (
+            differenceMilliseconds >=
+            0
+        ) {
+
+            const elapsedMinutes =
+                Math.floor(
+                    differenceMilliseconds /
+                    60000
+                );
+
+
+            let totalMinutes =
+                elapsedMinutes;
+
+
+            // =====================================
+            // Deduct Unpaid Break
+            // =====================================
+
+            if (
+                elapsedMinutes >=
+                360
+            ) {
+
+                totalMinutes =
+                    Math.max(
+                        0,
+                        elapsedMinutes -
+                        unpaidBreakMinutes
+                    );
+
+            }
+
+
+            return totalMinutes;
+
+        }
+
+    }
+
+
+    // =====================================
+    // Fallback For Older Records
+    // =====================================
+
+    if (
+        record.time &&
+        record.checkOutTime
+    ) {
+
+        const checkInParts =
+            String(
+                record.time
+            )
+                .split(":")
+                .map(Number);
+
+        const checkOutParts =
+            String(
+                record.checkOutTime
+            )
+                .split(":")
+                .map(Number);
+
+
+        if (
+            checkInParts.length <
+                2
+            ||
+            checkOutParts.length <
+                2
+            ||
+            checkInParts.some(
+                Number.isNaN
+            )
+            ||
+            checkOutParts.some(
+                Number.isNaN
+            )
+        ) {
+
+            return null;
+
+        }
+
+
+        const actualCheckInMinutes =
+            (
+                checkInParts[0] *
+                60
+            )
+            +
+            checkInParts[1];
+
+
+        const standardStartParts =
+            String(
+                standardWorkStartTime
+            )
+                .split(":")
+                .map(Number);
+
+
+        const standardStartMinutes =
+            (
+                standardStartParts[0] *
+                60
+            )
+            +
+            standardStartParts[1];
+
+
+        const effectiveCheckInMinutes =
+            Math.max(
+                actualCheckInMinutes,
+                standardStartMinutes
+            );
+
+
+        const checkOutMinutes =
+            (
+                checkOutParts[0] *
+                60
+            )
+            +
+            checkOutParts[1];
+
+
+        const elapsedMinutes =
+            checkOutMinutes -
+            effectiveCheckInMinutes;
+
+
+        if (
+            elapsedMinutes <
+            0
+        ) {
+
+            return null;
+
+        }
+
+
+        let totalMinutes =
+            elapsedMinutes;
+
+
+        // =====================================
+        // Deduct Unpaid Break
+        // =====================================
+
+        if (
+            elapsedMinutes >=
+            360
+        ) {
+
+            totalMinutes =
+                Math.max(
+                    0,
+                    elapsedMinutes -
+                    unpaidBreakMinutes
+                );
+
+        }
+
+
+        return totalMinutes;
+
+    }
+
+
+    return null;
+
+}
+
+
+// =====================================
+// Format Profile Minutes
+// =====================================
+
+function formatProfileMinutes(
+    totalMinutes
+) {
+
+    const hours =
+        Math.floor(
+            totalMinutes /
+            60
+        );
+
+    const minutes =
+        totalMinutes %
+        60;
+
+    return (
+        hours
+        +
+        "h "
+        +
+        String(
+            minutes
+        ).padStart(
+            2,
+            "0"
+        )
+        +
+        "m"
+    );
+
+}
+
+// =====================================
+// Display Attendance Profile History
+// =====================================
+
+function displayAttendanceProfileHistory(
+    records
+) {
+
+    profileAttendanceHistory.innerHTML =
+        "";
+
+    if (
+        records.length ===
+        0
+    ) {
+
+        profileAttendanceHistory.innerHTML = `
+            <tr>
+                <td
+                    colspan="5"
+                    class="empty-row"
+                >
+                    No attendance history found.
+                </td>
+            </tr>
+        `;
+
+        return;
+
+    }
+
+
+    records.forEach(
+        function (
+            record
+        ) {
+
+            const row =
+                document.createElement(
+                    "tr"
+                );
+
+            const statusClass =
+                createStatusClass(
+                    record.status
+                );
+
+            row.innerHTML = `
+
+                <td>
+                    ${escapeHtml(
+                        record.dateKey ??
+                        record.date ??
+                        "-"
+                    )}
+                </td>
+
+                <td>
+                    ${escapeHtml(
+                        record.time ??
+                        "-"
+                    )}
+                </td>
+
+                <td>
+                    ${escapeHtml(
+                        record.checkOutTime ??
+                        "Still at work"
+                    )}
+                </td>
+
+                <td>
+    ${escapeHtml(
+        formatProfileRecordHours(
+            record
+        )
+    )}
+</td>
+
+                <td>
+
+                    <span
+                        class="status-badge ${statusClass}"
+                    >
+                        ${escapeHtml(
+                            record.status ??
+                            "Unknown"
+                        )}
+                    </span>
+
+                </td>
+
+            `;
+
+            profileAttendanceHistory.appendChild(
+                row
+            );
+
+        }
+    );
+
+}
+
+// =====================================
+// Format Profile Record Hours
+// =====================================
+
+function formatProfileRecordHours(
+    record
+) {
+
+    if (
+        !record.checkOutTime &&
+        !record.checkOutTimestamp
+    ) {
+
+        return "In progress";
+
+    }
+
+
+    const workedMinutes =
+        calculateProfileWorkedMinutes(
+            record
+        );
+
+
+    if (
+        workedMinutes ===
+        null
+    ) {
+
+        return "Not available";
+
+    }
+
+
+    return formatProfileMinutes(
+        workedMinutes
     );
 
 }
@@ -1856,6 +3513,31 @@ async function saveEmployeeStatus() {
         );
 
     }
+
+}
+
+// =====================================
+// Create Status CSS Class
+// =====================================
+
+function createStatusClass(
+    status
+) {
+
+    return `status-${String(
+        status ??
+        "unknown"
+    )
+        .trim()
+        .toLowerCase()
+        .replace(
+            /\s+/g,
+            "-"
+        )
+        .replace(
+            /[^a-z0-9-]/g,
+            ""
+        )}`;
 
 }
 

@@ -189,251 +189,317 @@
             </section>
 
 
-            <!-- =====================================
-                 Report Summary
-            ====================================== -->
-
-            <!-- =====================================
-     Report Summary
+           
+<!-- =====================================
+     Report Filters
 ====================================== -->
 
 <section class="employee-table-section">
 
-                <div class="report-filters">
+    <div class="report-filters">
 
-                    <div class="form-group">
+        <div class="form-group">
 
-                        <label for="reportStartDate">
-                            Start Date
-                        </label>
+            <label for="reportStartDate">
+                Start Date
+            </label>
 
-                        <input
-                            type="date"
-                            id="reportStartDate"
-                        >
+            <input
+                type="date"
+                id="reportStartDate"
+            >
 
-                    </div>
+        </div>
 
-                    <div class="form-group">
 
-                        <label for="reportEndDate">
-                            End Date
-                        </label>
+        <div class="form-group">
 
-                        <input
-                            type="date"
-                            id="reportEndDate"
-                        >
+            <label for="reportEndDate">
+                End Date
+            </label>
 
-                    </div>
+            <input
+                type="date"
+                id="reportEndDate"
+            >
 
-                    <div class="form-group">
+        </div>
 
-                        <label for="employeeFilter">
-                            Employee
-                        </label>
 
-                        <select id="employeeFilter">
+        <div class="form-group">
 
-                            <option value="">
-                                All Employees
-                            </option>
+            <label for="employeeFilter">
+                Employee
+            </label>
 
-                        </select>
+            <select id="employeeFilter">
 
-                    </div>
+                <option value="">
+                    All Employees
+                </option>
 
-                    <div class="form-group">
+            </select>
 
-                        <label for="departmentFilter">
+        </div>
+
+
+        <div class="form-group">
+
+            <label for="departmentFilter">
+                Department
+            </label>
+
+            <select id="departmentFilter">
+
+                <option value="">
+                    All Departments
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label for="statusFilter">
+                Status
+            </label>
+
+            <select id="statusFilter">
+
+                <option value="">
+                    All Statuses
+                </option>
+
+                <option value="On Time">
+                    On Time
+                </option>
+
+                <option value="Late">
+                    Late
+                </option>
+
+                <option value="Absent">
+                    Absent
+                </option>
+
+                <option value="Sick Leave">
+                    Sick Leave
+                </option>
+
+                <option value="Annual Leave">
+                    Annual Leave
+                </option>
+
+                <option value="Maternity Leave">
+                    Maternity Leave
+                </option>
+
+                <option value="Family Responsibility Leave">
+                    Family Responsibility Leave
+                </option>
+
+                <option value="Unpaid Leave">
+                    Unpaid Leave
+                </option>
+
+                <option value="Public Holiday">
+                    Public Holiday
+                </option>
+
+                <option value="Work From Home">
+                    Work From Home
+                </option>
+
+                <option value="Business Trip">
+                    Business Trip
+                </option>
+
+                <option value="Training">
+                    Training
+                </option>
+
+                <option value="Medical Appointment">
+                    Medical Appointment
+                </option>
+
+                <option value="Half Day">
+                    Half Day
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <button
+            type="button"
+            class="refresh-btn"
+            id="generateReportButton"
+        >
+            Generate Report
+        </button>
+
+
+        <button
+            type="button"
+            class="refresh-btn"
+            id="exportCsvButton"
+        >
+            Export CSV
+        </button>
+
+
+        <button
+            type="button"
+            class="refresh-btn"
+            id="printReportButton"
+        >
+            Print Report
+        </button>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================
+     Attendance Records
+====================================== -->
+
+<section class="employee-table-section collapsible-section">
+
+    <div class="table-header collapsible-header">
+
+        <h2>
+            Attendance Records
+        </h2>
+
+        <button
+            type="button"
+            class="section-toggle-btn"
+            data-target="attendanceRecordsContent"
+            aria-expanded="false"
+        >
+            Expand
+        </button>
+
+    </div>
+
+
+    <div
+        id="attendanceRecordsContent"
+        class="collapsible-content collapsed"
+    >
+
+        <div class="employee-table-container">
+
+            <table class="attendance-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Date
+                        </th>
+
+                        <th>
+                            Employee Number
+                        </th>
+
+                        <th>
+                            Employee Name
+                        </th>
+
+                        <th>
                             Department
-                        </label>
+                        </th>
 
-                        <select id="departmentFilter">
+                        <th>
+                            Check In
+                        </th>
 
-                            <option value="">
-                                All Departments
-                            </option>
+                        <th>
+                            Check Out
+                        </th>
 
-                        </select>
+                        <th>
+                            Hours Worked
+                        </th>
 
-                    </div>
-
-                    <div class="form-group">
-
-                        <label for="statusFilter">
+                        <th>
                             Status
-                        </label>
+                        </th>
 
-                        <select id="statusFilter">
+                        <th>
+                            Late Reason
+                        </th>
 
-                            <option value="">
-                                All Statuses
-                            </option>
+                        <th>
+                            Early Exit
+                        </th>
 
-                            <option value="On Time">
-                                On Time
-                            </option>
+                        <th>
+                            Early Exit Reason
+                        </th>
 
-                            <option value="Late">
-                                Late
-                            </option>
+                    </tr>
 
-                            <option value="Absent">
-                                Absent
-                            </option>
+                </thead>
 
-                            <option value="Sick Leave">
-                                Sick Leave
-                            </option>
 
-                            <option value="Annual Leave">
-                                Annual Leave
-                            </option>
+                <tbody id="reportTableBody">
 
-                            <option value="Maternity Leave">
-                                Maternity Leave
-                            </option>
+                    <tr>
 
-                            <option value="Family Responsibility Leave">
-                                Family Responsibility Leave
-                            </option>
+                        <td
+                            colspan="11"
+                            class="empty-row"
+                        >
+                            Select a date range and generate a report.
+                        </td>
 
-                            <option value="Unpaid Leave">
-                                Unpaid Leave
-                            </option>
+                    </tr>
 
-                            <option value="Public Holiday">
-                                Public Holiday
-                            </option>
+                </tbody>
 
-                            <option value="Work From Home">
-                                Work From Home
-                            </option>
+            </table>
 
-                            <option value="Business Trip">
-                                Business Trip
-                            </option>
+        </div>
 
-                            <option value="Training">
-                                Training
-                            </option>
+        <div
+    class="report-pagination"
+    id="reportPagination"
+    hidden
+>
 
-                            <option value="Medical Appointment">
-                                Medical Appointment
-                            </option>
+    <button
+        type="button"
+        class="pagination-btn"
+        id="previousReportPageButton"
+    >
+        Previous
+    </button>
 
-                            <option value="Half Day">
-                                Half Day
-                            </option>
+    <span id="reportPageInfo">
+        Page 1 of 1
+    </span>
 
-                        </select>
+    <button
+        type="button"
+        class="pagination-btn"
+        id="nextReportPageButton"
+    >
+        Next
+    </button>
 
-                    </div>
+</div>
 
-                    <button
-                        type="button"
-                        class="refresh-btn"
-                        id="generateReportButton"
-                    >
-                        Generate Report
-                    </button>
+    </div>
 
-                    <button
-                        type="button"
-                        class="refresh-btn"
-                        id="exportCsvButton"
-                    >
-                        Export CSV
-                    </button>
-
-                    <button
-                        type="button"
-                        class="refresh-btn"
-                        id="printReportButton"
-                    >
-                        Print Report
-                    </button>
-
-                </div>
-
-                <div class="employee-table-container">
-
-                    <table class="attendance-table">
-
-                        <thead>
-
-                            <tr>
-
-                                <th>
-                                    Date
-                                </th>
-
-                                <th>
-                                    Employee Number
-                                </th>
-
-                                <th>
-                                    Employee Name
-                                </th>
-
-                                <th>
-                                    Department
-                                </th>
-
-                                <th>
-                                    Check In
-                                </th>
-                                
-                                <th>
-                                    Check Out
-                                </th>
-
-                                <th>
-                                    Hours Worked
-                                </th>
-
-                                <th>
-                                    Status
-                                </th>
-
-                                <th>
-                                    Late Reason
-                                </th>
-
-                                <th>
-                                    Early Exit
-                                </th>
-
-                                <th>
-                                    Early Exit Reason
-                                </th>
-
-                                
-                            </tr>
-
-                        </thead>
-
-                        <tbody id="reportTableBody">
-
-                            <tr>
-
-                                <td
-                                    colspan="11"
-                                    class="empty-row"
-                                >
-                                    Select a date range and generate a report.
-                                </td>
-
-                            </tr>
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-            </section>
+</section>
 
 <!-- =====================================
      Report Summary
@@ -773,6 +839,8 @@
 <span>
     Attendance Rate
 </span>
+
+<span>Performance Status</span>
 
 </div>
 

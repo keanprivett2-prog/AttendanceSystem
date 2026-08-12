@@ -56,6 +56,11 @@ const standardStartTimeInput =
         "standardEndTime"
     );
 
+    const unpaidBreakMinutesInput =
+    document.getElementById(
+        "unpaidBreakMinutes"
+    );
+
 const lateThresholdInput =
     document.getElementById(
         "lateThreshold"
@@ -578,16 +583,20 @@ async function loadSettings() {
             "";
 
         standardStartTimeInput.value =
-            settings.standardStartTime ??
-            "08:00";
+    settings.standardStartTime ??
+    "08:00";
 
-            standardEndTimeInput.value =
+standardEndTimeInput.value =
     settings.standardEndTime ??
-    "17:00";
+    "16:30";
 
-        lateThresholdInput.value =
-            settings.lateThreshold ??
-            "08:15";
+unpaidBreakMinutesInput.value =
+    settings.unpaidBreakMinutes ??
+    30;
+
+lateThresholdInput.value =
+    settings.lateThreshold ??
+    "08:15";
 
 
         // =====================================
@@ -1719,6 +1728,11 @@ async function saveSettings(
         const standardEndTime =
     standardEndTimeInput.value;
 
+    const unpaidBreakMinutes =
+    Number(
+        unpaidBreakMinutesInput.value
+    );
+
     if (
     !standardStartTime ||
     !standardEndTime
@@ -1743,6 +1757,27 @@ if (
     );
 
     return;
+}
+
+if (
+    !Number.isFinite(
+        unpaidBreakMinutes
+    )
+    ||
+    unpaidBreakMinutes <
+    0
+    ||
+    unpaidBreakMinutes >
+    240
+) {
+
+    showMessage(
+        "Please enter a valid unpaid break between 0 and 240 minutes.",
+        "error"
+    );
+
+    return;
+
 }
 
     const lateThreshold =
@@ -1969,13 +2004,16 @@ if (
                     companyName,
 
                 standardStartTime:
-                    standardStartTime,
+    standardStartTime,
 
-                    standardEndTime:
+standardEndTime:
     standardEndTime,
 
-                lateThreshold:
-                    lateThreshold,
+unpaidBreakMinutes:
+    unpaidBreakMinutes,
+
+lateThreshold:
+    lateThreshold,
 
                 workingDays:
                     workingDays,

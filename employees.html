@@ -275,239 +275,245 @@
     </div>
 
 
-    <!-- =====================================
-         Add / Edit Employee Modal
-    ====================================== -->
+   <!-- =====================================
+     Add / Edit Employee Modal
+====================================== -->
 
-    <div
-        class="modal-overlay"
-        id="employeeModal"
-    >
+<div
+    class="modal-overlay"
+    id="employeeModal"
+>
 
-        <div class="employee-modal">
+    <div class="employee-modal">
 
-            <div class="modal-header">
+        <div class="modal-header">
 
-                <div>
+            <div>
 
-                    <h2>
-                        Add Employee
-                    </h2>
+                <h2>
+                    Add Employee
+                </h2>
 
-                    <p>
-                        Create or update an employee profile.
-                    </p>
+                <p>
+                    Create or update an employee profile.
+                </p>
+
+            </div>
+
+            <button
+                type="button"
+                class="modal-close"
+                id="closeEmployeeModal"
+                aria-label="Close employee form"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <form
+            id="employeeForm"
+            name="employeeManagement"
+            autocomplete="off"
+            data-lpignore="true"
+            data-form-type="other"
+        >
+
+            <div class="form-grid">
+
+
+                <!-- Employee Number -->
+
+                <div class="form-group">
+
+                    <label for="employeeNumber">
+                        Employee Number
+                    </label>
+
+                    <input
+                        type="text"
+                        id="employeeNumber"
+                        autocomplete="off"
+                        autocorrect="off"
+                        autocapitalize="off"
+                        spellcheck="false"
+                        required
+                    >
 
                 </div>
 
+
+                <!-- Employee Name -->
+
+                <div class="form-group">
+
+                    <label for="employeeName">
+                        Full Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="employeeName"
+                        autocomplete="off"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- Employee Role -->
+
+                <div class="form-group">
+
+                    <label for="employeeRole">
+                        Role
+                    </label>
+
+                    <select
+                        id="employeeRole"
+                        required
+                    >
+
+                        <option value="">
+                            Select role
+                        </option>
+
+                    </select>
+
+                    <small>
+                        Employee roles are managed under Settings.
+                    </small>
+
+                </div>
+
+
+                <!-- Employee Department -->
+
+                <div class="form-group">
+
+                    <label for="employeeDepartment">
+                        Department
+                    </label>
+
+                    <select
+                        id="employeeDepartment"
+                        required
+                    >
+
+                        <option value="">
+                            Select department
+                        </option>
+
+                    </select>
+
+                    <small>
+                        Departments are managed under Settings.
+                    </small>
+
+                </div>
+
+
+                <!-- Employee Start Time -->
+
+                <div class="form-group">
+
+                    <label for="employeeStartTime">
+                        Start Time
+                    </label>
+
+                    <input
+                        type="time"
+                        id="employeeStartTime"
+                        required
+                    >
+
+                    <small>
+                        The employee will be considered late after their configured start time.
+                    </small>
+
+                </div>
+
+
+                <!-- Employee End Time -->
+
+                <div class="form-group">
+
+                    <label for="employeeEndTime">
+                        End Time
+                    </label>
+
+                    <input
+                        type="time"
+                        id="employeeEndTime"
+                        required
+                    >
+
+                    <small>
+                        The employee's normal scheduled finishing time.
+                    </small>
+
+                </div>
+
+
+                <!-- Employee PIN -->
+
+                <div class="form-group">
+
+                    <label for="employeePin">
+                        PIN
+                    </label>
+
+                    <input
+                        type="text"
+                        id="employeePin"
+                        name="employeeAccessPin"
+                        maxlength="6"
+                        inputmode="numeric"
+                        autocomplete="one-time-code"
+                        autocorrect="off"
+                        autocapitalize="off"
+                        spellcheck="false"
+                        data-lpignore="true"
+                        pattern="[0-9]{4,6}"
+                        required
+                    >
+
+                    <small>
+                        Enter a numeric PIN containing 4 to 6 digits.
+                    </small>
+
+                </div>
+
+
+            </div>
+
+
+            <div class="modal-actions">
+
                 <button
                     type="button"
-                    class="modal-close"
-                    id="closeEmployeeModal"
-                    aria-label="Close employee form"
+                    class="cancel-btn"
+                    id="cancelEmployeeButton"
                 >
-                    ×
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="save-employee-btn"
+                    id="saveEmployeeButton"
+                >
+                    Save Employee
                 </button>
 
             </div>
 
-            <form
-                id="employeeForm"
-                name="employeeManagement"
-                autocomplete="off"
-                data-lpignore="true"
-                data-form-type="other"
-            >
-
-                <div class="form-grid">
-
-                    <div class="form-group">
-
-                        <label for="employeeNumber">
-                            Employee Number
-                        </label>
-
-                        <input
-                            type="text"
-                            id="employeeNumber"
-                            autocomplete="off"
-                            autocorrect="off"
-                            autocapitalize="off"
-                            spellcheck="false"
-                            required
-                        >
-
-                    </div>
-
-                    <div class="form-group">
-
-                        <label for="employeeName">
-                            Full Name
-                        </label>
-
-                        <input
-                            type="text"
-                            id="employeeName"
-                            autocomplete="off"
-                            required
-                        >
-
-                    </div>
-
-                    <div class="form-group">
-
-                        <!-- =====================================
-     Employee Role
-====================================== -->
-
-<div class="form-group">
-
-    <label for="employeeRole">
-        Role
-    </label>
-
-    <select
-        id="employeeRole"
-        required
-    >
-
-        <option value="">
-            Select role
-        </option>
-
-    </select>
-
-    <small>
-        Employee roles are managed under Settings.
-    </small>
-
-</div>
-
-
-<!-- =====================================
-     Employee Department
-====================================== -->
-
-<div class="form-group">
-
-    <label for="employeeDepartment">
-        Department
-    </label>
-
-    <select
-        id="employeeDepartment"
-        required
-    >
-
-        <option value="">
-            Select department
-        </option>
-
-    </select>
-
-    <small>
-        Departments are managed under Settings.
-    </small>
-
-</div>
-
-                    <div class="form-group">
-
-                        <!-- =====================================
-     Employee Working Hours
-====================================== -->
-
-<div class="form-group">
-
-    <label for="employeeStartTime">
-        Start Time
-    </label>
-
-    <input
-        type="time"
-        id="employeeStartTime"
-        required
-    >
-
-    <small>
-        The employee will be considered late after their configured start time.
-    </small>
-
-</div>
-
-<div class="form-group">
-
-    <label for="employeeEndTime">
-        End Time
-    </label>
-
-    <input
-        type="time"
-        id="employeeEndTime"
-        required
-    >
-
-    <small>
-        The employee's normal scheduled finishing time.
-    </small>
-
-</div>
-
-                        <div class="form-group">
-
-                        <label for="employeePin">
-                            PIN
-                        </label>
-
-                        <input
-                            type="text"
-                            id="employeePin"
-                            name="employeeAccessPin"
-                            maxlength="6"
-                            inputmode="numeric"
-                            autocomplete="one-time-code"
-                            autocorrect="off"
-                            autocapitalize="off"
-                            spellcheck="false"
-                            data-lpignore="true"
-                            pattern="[0-9]{4,6}"
-                            required
-                        >
-
-                        <small>
-                            Enter a numeric PIN containing 4 to 6 digits.
-                        </small>
-
-                    </div>
-
-                </div>
-
-                <div class="modal-actions">
-
-                    <button
-                        type="button"
-                        class="cancel-btn"
-                        id="cancelEmployeeButton"
-                    >
-                        Cancel
-                    </button>
-
-                    <button
-                        type="submit"
-                        class="save-employee-btn"
-                        id="saveEmployeeButton"
-                    >
-                        Save Employee
-                    </button>
-
-                </div>
-
-            </form>
-
-        </div>
+        </form>
 
     </div>
 
+</div>
 
     <!-- =====================================
          Delete Employee Modal
@@ -736,6 +742,299 @@
         </div>
 
     </div>
+
+    <!-- =====================================
+     Employee Attendance Profile Modal
+====================================== -->
+
+<div
+    class="modal-overlay"
+    id="attendanceProfileModal"
+>
+
+    <div class="employee-modal attendance-profile-modal">
+
+        <div class="modal-header">
+
+            <div>
+
+                <h2 id="attendanceProfileName">
+                    Employee Attendance Profile
+                </h2>
+
+                <p id="attendanceProfileDetails">
+                    Attendance and performance overview.
+                </p>
+
+            </div>
+
+            <!-- =====================================
+     Attendance Period
+====================================== -->
+
+<div class="attendance-profile-period">
+
+    <label for="attendanceProfilePeriod">
+        Attendance Period
+    </label>
+
+    <select id="attendanceProfilePeriod">
+
+        <option value="this-week">
+            This Week
+        </option>
+
+        <option
+            value="this-month"
+            selected
+        >
+            This Month
+        </option>
+
+        <option value="last-month">
+            Last Month
+        </option>
+
+        <option value="last-3-months">
+            Last 3 Months
+        </option>
+
+        <option value="this-year">
+            This Year
+        </option>
+
+        <option value="last-12-months">
+            Last 12 Months
+        </option>
+
+        <option value="all-time">
+            All Time
+        </option>
+
+    </select>
+
+</div>
+
+
+            <button
+                type="button"
+                class="modal-close"
+                id="closeAttendanceProfileModal"
+                aria-label="Close attendance profile"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <!-- =====================================
+             Profile Summary
+        ====================================== -->
+
+        <div class="attendance-profile-summary">
+
+            <div class="attendance-profile-card">
+
+                <span>
+                    Attendance Rate
+                </span>
+
+                <strong id="profileAttendanceRate">
+                    -
+                </strong>
+
+            </div>
+
+
+            <div class="attendance-profile-card">
+
+                <span>
+                    Average Hours / Day
+                </span>
+
+                <strong id="profileAverageHours">
+                    -
+                </strong>
+
+            </div>
+
+
+            <div class="attendance-profile-card">
+
+                <span>
+                    Late Arrivals
+                </span>
+
+                <strong id="profileLateCount">
+                    -
+                </strong>
+
+            </div>
+
+
+            <div class="attendance-profile-card">
+
+                <span>
+                    Absences
+                </span>
+
+                <strong id="profileAbsentCount">
+                    -
+                </strong>
+
+            </div>
+
+
+            <div class="attendance-profile-card">
+
+                <span>
+                    Early Exits
+                </span>
+
+                <strong id="profileEarlyExitCount">
+                    -
+                </strong>
+
+            </div>
+
+
+            <div class="attendance-profile-card">
+
+                <span>
+                    Total Hours
+                </span>
+
+                <strong id="profileTotalHours">
+                    -
+                </strong>
+
+                <small id="profileExpectedHours">
+    -
+</small>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================
+             Performance Status
+        ====================================== -->
+
+        <div class="attendance-profile-section">
+
+            <div class="attendance-profile-section-header">
+
+                <h3>
+                    Performance Status
+                </h3>
+
+                <span
+                    id="profilePerformanceStatus"
+                    class="performance-status-cell"
+                >
+                    -
+                </span>
+
+            </div>
+
+
+            <div
+                id="profilePerformanceReasons"
+                class="attendance-profile-reasons"
+            >
+                No performance information available.
+            </div>
+
+        </div>
+
+
+        <!-- =====================================
+             Recent Attendance
+        ====================================== -->
+
+        <div class="attendance-profile-section">
+
+            <h3>
+                Recent Attendance
+            </h3>
+
+
+            <div class="employee-table-container">
+
+                <table class="attendance-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Date
+                            </th>
+
+                            <th>
+                                Check In
+                            </th>
+
+                            <th>
+                                Check Out
+                            </th>
+
+                            <th>
+                                Hours
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="profileAttendanceHistory">
+
+                        <tr>
+
+                            <td
+                                colspan="5"
+                                class="empty-row"
+                            >
+                                Select an employee to view attendance history.
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================
+             Close
+        ====================================== -->
+
+        <div class="modal-actions">
+
+            <button
+                type="button"
+                class="cancel-btn"
+                id="closeAttendanceProfileButton"
+            >
+                Close
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
 
 
     <!-- =====================================
