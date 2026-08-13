@@ -25,13 +25,18 @@
 
     <div class="login-card">
 
+
+        <!-- =====================================
+             Page Heading
+        ====================================== -->
+
         <h1>
             Employee Attendance
         </h1>
 
         <p>
-    Enter your Employee Number and PIN to check in or check out.
-</p>
+            Enter your Employee Number and PIN to check in or check out.
+        </p>
 
 
         <!-- =====================================
@@ -67,15 +72,15 @@
 
 
         <!-- =====================================
-             Check In Button
+             Continue Button
         ====================================== -->
 
         <button
-    type="button"
-    id="checkInButton"
->
-    Continue
-</button>
+            type="button"
+            id="checkInButton"
+        >
+            Continue
+        </button>
 
 
         <!-- =====================================
@@ -86,7 +91,7 @@
 
 
         <!-- =====================================
-             Late Reason Section
+             Late Check-In Reason Section
         ====================================== -->
 
         <div
@@ -122,6 +127,7 @@
                 required
             ></textarea>
 
+
             <div class="late-reason-actions">
 
                 <button
@@ -140,206 +146,225 @@
 
             </div>
 
-            <p id="lateReasonMessage"></p>
+
+            <p
+                id="lateReasonMessage"
+                aria-live="polite"
+            ></p>
 
         </div>
 
+
         <!-- =====================================
-     Early Exit Reason Section
-====================================== -->
+             Early Check-Out Reason Section
+        ====================================== -->
 
-<div
-    id="earlyExitSection"
-    class="late-reason-section"
-    hidden
->
-
-    <h2>
-        Early Check-Out
-    </h2>
-
-    <p id="earlyExitIntro">
-        You are checking out before your scheduled end time.
-    </p>
-
-    <p>
-        Scheduled end time:
-        <strong id="scheduledEndTime">
-            --
-        </strong>
-    </p>
-
-    <p>
-        Current check-out time:
-        <strong id="earlyExitScanTime">
-            --
-        </strong>
-    </p>
-
-    <label for="earlyExitReason">
-        Reason for leaving early
-    </label>
-
-    <select
-        id="earlyExitReason"
-        required
-    >
-
-        <option value="">
-            Select reason
-        </option>
-
-        <option value="Sick">
-            Sick
-        </option>
-
-        <option value="Approved Half Day">
-            Approved Half Day
-        </option>
-
-        <option value="Annual Leave">
-            Annual Leave
-        </option>
-
-        <option value="Family Responsibility">
-            Family Responsibility
-        </option>
-
-        <option value="Medical Appointment">
-            Medical Appointment
-        </option>
-
-        <option value="Emergency">
-            Emergency
-        </option>
-
-        <option value="Manager Approved">
-            Manager Approved
-        </option>
-
-        <option value="Other">
-            Other
-        </option>
-
-    </select>
-
-    <!-- =====================================================
-     Late Check-Out Reason
-===================================================== -->
-
-<div
-    id="lateCheckOutSection"
-    hidden
->
-
-    <h3>
-        Late Check-Out
-    </h3>
-
-    <p>
-        Your scheduled end time is
-        <strong id="lateCheckOutScheduledEndTime">
-            -
-        </strong>
-    </p>
-
-    <p>
-        Your check-out time is
-        <strong id="lateCheckOutScanTime">
-            -
-        </strong>
-    </p>
-
-    <p>
-        You are checking out more than 15 minutes
-        after your scheduled end time.
-    </p>
-
-    <div class="form-group">
-
-        <label for="lateCheckOutReason">
-            Reason for late check-out
-        </label>
-
-        <textarea
-            id="lateCheckOutReason"
-            rows="4"
-            maxlength="500"
-            placeholder="Explain why you are checking out late..."
-        ></textarea>
-
-    </div>
-
-    <p
-        id="lateCheckOutMessage"
-        aria-live="polite"
-    ></p>
-
-    <div class="form-actions">
-
-        <button
-            type="button"
-            id="submitLateCheckOutButton"
+        <div
+            id="earlyExitSection"
+            class="late-reason-section"
+            hidden
         >
-            Submit Check-Out
-        </button>
 
-        <button
-            type="button"
-            id="cancelLateCheckOutButton"
+            <h2>
+                Early Check-Out
+            </h2>
+
+            <p id="earlyExitIntro">
+                You are checking out before your scheduled end time.
+            </p>
+
+
+            <p>
+                Scheduled end time:
+                <strong id="scheduledEndTime">
+                    --
+                </strong>
+            </p>
+
+
+            <p>
+                Current check-out time:
+                <strong id="earlyExitScanTime">
+                    --
+                </strong>
+            </p>
+
+
+            <label for="earlyExitReason">
+                Reason for leaving early
+            </label>
+
+
+            <select
+                id="earlyExitReason"
+                required
+            >
+
+                <option value="">
+                    Select reason
+                </option>
+
+                <option value="Sick">
+                    Sick
+                </option>
+
+                <option value="Approved Half Day">
+                    Approved Half Day
+                </option>
+
+                <option value="Annual Leave">
+                    Annual Leave
+                </option>
+
+                <option value="Family Responsibility">
+                    Family Responsibility
+                </option>
+
+                <option value="Medical Appointment">
+                    Medical Appointment
+                </option>
+
+                <option value="Emergency">
+                    Emergency
+                </option>
+
+                <option value="Manager Approved">
+                    Manager Approved
+                </option>
+
+                <option value="Other">
+                    Other
+                </option>
+
+            </select>
+
+
+            <!-- =====================================
+                 Early Exit Other Reason
+            ====================================== -->
+
+            <div
+                id="earlyExitOtherSection"
+                hidden
+            >
+
+                <label for="earlyExitNote">
+                    Additional details
+                </label>
+
+                <textarea
+                    id="earlyExitNote"
+                    rows="4"
+                    maxlength="500"
+                    placeholder="Please provide additional details"
+                ></textarea>
+
+            </div>
+
+
+            <div class="late-reason-actions">
+
+                <button
+                    type="button"
+                    id="submitEarlyExitButton"
+                >
+                    Submit Check-Out
+                </button>
+
+                <button
+                    type="button"
+                    id="cancelEarlyExitButton"
+                >
+                    Cancel
+                </button>
+
+            </div>
+
+
+            <p
+                id="earlyExitMessage"
+                aria-live="polite"
+            ></p>
+
+        </div>
+
+
+        <!-- =====================================
+             Late Check-Out Reason Section
+        ====================================== -->
+
+        <div
+            id="lateCheckOutSection"
+            class="late-reason-section"
+            hidden
         >
-            Cancel
-        </button>
 
-    </div>
-
-</div>
+            <h2>
+                Late Check-Out
+            </h2>
 
 
-    <!-- =====================================
-         Other Reason Note
-    ====================================== -->
-
-    <div
-        id="earlyExitOtherSection"
-        hidden
-    >
-
-        <label for="earlyExitNote">
-            Additional details
-        </label>
-
-        <textarea
-            id="earlyExitNote"
-            rows="4"
-            maxlength="500"
-            placeholder="Please provide additional details"
-        ></textarea>
-
-    </div>
+            <p>
+                You are checking out more than 15 minutes
+                after your scheduled end time.
+            </p>
 
 
-    <div class="late-reason-actions">
+            <p>
+                Scheduled end time:
+                <strong id="lateCheckOutScheduledEndTime">
+                    --
+                </strong>
+            </p>
 
-        <button
-            type="button"
-            id="submitEarlyExitButton"
-        >
-            Submit Check-Out
-        </button>
 
-        <button
-            type="button"
-            id="cancelEarlyExitButton"
-        >
-            Cancel
-        </button>
+            <p>
+                Current check-out time:
+                <strong id="lateCheckOutScanTime">
+                    --
+                </strong>
+            </p>
 
-    </div>
 
-    <p id="earlyExitMessage"></p>
+            <label for="lateCheckOutReason">
+                Reason for late check-out
+            </label>
 
-</div>
+
+            <textarea
+                id="lateCheckOutReason"
+                rows="4"
+                maxlength="500"
+                placeholder="Explain why you are checking out late..."
+                required
+            ></textarea>
+
+
+            <div class="late-reason-actions">
+
+                <button
+                    type="button"
+                    id="submitLateCheckOutButton"
+                >
+                    Submit Check-Out
+                </button>
+
+                <button
+                    type="button"
+                    id="cancelLateCheckOutButton"
+                >
+                    Cancel
+                </button>
+
+            </div>
+
+
+            <p
+                id="lateCheckOutMessage"
+                aria-live="polite"
+            ></p>
+
+        </div>
 
 
         <!-- =====================================
@@ -355,15 +380,21 @@
          Supporting Scripts
     ====================================== -->
 
-    <script src="js/employeeData.js"></script>
+    <script
+        src="js/employeeData.js"
+    ></script>
 
-    <script src="js/attendanceManager.js"></script>
+    <script
+        src="js/attendanceManager.js"
+    ></script>
 
-    <script src="js/deviceManager.js"></script>
+    <script
+        src="js/deviceManager.js"
+    ></script>
 
     <script
         type="module"
-        src="js/checkin.js?v=10"
+        src="js/checkin.js?v=11"
     ></script>
 
 </body>
