@@ -223,6 +223,78 @@
 
     </select>
 
+    <!-- =====================================================
+     Late Check-Out Reason
+===================================================== -->
+
+<div
+    id="lateCheckOutSection"
+    hidden
+>
+
+    <h3>
+        Late Check-Out
+    </h3>
+
+    <p>
+        Your scheduled end time is
+        <strong id="lateCheckOutScheduledEndTime">
+            -
+        </strong>
+    </p>
+
+    <p>
+        Your check-out time is
+        <strong id="lateCheckOutScanTime">
+            -
+        </strong>
+    </p>
+
+    <p>
+        You are checking out more than 15 minutes
+        after your scheduled end time.
+    </p>
+
+    <div class="form-group">
+
+        <label for="lateCheckOutReason">
+            Reason for late check-out
+        </label>
+
+        <textarea
+            id="lateCheckOutReason"
+            rows="4"
+            maxlength="500"
+            placeholder="Explain why you are checking out late..."
+        ></textarea>
+
+    </div>
+
+    <p
+        id="lateCheckOutMessage"
+        aria-live="polite"
+    ></p>
+
+    <div class="form-actions">
+
+        <button
+            type="button"
+            id="submitLateCheckOutButton"
+        >
+            Submit Check-Out
+        </button>
+
+        <button
+            type="button"
+            id="cancelLateCheckOutButton"
+        >
+            Cancel
+        </button>
+
+    </div>
+
+</div>
+
 
     <!-- =====================================
          Other Reason Note

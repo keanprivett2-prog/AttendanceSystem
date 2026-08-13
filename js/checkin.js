@@ -187,6 +187,45 @@ const earlyExitMessage =
         "earlyExitMessage"
     );
 
+    // =====================================================
+// Late Check-Out Elements
+// =====================================================
+
+const lateCheckOutSection =
+    document.getElementById(
+        "lateCheckOutSection"
+    );
+
+const lateCheckOutScheduledEndTime =
+    document.getElementById(
+        "lateCheckOutScheduledEndTime"
+    );
+
+const lateCheckOutScanTime =
+    document.getElementById(
+        "lateCheckOutScanTime"
+    );
+
+const lateCheckOutReason =
+    document.getElementById(
+        "lateCheckOutReason"
+    );
+
+const submitLateCheckOutButton =
+    document.getElementById(
+        "submitLateCheckOutButton"
+    );
+
+const cancelLateCheckOutButton =
+    document.getElementById(
+        "cancelLateCheckOutButton"
+    );
+
+const lateCheckOutMessage =
+    document.getElementById(
+        "lateCheckOutMessage"
+    );
+
 
 // =====================================================
 // QR Scan State
@@ -215,11 +254,33 @@ let pendingLateCheckIn =
 let pendingEarlyCheckOut =
     null;
 
+    // Holds a late check-out while the employee
+// provides a mandatory reason for staying late.
 
-// Five-minute grace period before scheduled end time.
+let pendingLateCheckOut =
+    null;
+
+
+// Zero-minute grace period before scheduled end time.
 
 const EARLY_EXIT_GRACE_MINUTES =
-    5;
+    0;
+
+    // =====================================================
+// Late Check-Out Grace Period
+// =====================================================
+
+// Employees may check out up to 15 minutes
+// after their scheduled end time without
+// being asked for a late check-out reason.
+//
+// Example:
+// Scheduled end: 17:00
+// 17:00 - 17:15 = Normal
+// After 17:15 = Late check-out reason required.
+
+const LATE_CHECKOUT_GRACE_MINUTES =
+    15;
 
 
 // =====================================================
@@ -275,6 +336,16 @@ cancelEarlyExitButton.addEventListener(
     cancelEarlyExit
 );
 
+submitLateCheckOutButton.addEventListener(
+    "click",
+    submitLateCheckOut
+);
+
+cancelLateCheckOutButton.addEventListener(
+    "click",
+    cancelLateCheckOut
+);
+
 earlyExitSection.hidden =
     true;
 
@@ -283,6 +354,9 @@ earlyExitOtherSection.hidden =
 
     lateReasonSection.hidden =
         true;
+
+        lateCheckOutSection.hidden =
+    true;
 
     message.style.color =
         "#0b5ed7";
@@ -1295,11 +1369,29 @@ async function beginCheckOut(
     // =================================================
 
     const employeeEndTime =
+    String(
         employee.endTime
         ||
         attendanceRecord.scheduledEndTime
         ||
-        "";
+        ""
+    ).trim();
+
+console.log(
+    "CHECKOUT TEST:",
+    {
+        actualCheckOutTime:
+            checkOutTime.toLocaleTimeString(
+                "en-ZA"
+            ),
+
+        employeeEndTime:
+            employeeEndTime,
+
+        graceMinutes:
+            LATE_CHECKOUT_GRACE_MINUTES
+    }
+);
 
     if (
         !employeeEndTime
@@ -1393,6 +1485,80 @@ async function beginCheckOut(
 
     }
 
+    // =================================================
+// Check For Late Check-Out
+// =================================================
+
+const isLateCheckOut =
+    isCheckOutLate(
+        checkOutTime,
+        employeeEndTime
+    );
+
+if (
+    isLateCheckOut
+) {
+
+    pendingLateCheckOut = {
+
+        employee:
+            employee,
+
+        attendanceRecord:
+            attendanceRecord,
+
+        checkOutTime:
+            checkOutTime,
+
+        scheduledEndTime:
+            employeeEndTime
+
+    };
+
+    lateCheckOutScheduledEndTime.textContent =
+        employeeEndTime;
+
+    lateCheckOutScanTime.textContent =
+        checkOutTime.toLocaleTimeString(
+            "en-ZA"
+        );
+
+    lateCheckOutReason.value =
+        "";
+
+    lateCheckOutMessage.textContent =
+        "";
+
+    lateCheckOutSection.hidden =
+        false;
+
+    employeeNumberInput.disabled =
+        true;
+
+    pinInput.disabled =
+        true;
+
+    checkInButton.disabled =
+        true;
+
+    message.style.color =
+        "orange";
+
+    message.innerHTML =
+        "⚠️ You are checking out more than "
+        +
+        LATE_CHECKOUT_GRACE_MINUTES
+        +
+        " minutes after your scheduled end time."
+        +
+        "<br>Please provide a reason before check-out can be completed.";
+
+    lateCheckOutReason.focus();
+
+    return;
+
+}
+
 
     // =================================================
     // Normal Check-Out
@@ -1457,6 +1623,164 @@ function isCheckOutEarly(
     return (
         checkOutTime <
         earlyExitCutoff
+    );
+
+}
+
+// =====================================================
+// Late Check-Out Check
+// =====================================================
+
+function isCheckOutLate(
+    checkOutTime,
+    scheduledEndTimeValue
+) {
+
+    const timeValue =
+        String(
+            scheduledEndTimeValue ??
+            ""
+        ).trim();
+
+
+    const timeParts =
+        timeValue
+            .split(":")
+            .map(Number);
+
+
+    if (
+        timeParts.length <
+        2
+        ||
+        !Number.isFinite(
+            timeParts[0]
+        )
+        ||
+        !Number.isFinite(
+            timeParts[1]
+        )
+    ) {
+
+        console.error(
+            "Invalid scheduled end time:",
+            scheduledEndTimeValue
+        );
+
+        return false;
+
+    }
+
+
+    const endHour =
+        timeParts[0];
+
+    const endMinute =
+        timeParts[1];
+
+
+    const scheduledEnd =
+        new Date(
+            checkOutTime
+        );
+
+
+    scheduledEnd.setHours(
+        endHour,
+        endMinute,
+        0,
+        0
+    );
+
+
+    const lateCheckOutCutoff =
+        new Date(
+            scheduledEnd.getTime()
+            +
+            (
+                LATE_CHECKOUT_GRACE_MINUTES
+                *
+                60
+                *
+                1000
+            )
+        );
+
+
+    console.log(
+        "LATE CHECKOUT CHECK:",
+        {
+            actual:
+                checkOutTime,
+
+            scheduledEnd:
+                scheduledEnd,
+
+            cutoff:
+                lateCheckOutCutoff,
+
+            isLate:
+                checkOutTime >
+                lateCheckOutCutoff
+        }
+    );
+
+
+    return (
+        checkOutTime >
+        lateCheckOutCutoff
+    );
+
+}
+
+// =====================================================
+// Calculate Late Check-Out Minutes
+// =====================================================
+
+function calculateLateCheckoutMinutes(
+    checkOutTime,
+    scheduledEndTimeValue
+) {
+
+    const [
+        endHour,
+        endMinute
+    ] =
+        String(
+            scheduledEndTimeValue
+        )
+            .split(":")
+            .map(Number);
+
+    const scheduledEnd =
+        new Date(
+            checkOutTime
+        );
+
+    scheduledEnd.setHours(
+        endHour,
+        endMinute,
+        0,
+        0
+    );
+
+    const differenceMilliseconds =
+        checkOutTime.getTime()
+        -
+        scheduledEnd.getTime();
+
+    if (
+        differenceMilliseconds <=
+        0
+    ) {
+
+        return 0;
+
+    }
+
+    return Math.floor(
+        differenceMilliseconds /
+        60000
     );
 
 }
@@ -1660,6 +1984,182 @@ function cancelEarlyExit() {
 
     message.innerHTML =
         "Check-out cancelled.";
+
+}
+
+// =====================================================
+// Submit Late Check-Out
+// =====================================================
+
+async function submitLateCheckOut() {
+
+    if (
+        !pendingLateCheckOut
+    ) {
+
+        lateCheckOutMessage.style.color =
+            "red";
+
+        lateCheckOutMessage.textContent =
+            "No pending late check-out was found.";
+
+        return;
+
+    }
+
+    const reason =
+        lateCheckOutReason.value
+            .trim();
+
+    if (
+        reason ===
+        ""
+    ) {
+
+        lateCheckOutMessage.style.color =
+            "red";
+
+        lateCheckOutMessage.textContent =
+            "Please provide a reason for checking out late.";
+
+        lateCheckOutReason.focus();
+
+        return;
+
+    }
+
+    if (
+        reason.length <
+        3
+    ) {
+
+        lateCheckOutMessage.style.color =
+            "red";
+
+        lateCheckOutMessage.textContent =
+            "Please provide a valid reason.";
+
+        lateCheckOutReason.focus();
+
+        return;
+
+    }
+
+    try {
+
+        submitLateCheckOutButton.disabled =
+            true;
+
+        cancelLateCheckOutButton.disabled =
+            true;
+
+        submitLateCheckOutButton.textContent =
+            "Submitting...";
+
+        lateCheckOutMessage.style.color =
+            "#0b5ed7";
+
+        lateCheckOutMessage.textContent =
+            "Saving your check-out...";
+
+        const {
+            employee,
+            attendanceRecord,
+            checkOutTime,
+            scheduledEndTime
+        } =
+            pendingLateCheckOut;
+
+
+        const lateCheckoutMinutes =
+            calculateLateCheckoutMinutes(
+                checkOutTime,
+                scheduledEndTime
+            );
+
+
+        await saveCheckOut(
+            employee,
+            attendanceRecord,
+            checkOutTime,
+            false,
+            "",
+            "",
+            true,
+            reason,
+            lateCheckoutMinutes
+        );
+
+
+        pendingLateCheckOut =
+            null;
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Late check-out error:",
+            error
+        );
+
+        lateCheckOutMessage.style.color =
+            "red";
+
+        lateCheckOutMessage.textContent =
+            "Check-out could not be completed. Please try again.";
+
+    } finally {
+
+        submitLateCheckOutButton.disabled =
+            false;
+
+        cancelLateCheckOutButton.disabled =
+            false;
+
+        submitLateCheckOutButton.textContent =
+            "Submit Check-Out";
+
+    }
+
+}
+
+
+// =====================================================
+// Cancel Late Check-Out
+// =====================================================
+
+function cancelLateCheckOut() {
+
+    pendingLateCheckOut =
+        null;
+
+    lateCheckOutReason.value =
+        "";
+
+    lateCheckOutMessage.textContent =
+        "";
+
+    lateCheckOutSection.hidden =
+        true;
+
+    employeeNumberInput.disabled =
+        false;
+
+    pinInput.disabled =
+        false;
+
+    checkInButton.disabled =
+        false;
+
+    originalScanTime =
+        new Date();
+
+    message.style.color =
+        "#0b5ed7";
+
+    message.innerHTML =
+        "Late check-out cancelled.";
 
 }
 
@@ -1867,7 +2367,10 @@ async function saveCheckOut(
     checkOutTime,
     earlyExit,
     earlyExitReasonValue,
-    earlyExitNoteValue
+    earlyExitNoteValue,
+    lateCheckout = false,
+    lateCheckoutReasonValue = "",
+    lateCheckoutMinutes = 0
 ) {
 
     const attendanceReference =
@@ -1915,6 +2418,23 @@ async function saveCheckOut(
                     :
                     "",
 
+                    lateCheckout:
+    lateCheckout,
+
+lateCheckoutReason:
+    lateCheckout
+        ?
+        lateCheckoutReasonValue
+        :
+        "",
+
+lateCheckoutMinutes:
+    lateCheckout
+        ?
+        lateCheckoutMinutes
+        :
+        0,
+
             checkOutMethod:
                 "QR Code",
 
@@ -1926,6 +2446,9 @@ async function saveCheckOut(
 
     earlyExitSection.hidden =
         true;
+
+        lateCheckOutSection.hidden =
+    true;
 
     message.style.color =
         "green";
@@ -1975,12 +2498,33 @@ async function saveCheckOut(
 
     }
 
+    if (
+    lateCheckout
+) {
+
+    resultMessage +=
+        "<br>Late Check-Out: Yes"
+        +
+        "<br>Extra Time: "
+        +
+        lateCheckoutMinutes
+        +
+        " minutes"
+        +
+        "<br>Reason: "
+        +
+        escapeHtml(
+            lateCheckoutReasonValue
+        );
+
+}
+
     message.innerHTML =
         resultMessage;
 
     resetCheckInForm();
 
-}
+    }
 
 
 // =====================================================
@@ -2531,6 +3075,22 @@ earlyExitSection.hidden =
     true;
 
 pendingEarlyCheckOut =
+    null;
+
+    // =====================================================
+// Reset Late Check-Out
+// =====================================================
+
+lateCheckOutReason.value =
+    "";
+
+lateCheckOutMessage.textContent =
+    "";
+
+lateCheckOutSection.hidden =
+    true;
+
+pendingLateCheckOut =
     null;
 
     originalScanTime =

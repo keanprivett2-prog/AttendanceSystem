@@ -2543,6 +2543,70 @@ function calculateProfileExpectedMinutes() {
 
     }
 
+   // =====================================
+// Only Count Completed Working Days
+// =====================================
+
+const todayStart =
+    new Date();
+
+todayStart.setHours(
+    0,
+    0,
+    0,
+    0
+);
+
+
+// For current/live periods, do not count
+// today until the working day is complete.
+
+const currentPeriods =
+    [
+        "this-week",
+        "this-month",
+        "last-3-months",
+        "this-year",
+        "last-12-months"
+    ];
+
+
+if (
+    currentPeriods.includes(
+        period
+    )
+) {
+
+    const yesterdayEnd =
+        new Date(
+            todayStart
+        );
+
+    yesterdayEnd.setDate(
+        yesterdayEnd.getDate() -
+        1
+    );
+
+    yesterdayEnd.setHours(
+        23,
+        59,
+        59,
+        999
+    );
+
+
+    if (
+        periodEnd >
+        yesterdayEnd
+    ) {
+
+        periodEnd =
+            yesterdayEnd;
+
+    }
+
+}
+
 
     // =====================================
     // Leave Statuses
@@ -3405,9 +3469,9 @@ if (
 ) {
 
     profileExpectedHours.textContent =
-        `${formatProfileMinutes(
-            expectedMinutes
-        )} expected`;
+    formatProfileMinutes(
+        expectedMinutes
+    );
 
 }
 
