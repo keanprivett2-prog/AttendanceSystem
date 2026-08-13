@@ -146,6 +146,65 @@ const workSunday =
         "workSunday"
     );
 
+    // =====================================
+// Public Holiday Elements
+// =====================================
+
+const publicHolidayDateInput =
+    document.getElementById(
+        "publicHolidayDate"
+    );
+
+const publicHolidayNameInput =
+    document.getElementById(
+        "publicHolidayName"
+    );
+
+const publicHolidayRecurringInput =
+    document.getElementById(
+        "publicHolidayRecurring"
+    );
+
+const addPublicHolidayButton =
+    document.getElementById(
+        "addPublicHolidayButton"
+    );
+
+const publicHolidayList =
+    document.getElementById(
+        "publicHolidayList"
+    );
+
+    const automaticHolidayYear =
+    document.getElementById(
+        "automaticHolidayYear"
+    );
+
+const automaticHolidaySyncStatus =
+    document.getElementById(
+        "automaticHolidaySyncStatus"
+    );
+
+const automaticHolidayLastSync =
+    document.getElementById(
+        "automaticHolidayLastSync"
+    );
+
+const automaticHolidayCount =
+    document.getElementById(
+        "automaticHolidayCount"
+    );
+
+const syncSouthAfricanHolidaysButton =
+    document.getElementById(
+        "syncSouthAfricanHolidaysButton"
+    );
+
+const automaticHolidayList =
+    document.getElementById(
+        "automaticHolidayList"
+    );
+
 
 // =====================================
 // Attendance Behaviour Trend Elements
@@ -264,6 +323,15 @@ let departments =
 
 let employeeRoles =
     [];
+
+    let publicHolidays =
+    [];
+
+    let automaticPublicHolidays =
+    [];
+
+let automaticHolidaySyncData =
+    null;
 
 
 // =====================================
@@ -451,6 +519,80 @@ function initializeSettingsPage() {
 
     }
 
+    // =====================================
+// Public Holidays
+// =====================================
+
+if (
+    addPublicHolidayButton
+) {
+
+    addPublicHolidayButton.addEventListener(
+        "click",
+        addPublicHoliday
+    );
+
+}
+
+
+// =====================================
+// Automatic South African Holidays
+// =====================================
+
+if (
+    syncSouthAfricanHolidaysButton
+) {
+
+    syncSouthAfricanHolidaysButton.addEventListener(
+        "click",
+        function () {
+
+            syncSouthAfricanHolidays(
+                true
+            );
+
+        }
+    );
+
+}
+
+if (
+    publicHolidayNameInput
+) {
+
+    publicHolidayNameInput.addEventListener(
+        "keydown",
+        function (
+            event
+        ) {
+
+            if (
+                event.key ===
+                "Enter"
+            ) {
+
+                event.preventDefault();
+
+                addPublicHoliday();
+
+            }
+
+        }
+    );
+
+}
+
+if (
+    publicHolidayList
+) {
+
+    publicHolidayList.addEventListener(
+        "click",
+        handlePublicHolidayListClick
+    );
+
+}
+
 
     // =====================================
     // Collapsible Sections
@@ -476,7 +618,11 @@ function initializeSettingsPage() {
 
     loadSettings();
 
-    loadOrganisationStructure();
+loadOrganisationStructure();
+
+loadPublicHolidays();
+
+loadAutomaticSouthAfricanHolidays();
 
 }
 
@@ -1468,6 +1614,1243 @@ function renderEmployeeRoles() {
             );
 
             employeeRoleList.appendChild(
+                item
+            );
+
+        }
+    );
+
+}
+
+// =====================================
+// Load Public Holidays
+// =====================================
+
+async function loadPublicHolidays() {
+
+    try {
+
+        const holidaysReference =
+            doc(
+                db,
+                "systemSettings",
+                "holidays"
+            );
+
+        const holidaysSnapshot =
+            await getDoc(
+                holidaysReference
+            );
+
+        if (
+            !holidaysSnapshot.exists()
+        ) {
+
+            publicHolidays =
+                [];
+
+            renderPublicHolidays();
+
+            return;
+
+        }
+
+
+        const holidaysData =
+            holidaysSnapshot.data();
+
+
+        publicHolidays =
+            Array.isArray(
+                holidaysData.publicHolidays
+            )
+                ?
+                holidaysData.publicHolidays
+                :
+                [];
+
+
+        sortPublicHolidays();
+
+        renderPublicHolidays();
+
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Load public holidays error:",
+            error
+        );
+
+        showMessage(
+            "Public holidays could not be loaded.",
+            "error"
+        );
+
+    }
+
+}
+
+
+// =====================================
+// Save Public Holidays
+// =====================================
+
+async function savePublicHolidays() {
+
+    const holidaysReference =
+        doc(
+            db,
+            "systemSettings",
+            "holidays"
+        );
+
+
+    await setDoc(
+        holidaysReference,
+        {
+
+            publicHolidays:
+                publicHolidays
+
+        },
+        {
+            merge:
+                true
+        }
+    );
+
+}
+
+
+// =====================================
+// Sort Public Holidays
+// =====================================
+
+function sortPublicHolidays() {
+
+    publicHolidays.sort(
+        function (
+            firstHoliday,
+            secondHoliday
+        ) {
+
+            return String(
+                firstHoliday.date
+            ).localeCompare(
+                String(
+                    secondHoliday.date
+                )
+            );
+
+        }
+    );
+
+}
+
+
+// =====================================
+// Add Public Holiday
+// =====================================
+
+async function addPublicHoliday() {
+
+    if (
+        !publicHolidayDateInput ||
+        !publicHolidayNameInput
+    ) {
+
+        return;
+
+    }
+
+
+    const holidayDate =
+        publicHolidayDateInput.value;
+
+    const holidayName =
+        publicHolidayNameInput.value
+            .trim();
+
+    const recurring =
+        publicHolidayRecurringInput
+            ?
+            publicHolidayRecurringInput.checked
+            :
+            false;
+
+
+    if (
+        !holidayDate
+    ) {
+
+        showMessage(
+            "Please select a public holiday date.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    if (
+        holidayName ===
+        ""
+    ) {
+
+        showMessage(
+            "Please enter the public holiday name.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    const holidayExists =
+        publicHolidays.some(
+            function (
+                holiday
+            ) {
+
+                return (
+                    holiday.date ===
+                    holidayDate
+                );
+
+            }
+        );
+
+
+    if (
+        holidayExists
+    ) {
+
+        showMessage(
+            "A public holiday already exists on that date.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    const newHoliday =
+        {
+
+            date:
+                holidayDate,
+
+            name:
+                holidayName,
+
+            recurring:
+                recurring
+
+        };
+
+
+    try {
+
+        addPublicHolidayButton.disabled =
+            true;
+
+
+        publicHolidays.push(
+            newHoliday
+        );
+
+
+        sortPublicHolidays();
+
+
+        await savePublicHolidays();
+
+
+        publicHolidayDateInput.value =
+            "";
+
+        publicHolidayNameInput.value =
+            "";
+
+        if (
+            publicHolidayRecurringInput
+        ) {
+
+            publicHolidayRecurringInput.checked =
+                false;
+
+        }
+
+
+        renderPublicHolidays();
+
+
+        showMessage(
+            `"${holidayName}" added successfully.`,
+            "success"
+        );
+
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Add public holiday error:",
+            error
+        );
+
+
+        publicHolidays =
+            publicHolidays.filter(
+                function (
+                    holiday
+                ) {
+
+                    return (
+                        !(
+                            holiday.date ===
+                                holidayDate &&
+                            holiday.name ===
+                                holidayName
+                        )
+                    );
+
+                }
+            );
+
+
+        renderPublicHolidays();
+
+
+        showMessage(
+            "The public holiday could not be added.",
+            "error"
+        );
+
+
+    } finally {
+
+        addPublicHolidayButton.disabled =
+            false;
+
+    }
+
+}
+
+
+// =====================================
+// Public Holiday List Click
+// =====================================
+
+function handlePublicHolidayListClick(
+    event
+) {
+
+    const removeButton =
+        event.target.closest(
+            ".remove-public-holiday-btn"
+        );
+
+
+    if (
+        !removeButton
+    ) {
+
+        return;
+
+    }
+
+
+    const holidayDate =
+        removeButton.dataset.date;
+
+
+    removePublicHoliday(
+        holidayDate
+    );
+
+}
+
+
+// =====================================
+// Remove Public Holiday
+// =====================================
+
+async function removePublicHoliday(
+    holidayDate
+) {
+
+    const holiday =
+        publicHolidays.find(
+            function (
+                item
+            ) {
+
+                return (
+                    item.date ===
+                    holidayDate
+                );
+
+            }
+        );
+
+
+    if (
+        !holiday
+    ) {
+
+        return;
+
+    }
+
+
+    const confirmed =
+        confirm(
+            `Remove "${holiday.name}" (${holiday.date})?`
+        );
+
+
+    if (
+        !confirmed
+    ) {
+
+        return;
+
+    }
+
+
+    const previousPublicHolidays =
+        [
+            ...publicHolidays
+        ];
+
+
+    try {
+
+        publicHolidays =
+            publicHolidays.filter(
+                function (
+                    item
+                ) {
+
+                    return (
+                        item.date !==
+                        holidayDate
+                    );
+
+                }
+            );
+
+
+        await savePublicHolidays();
+
+
+        renderPublicHolidays();
+
+
+        showMessage(
+            `"${holiday.name}" removed.`,
+            "success"
+        );
+
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Remove public holiday error:",
+            error
+        );
+
+
+        publicHolidays =
+            previousPublicHolidays;
+
+
+        renderPublicHolidays();
+
+
+        showMessage(
+            "The public holiday could not be removed.",
+            "error"
+        );
+
+    }
+
+}
+
+
+// =====================================
+// Render Public Holidays
+// =====================================
+
+function renderPublicHolidays() {
+
+    if (
+        !publicHolidayList
+    ) {
+
+        return;
+
+    }
+
+
+    publicHolidayList.innerHTML =
+        "";
+
+
+    if (
+        publicHolidays.length ===
+        0
+    ) {
+
+        publicHolidayList.innerHTML = `
+            <p class="empty-row">
+                No public holidays have been added yet.
+            </p>
+        `;
+
+        return;
+
+    }
+
+
+    publicHolidays.forEach(
+        function (
+            holiday
+        ) {
+
+            const item =
+                document.createElement(
+                    "div"
+                );
+
+            item.className =
+                "settings-list-item";
+
+
+            const details =
+                document.createElement(
+                    "span"
+                );
+
+
+            const formattedDate =
+                formatPublicHolidayDate(
+                    holiday.date
+                );
+
+
+            details.textContent =
+                `${formattedDate} — ${holiday.name}`;
+
+
+            if (
+                holiday.recurring
+            ) {
+
+                details.textContent +=
+                    " (Repeats yearly)";
+
+            }
+
+
+            const removeButton =
+                document.createElement(
+                    "button"
+                );
+
+            removeButton.type =
+                "button";
+
+            removeButton.className =
+                "remove-public-holiday-btn";
+
+            removeButton.dataset.date =
+                holiday.date;
+
+            removeButton.textContent =
+                "Remove";
+
+
+            item.appendChild(
+                details
+            );
+
+            item.appendChild(
+                removeButton
+            );
+
+
+            publicHolidayList.appendChild(
+                item
+            );
+
+        }
+    );
+
+}
+
+
+// =====================================
+// Format Public Holiday Date
+// =====================================
+
+function formatPublicHolidayDate(
+    dateValue
+) {
+
+    if (
+        !dateValue
+    ) {
+
+        return "";
+
+    }
+
+
+    const dateParts =
+        String(
+            dateValue
+        )
+            .split("-")
+            .map(Number);
+
+
+    if (
+        dateParts.length !==
+        3
+    ) {
+
+        return dateValue;
+
+    }
+
+
+    const date =
+        new Date(
+            dateParts[0],
+            dateParts[1] - 1,
+            dateParts[2]
+        );
+
+
+    return date.toLocaleDateString(
+        "en-ZA",
+        {
+            day:
+                "2-digit",
+
+            month:
+                "short",
+
+            year:
+                "numeric"
+        }
+    );
+
+}
+
+// =====================================
+// Load Automatic South African Holidays
+// =====================================
+
+async function loadAutomaticSouthAfricanHolidays() {
+
+    const currentYear =
+        new Date().getFullYear();
+
+    if (
+        automaticHolidayYear
+    ) {
+
+        automaticHolidayYear.textContent =
+            String(
+                currentYear
+            );
+
+    }
+
+
+    try {
+
+        const automaticReference =
+            doc(
+                db,
+                "systemSettings",
+                "automaticHolidays"
+            );
+
+        const automaticSnapshot =
+            await getDoc(
+                automaticReference
+            );
+
+
+        if (
+            automaticSnapshot.exists()
+        ) {
+
+            const data =
+                automaticSnapshot.data();
+
+            automaticHolidaySyncData =
+                data;
+
+            automaticPublicHolidays =
+                Array.isArray(
+                    data.holidays
+                )
+                    ?
+                    data.holidays
+                    :
+                    [];
+
+        } else {
+
+            automaticHolidaySyncData =
+                null;
+
+            automaticPublicHolidays =
+                [];
+
+        }
+
+
+        renderAutomaticPublicHolidays();
+
+        updateAutomaticHolidaySyncDisplay();
+
+
+        // =====================================
+        // Automatic Self-Healing Year Check
+        // =====================================
+
+        const syncedYear =
+            Number(
+                automaticHolidaySyncData?.year ??
+                0
+            );
+
+
+        if (
+            syncedYear !==
+            currentYear
+        ) {
+
+            await syncSouthAfricanHolidays(
+                false
+            );
+
+        }
+
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Load automatic holidays error:",
+            error
+        );
+
+        if (
+            automaticHolidaySyncStatus
+        ) {
+
+            automaticHolidaySyncStatus.textContent =
+                "Unable to load";
+
+        }
+
+    }
+
+}
+
+
+// =====================================
+// Sync South African Holidays
+// =====================================
+
+async function syncSouthAfricanHolidays(
+    forceSync = false
+) {
+
+    const currentYear =
+        new Date().getFullYear();
+
+
+    const alreadySynced =
+        Number(
+            automaticHolidaySyncData?.year ??
+            0
+        ) ===
+        currentYear;
+
+
+    if (
+        alreadySynced &&
+        !forceSync
+    ) {
+
+        return;
+
+    }
+
+
+    try {
+
+        if (
+            syncSouthAfricanHolidaysButton
+        ) {
+
+            syncSouthAfricanHolidaysButton.disabled =
+                true;
+
+            syncSouthAfricanHolidaysButton.textContent =
+                "Syncing...";
+
+        }
+
+
+        if (
+            automaticHolidaySyncStatus
+        ) {
+
+            automaticHolidaySyncStatus.textContent =
+                "Syncing...";
+
+        }
+
+
+        const response =
+            await fetch(
+                `https://date.nager.at/api/v4/Holidays/ZA/${currentYear}`
+            );
+
+
+        if (
+            !response.ok
+        ) {
+
+            throw new Error(
+                `Holiday API returned ${response.status}`
+            );
+
+        }
+
+
+        const apiHolidays =
+            await response.json();
+
+
+        if (
+            !Array.isArray(
+                apiHolidays
+            )
+            ||
+            apiHolidays.length ===
+            0
+        ) {
+
+            throw new Error(
+                "Holiday API returned no valid holidays."
+            );
+
+        }
+
+
+        // =====================================
+        // Keep National Public Holidays Only
+        // =====================================
+
+        const validatedHolidays =
+            apiHolidays
+                .filter(
+                    function (
+                        holiday
+                    ) {
+
+                        const holidayTypes =
+                            Array.isArray(
+                                holiday.holidayTypes
+                            )
+                                ?
+                                holiday.holidayTypes
+                                :
+                                [];
+
+                        return (
+                            holiday.date &&
+                            holiday.name &&
+                            holiday.countryCode ===
+                                "ZA" &&
+                            holiday.nationalHoliday ===
+                                true &&
+                            holidayTypes.includes(
+                                "Public"
+                            )
+                        );
+
+                    }
+                )
+                .map(
+                    function (
+                        holiday
+                    ) {
+
+                        return {
+
+                            date:
+                                holiday.date,
+
+                            name:
+                                holiday.name,
+
+                            countryCode:
+                                "ZA",
+
+                            source:
+                                "Nager.Date",
+
+                            automatic:
+                                true
+
+                        };
+
+                    }
+                );
+
+
+        if (
+            validatedHolidays.length ===
+            0
+        ) {
+
+            throw new Error(
+                "No valid South African public holidays were returned."
+            );
+
+        }
+
+
+        validatedHolidays.sort(
+            function (
+                firstHoliday,
+                secondHoliday
+            ) {
+
+                return String(
+                    firstHoliday.date
+                ).localeCompare(
+                    String(
+                        secondHoliday.date
+                    )
+                );
+
+            }
+        );
+
+
+        // =====================================
+        // Save Only After Successful Validation
+        // =====================================
+
+        const now =
+            new Date();
+
+        const syncTimestamp =
+            now.toISOString();
+
+
+        const automaticReference =
+            doc(
+                db,
+                "systemSettings",
+                "automaticHolidays"
+            );
+
+
+        const newSyncData =
+            {
+
+                year:
+                    currentYear,
+
+                countryCode:
+                    "ZA",
+
+                source:
+                    "Nager.Date",
+
+                lastSuccessfulSync:
+                    syncTimestamp,
+
+                holidayCount:
+                    validatedHolidays.length,
+
+                holidays:
+                    validatedHolidays
+
+            };
+
+
+        await setDoc(
+            automaticReference,
+            newSyncData,
+            {
+                merge:
+                    false
+            }
+        );
+
+
+        // =====================================
+        // Only Replace Local Data After
+        // Firestore Save Succeeds
+        // =====================================
+
+        automaticHolidaySyncData =
+            newSyncData;
+
+        automaticPublicHolidays =
+            validatedHolidays;
+
+
+        renderAutomaticPublicHolidays();
+
+        updateAutomaticHolidaySyncDisplay();
+
+
+        showMessage(
+            `${validatedHolidays.length} South African public holidays synced successfully.`,
+            "success"
+        );
+
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "South African holiday sync error:",
+            error
+        );
+
+
+        if (
+            automaticHolidaySyncStatus
+        ) {
+
+            automaticHolidaySyncStatus.textContent =
+                "Sync failed";
+
+        }
+
+
+        showMessage(
+            "South African public holidays could not be synced. Existing saved holiday data has been kept.",
+            "error"
+        );
+
+
+    } finally {
+
+        if (
+            syncSouthAfricanHolidaysButton
+        ) {
+
+            syncSouthAfricanHolidaysButton.disabled =
+                false;
+
+            syncSouthAfricanHolidaysButton.textContent =
+                "Sync South African Holidays Now";
+
+        }
+
+    }
+
+}
+
+
+// =====================================
+// Update Automatic Holiday Display
+// =====================================
+
+function updateAutomaticHolidaySyncDisplay() {
+
+    const currentYear =
+        new Date().getFullYear();
+
+
+    if (
+        automaticHolidayYear
+    ) {
+
+        automaticHolidayYear.textContent =
+            String(
+                currentYear
+            );
+
+    }
+
+
+    if (
+        automaticHolidayCount
+    ) {
+
+        automaticHolidayCount.textContent =
+            String(
+                automaticPublicHolidays.length
+            );
+
+    }
+
+
+    if (
+        automaticHolidaySyncStatus
+    ) {
+
+        const syncedYear =
+            Number(
+                automaticHolidaySyncData?.year ??
+                0
+            );
+
+        automaticHolidaySyncStatus.textContent =
+            syncedYear ===
+                currentYear
+                    ?
+                    "Synced"
+                    :
+                    "Not synced";
+
+    }
+
+
+    if (
+        automaticHolidayLastSync
+    ) {
+
+        const lastSync =
+            automaticHolidaySyncData
+                ?.lastSuccessfulSync;
+
+
+        if (
+            !lastSync
+        ) {
+
+            automaticHolidayLastSync.textContent =
+                "Never";
+
+        } else {
+
+            const syncDate =
+                new Date(
+                    lastSync
+                );
+
+            automaticHolidayLastSync.textContent =
+                syncDate.toLocaleString(
+                    "en-ZA"
+                );
+
+        }
+
+    }
+
+}
+
+
+// =====================================
+// Render Automatic Public Holidays
+// =====================================
+
+function renderAutomaticPublicHolidays() {
+
+    if (
+        !automaticHolidayList
+    ) {
+
+        return;
+
+    }
+
+
+    automaticHolidayList.innerHTML =
+        "";
+
+
+    if (
+        automaticPublicHolidays.length ===
+        0
+    ) {
+
+        automaticHolidayList.innerHTML = `
+            <p class="empty-row">
+                No automatic public holidays loaded yet.
+            </p>
+        `;
+
+        return;
+
+    }
+
+
+    automaticPublicHolidays.forEach(
+        function (
+            holiday
+        ) {
+
+            const item =
+                document.createElement(
+                    "div"
+                );
+
+            item.className =
+                "settings-list-item";
+
+
+            const details =
+                document.createElement(
+                    "span"
+                );
+
+
+            details.textContent =
+                `${formatPublicHolidayDate(
+                    holiday.date
+                )} — ${holiday.name}`;
+
+
+            const sourceBadge =
+                document.createElement(
+                    "small"
+                );
+
+            sourceBadge.textContent =
+                "Automatic";
+
+
+            item.appendChild(
+                details
+            );
+
+            item.appendChild(
+                sourceBadge
+            );
+
+
+            automaticHolidayList.appendChild(
                 item
             );
 

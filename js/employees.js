@@ -237,6 +237,11 @@ const profileExpectedHours =
         "profileExpectedHours"
     );
 
+    const profileHoursBalance =
+    document.getElementById(
+        "profileHoursBalance"
+    );
+
 
 // =====================================
 // Page State
@@ -268,6 +273,12 @@ let currentAttendanceProfileEmployee =
 
 let unpaidBreakMinutes =
     30;
+
+    let publicHolidays =
+    [];
+
+    let automaticPublicHolidays =
+    [];
 
 
 // =====================================
@@ -425,6 +436,8 @@ applySidebarPermissions();
 
     }
 
+   
+
     if (
     attendanceProfilePeriod
 ) {
@@ -522,8 +535,11 @@ if (
 
 loadEmployeeAttendanceSettings();
 
-loadEmployees();
+loadEmployeePublicHolidays();
 
+loadEmployeeAutomaticPublicHolidays();
+
+loadEmployees();
 }
 
 // =====================================
@@ -1666,6 +1682,324 @@ async function loadEmployeeAttendanceSettings() {
 
 }
 
+ // =====================================
+// Load Public Holidays
+// =====================================
+
+async function loadEmployeePublicHolidays() {
+
+    try {
+
+        const holidaysReference =
+            doc(
+                db,
+                "systemSettings",
+                "holidays"
+            );
+
+        const holidaysSnapshot =
+            await getDoc(
+                holidaysReference
+            );
+
+        if (
+            !holidaysSnapshot.exists()
+        ) {
+
+            publicHolidays =
+                [];
+
+            return;
+
+        }
+
+        const holidaysData =
+            holidaysSnapshot.data();
+
+        publicHolidays =
+            Array.isArray(
+                holidaysData.publicHolidays
+            )
+                ?
+                holidaysData.publicHolidays
+                :
+                [];
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Unable to load public holidays:",
+            error
+        );
+
+        publicHolidays =
+            [];
+
+    }
+
+}
+
+// =====================================
+// Load Automatic South African Holidays
+// =====================================
+
+async function loadEmployeeAutomaticPublicHolidays() {
+
+    try {
+
+        const automaticReference =
+            doc(
+                db,
+                "systemSettings",
+                "automaticHolidays"
+            );
+
+        const automaticSnapshot =
+            await getDoc(
+                automaticReference
+            );
+
+        if (
+            !automaticSnapshot.exists()
+        ) {
+
+            automaticPublicHolidays =
+                [];
+
+            return;
+
+        }
+
+        const automaticData =
+            automaticSnapshot.data();
+
+        automaticPublicHolidays =
+            Array.isArray(
+                automaticData.holidays
+            )
+                ?
+                automaticData.holidays
+                :
+                [];
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Unable to load automatic public holidays:",
+            error
+        );
+
+        automaticPublicHolidays =
+            [];
+
+    }
+
+}
+
+// =====================================
+// Check Public Holiday
+// Manual + Automatic + Sunday Rule
+// =====================================
+
+function isPublicHoliday(
+    date
+) {
+
+    const year =
+        date.getFullYear();
+
+    const month =
+        String(
+            date.getMonth() + 1
+        ).padStart(
+            2,
+            "0"
+        );
+
+    const day =
+        String(
+            date.getDate()
+        ).padStart(
+            2,
+            "0"
+        );
+
+    const dateKey =
+        `${year}-${month}-${day}`;
+
+    const monthDay =
+        `${month}-${day}`;
+
+
+    // =====================================
+    // Combine Manual + Automatic Holidays
+    // =====================================
+
+    const allPublicHolidays =
+        [
+            ...publicHolidays,
+            ...automaticPublicHolidays
+        ];
+
+
+    // =====================================
+    // Check Direct Holiday
+    // =====================================
+
+    const directHoliday =
+        allPublicHolidays.some(
+            function (
+                holiday
+            ) {
+
+                const holidayDate =
+                    String(
+                        holiday.date ??
+                        ""
+                    );
+
+
+                // Manual recurring holidays
+
+                if (
+                    holiday.recurring ===
+                    true
+                ) {
+
+                    return (
+                        holidayDate.slice(
+                            5
+                        ) ===
+                        monthDay
+                    );
+
+                }
+
+
+                // Automatic holidays and
+                // non-recurring manual holidays
+
+                return (
+                    holidayDate ===
+                    dateKey
+                );
+
+            }
+        );
+
+
+    if (
+        directHoliday
+    ) {
+
+        return true;
+
+    }
+
+
+    // =====================================
+    // South African Sunday -> Monday Rule
+    // =====================================
+
+    if (
+        date.getDay() ===
+        1
+    ) {
+
+        const previousDay =
+            new Date(
+                date
+            );
+
+        previousDay.setDate(
+            previousDay.getDate() -
+            1
+        );
+
+
+        const previousYear =
+            previousDay.getFullYear();
+
+        const previousMonth =
+            String(
+                previousDay.getMonth() + 1
+            ).padStart(
+                2,
+                "0"
+            );
+
+        const previousDate =
+            String(
+                previousDay.getDate()
+            ).padStart(
+                2,
+                "0"
+            );
+
+
+        const previousDateKey =
+            `${previousYear}-${previousMonth}-${previousDate}`;
+
+        const previousMonthDay =
+            `${previousMonth}-${previousDate}`;
+
+
+        const sundayWasPublicHoliday =
+            allPublicHolidays.some(
+                function (
+                    holiday
+                ) {
+
+                    const holidayDate =
+                        String(
+                            holiday.date ??
+                            ""
+                        );
+
+
+                    if (
+                        holiday.recurring ===
+                        true
+                    ) {
+
+                        return (
+                            holidayDate.slice(
+                                5
+                            ) ===
+                            previousMonthDay
+                        );
+
+                    }
+
+
+                    return (
+                        holidayDate ===
+                        previousDateKey
+                    );
+
+                }
+            );
+
+
+        if (
+            sundayWasPublicHoliday
+        ) {
+
+            return true;
+
+        }
+
+    }
+
+
+    return false;
+
+}
+
 // =====================================
 // Employee Attendance Profile
 // =====================================
@@ -1696,7 +2030,7 @@ async function openAttendanceProfile(
     employee;
 
 attendanceProfilePeriod.value =
-    "this-month";
+    "this-week";
 
 
     attendanceProfileName.textContent =
@@ -1871,14 +2205,20 @@ function calculateProfileExpectedMinutes() {
     }
 
 
+    // =====================================
+    // Employee Schedule
+    // =====================================
+
     const employee =
         currentAttendanceProfileEmployee;
+
 
     const startTime =
         String(
             employee.startTime ??
             "08:00"
         );
+
 
     const endTime =
         String(
@@ -1892,6 +2232,7 @@ function calculateProfileExpectedMinutes() {
             .split(":")
             .map(Number);
 
+
     const endParts =
         endTime
             .split(":")
@@ -1899,9 +2240,11 @@ function calculateProfileExpectedMinutes() {
 
 
     if (
-        startParts.length < 2
+        startParts.length <
+        2
         ||
-        endParts.length < 2
+        endParts.length <
+        2
         ||
         startParts.some(
             Number.isNaN
@@ -1925,6 +2268,7 @@ function calculateProfileExpectedMinutes() {
         +
         startParts[1];
 
+
     const dailyEndMinutes =
         (
             endParts[0] *
@@ -1935,15 +2279,16 @@ function calculateProfileExpectedMinutes() {
 
 
     const elapsedScheduledMinutes =
-    dailyEndMinutes -
-    dailyStartMinutes;
+        dailyEndMinutes -
+        dailyStartMinutes;
 
-const scheduledMinutesPerDay =
-    Math.max(
-        0,
-        elapsedScheduledMinutes -
-        unpaidBreakMinutes
-    );
+
+    const scheduledMinutesPerDay =
+        Math.max(
+            0,
+            elapsedScheduledMinutes -
+            unpaidBreakMinutes
+        );
 
 
     if (
@@ -1956,11 +2301,17 @@ const scheduledMinutesPerDay =
     }
 
 
+    // =====================================
+    // Selected Profile Period
+    // =====================================
+
     const period =
         attendanceProfilePeriod.value;
 
+
     const today =
         new Date();
+
 
     today.setHours(
         0,
@@ -1975,6 +2326,7 @@ const scheduledMinutesPerDay =
             today
         );
 
+
     let periodEnd =
         new Date(
             today
@@ -1985,10 +2337,16 @@ const scheduledMinutesPerDay =
         period
     ) {
 
+
+        // =====================================
+        // This Week
+        // =====================================
+
         case "this-week": {
 
             const day =
                 today.getDay();
+
 
             const daysSinceMonday =
                 day ===
@@ -1999,17 +2357,57 @@ const scheduledMinutesPerDay =
                     day -
                     1;
 
+
+            periodStart =
+                new Date(
+                    today
+                );
+
+
             periodStart.setDate(
                 today.getDate() -
                 daysSinceMonday
             );
+
+
+            periodStart.setHours(
+                0,
+                0,
+                0,
+                0
+            );
+
+
+            periodEnd =
+                new Date(
+                    periodStart
+                );
+
+
+            periodEnd.setDate(
+                periodStart.getDate() +
+                6
+            );
+
+
+            periodEnd.setHours(
+                23,
+                59,
+                59,
+                999
+            );
+
 
             break;
 
         }
 
 
-        case "this-month":
+        // =====================================
+        // This Month
+        // =====================================
+
+        case "this-month": {
 
             periodStart =
                 new Date(
@@ -2018,10 +2416,17 @@ const scheduledMinutesPerDay =
                     1
                 );
 
+
             break;
 
+        }
 
-        case "last-month":
+
+        // =====================================
+        // Last Month
+        // =====================================
+
+        case "last-month": {
 
             periodStart =
                 new Date(
@@ -2031,6 +2436,7 @@ const scheduledMinutesPerDay =
                     1
                 );
 
+
             periodEnd =
                 new Date(
                     today.getFullYear(),
@@ -2038,25 +2444,40 @@ const scheduledMinutesPerDay =
                     0
                 );
 
+
             break;
 
+        }
 
-        case "last-3-months":
+
+        // =====================================
+        // Last 3 Months
+        // =====================================
+
+        case "last-3-months": {
 
             periodStart =
                 new Date(
                     today
                 );
 
+
             periodStart.setMonth(
                 periodStart.getMonth() -
                 3
             );
 
+
             break;
 
+        }
 
-        case "this-year":
+
+        // =====================================
+        // This Year
+        // =====================================
+
+        case "this-year": {
 
             periodStart =
                 new Date(
@@ -2065,30 +2486,45 @@ const scheduledMinutesPerDay =
                     1
                 );
 
+
             break;
 
+        }
 
-        case "last-12-months":
+
+        // =====================================
+        // Last 12 Months
+        // =====================================
+
+        case "last-12-months": {
 
             periodStart =
                 new Date(
                     today
                 );
 
+
             periodStart.setFullYear(
                 periodStart.getFullYear() -
                 1
             );
 
+
             break;
 
+        }
+
+
+        // =====================================
+        // All Time
+        // =====================================
 
         case "all-time": {
 
             /*
-                We cannot reliably calculate expected
-                all-time hours without an employee
-                employment/start date.
+                We cannot reliably calculate
+                all-time expected hours without
+                an employee employment/start date.
             */
 
             if (
@@ -2100,6 +2536,7 @@ const scheduledMinutesPerDay =
 
             }
 
+
             return 0;
 
         }
@@ -2107,8 +2544,27 @@ const scheduledMinutesPerDay =
     }
 
 
-    let workingDays =
+    // =====================================
+    // Leave Statuses
+    // =====================================
+
+    const leaveStatuses =
+        [
+            "Annual Leave",
+            "Sick Leave",
+            "Family Responsibility Leave",
+            "Maternity Leave",
+            "Unpaid Leave"
+        ];
+
+
+    // =====================================
+    // Calculate Expected Minutes
+    // =====================================
+
+    let totalExpectedMinutes =
         0;
+
 
     const currentDate =
         new Date(
@@ -2125,19 +2581,343 @@ const scheduledMinutesPerDay =
             currentDate.getDay();
 
 
-        // Monday - Friday only
+        // =====================================
+        // Weekend Check
+        // =====================================
 
-        if (
+        const isWeekday =
             dayOfWeek !==
             0
             &&
             dayOfWeek !==
-            6
+            6;
+
+
+        if (
+            !isWeekday
         ) {
 
-            workingDays++;
+            currentDate.setDate(
+                currentDate.getDate() +
+                1
+            );
+
+            continue;
 
         }
+
+
+        // =====================================
+        // Public Holiday Check
+        // =====================================
+
+        if (
+            isPublicHoliday(
+                currentDate
+            )
+        ) {
+
+            currentDate.setDate(
+                currentDate.getDate() +
+                1
+            );
+
+            continue;
+
+        }
+
+
+        // =====================================
+        // Date Key
+        // =====================================
+
+        const year =
+            currentDate.getFullYear();
+
+
+        const month =
+            String(
+                currentDate.getMonth() +
+                1
+            ).padStart(
+                2,
+                "0"
+            );
+
+
+        const day =
+            String(
+                currentDate.getDate()
+            ).padStart(
+                2,
+                "0"
+            );
+
+
+        const dateKey =
+            `${year}-${month}-${day}`;
+
+
+        // =====================================
+        // Find Attendance Record For Day
+        // =====================================
+
+        const attendanceRecord =
+            currentAttendanceProfileRecords.find(
+                function (
+                    record
+                ) {
+
+                    const recordDate =
+                        record.dateKey ??
+                        record.date ??
+                        "";
+
+
+                    return (
+                        String(
+                            recordDate
+                        ) ===
+                        dateKey
+                    );
+
+                }
+            );
+
+
+        // =====================================
+        // Normal Working Day
+        // =====================================
+
+        if (
+            !attendanceRecord
+        ) {
+
+            totalExpectedMinutes +=
+                scheduledMinutesPerDay;
+
+
+            currentDate.setDate(
+                currentDate.getDate() +
+                1
+            );
+
+
+            continue;
+
+        }
+
+
+        const attendanceStatus =
+            String(
+                attendanceRecord.status ??
+                ""
+            ).trim();
+
+
+        const leaveDuration =
+            String(
+                attendanceRecord.leaveDuration ??
+                ""
+            ).trim();
+
+
+        const leaveTime =
+            String(
+                attendanceRecord.leaveTime ??
+                ""
+            ).trim();
+
+
+        // =====================================
+        // Not A Leave Record
+        // =====================================
+
+        if (
+            !leaveStatuses.includes(
+                attendanceStatus
+            )
+        ) {
+
+            totalExpectedMinutes +=
+                scheduledMinutesPerDay;
+
+
+            currentDate.setDate(
+                currentDate.getDate() +
+                1
+            );
+
+
+            continue;
+
+        }
+
+
+        // =====================================
+        // Full Day Leave
+        // =====================================
+
+        if (
+            leaveDuration ===
+            "full-day"
+        ) {
+
+            /*
+                Full-day leave removes the
+                employee's expected working
+                requirement for this day.
+            */
+
+            currentDate.setDate(
+                currentDate.getDate() +
+                1
+            );
+
+
+            continue;
+
+        }
+
+
+        // =====================================
+        // Half Day Leave
+        // =====================================
+
+        if (
+            leaveDuration ===
+            "half-day"
+        ) {
+
+            totalExpectedMinutes +=
+                Math.round(
+                    scheduledMinutesPerDay /
+                    2
+                );
+
+
+            currentDate.setDate(
+                currentDate.getDate() +
+                1
+            );
+
+
+            continue;
+
+        }
+
+
+        // =====================================
+        // Custom Time Leave
+        // =====================================
+
+        if (
+            leaveDuration ===
+            "custom"
+            &&
+            leaveTime
+        ) {
+
+            const leaveTimeParts =
+                leaveTime
+                    .split(":")
+                    .map(Number);
+
+
+            if (
+                leaveTimeParts.length >=
+                2
+                &&
+                Number.isFinite(
+                    leaveTimeParts[0]
+                )
+                &&
+                Number.isFinite(
+                    leaveTimeParts[1]
+                )
+            ) {
+
+                const leaveTimeMinutes =
+                    (
+                        leaveTimeParts[0] *
+                        60
+                    )
+                    +
+                    leaveTimeParts[1];
+
+
+                let customExpectedMinutes =
+                    leaveTimeMinutes -
+                    dailyStartMinutes;
+
+
+                customExpectedMinutes =
+                    Math.max(
+                        0,
+                        customExpectedMinutes
+                    );
+
+
+                // =====================================
+                // Deduct Break For 6+ Hours
+                // =====================================
+
+                if (
+                    customExpectedMinutes >=
+                    360
+                ) {
+
+                    customExpectedMinutes =
+                        Math.max(
+                            0,
+                            customExpectedMinutes -
+                            unpaidBreakMinutes
+                        );
+
+                }
+
+
+                // Never exceed a full scheduled day
+
+                customExpectedMinutes =
+                    Math.min(
+                        scheduledMinutesPerDay,
+                        customExpectedMinutes
+                    );
+
+
+                totalExpectedMinutes +=
+                    customExpectedMinutes;
+
+
+                currentDate.setDate(
+                    currentDate.getDate() +
+                    1
+                );
+
+
+                continue;
+
+            }
+
+        }
+
+
+        // =====================================
+        // Legacy / Missing Duration
+        // =====================================
+
+        /*
+            Existing leave records created before
+            Leave Duration was added should not
+            accidentally reduce expected hours.
+
+            Until they are updated, treat them as
+            a normal scheduled working day.
+        */
+
+        totalExpectedMinutes +=
+            scheduledMinutesPerDay;
 
 
         currentDate.setDate(
@@ -2148,10 +2928,7 @@ const scheduledMinutesPerDay =
     }
 
 
-    return (
-        workingDays *
-        scheduledMinutesPerDay
-    );
+    return totalExpectedMinutes;
 
 }
 
@@ -2619,6 +3396,10 @@ function updateAttendanceProfileSummary(
 const expectedMinutes =
     calculateProfileExpectedMinutes();
 
+    const hoursBalanceMinutes =
+    totalWorkedMinutes -
+    expectedMinutes;
+
 if (
     profileExpectedHours
 ) {
@@ -2627,6 +3408,17 @@ if (
         `${formatProfileMinutes(
             expectedMinutes
         )} expected`;
+
+}
+
+if (
+    profileHoursBalance
+) {
+
+    profileHoursBalance.textContent =
+        formatProfileBalance(
+            hoursBalanceMinutes
+        );
 
 }
 
@@ -2899,6 +3691,69 @@ function formatProfileMinutes(
         60;
 
     return (
+        hours
+        +
+        "h "
+        +
+        String(
+            minutes
+        ).padStart(
+            2,
+            "0"
+        )
+        +
+        "m"
+    );
+
+}
+
+// =====================================
+// Format Hours Balance
+// =====================================
+
+function formatProfileBalance(
+    totalMinutes
+) {
+
+    const absoluteMinutes =
+        Math.abs(
+            totalMinutes
+        );
+
+    const hours =
+        Math.floor(
+            absoluteMinutes /
+            60
+        );
+
+    const minutes =
+        absoluteMinutes %
+        60;
+
+    let prefix =
+        "";
+
+    if (
+        totalMinutes >
+        0
+    ) {
+
+        prefix =
+            "+";
+
+    } else if (
+        totalMinutes <
+        0
+    ) {
+
+        prefix =
+            "-";
+
+    }
+
+    return (
+        prefix
+        +
         hours
         +
         "h "

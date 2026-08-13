@@ -78,12 +78,12 @@
                 </a>
 
                 <a
-    href="disciplinary.html"
-    class="menu-link"
-    data-permission="disciplinary"
->
-    Disciplinary
-</a>
+                    href="disciplinary.html"
+                    class="menu-link"
+                    data-permission="disciplinary"
+                >
+                    Disciplinary
+                </a>
 
                 <a
                     href="settings.html"
@@ -122,6 +122,7 @@
 
         </aside>
 
+
         <main class="content">
 
             <header class="topbar">
@@ -152,7 +153,9 @@
 
             </header>
 
+
             <div class="attendance-layout">
+
 
                 <!-- =====================================
                      Record Attendance
@@ -176,9 +179,13 @@
 
                     </div>
 
+
                     <form id="attendanceManagementForm">
 
                         <div class="form-grid">
+
+
+                            <!-- Employee -->
 
                             <div class="form-group">
 
@@ -199,6 +206,9 @@
 
                             </div>
 
+
+                            <!-- Date -->
+
                             <div class="form-group">
 
                                 <label for="attendanceDate">
@@ -212,6 +222,9 @@
                                 >
 
                             </div>
+
+
+                            <!-- Status -->
 
                             <div class="form-group form-group-full">
 
@@ -288,6 +301,77 @@
 
                             </div>
 
+
+                            <!-- =====================================
+                                 Leave Duration
+                            ====================================== -->
+
+                            <div
+                                class="form-group form-group-full"
+                                id="leaveDurationGroup"
+                                style="display: none;"
+                            >
+
+                                <label for="leaveDuration">
+                                    Leave Duration
+                                </label>
+
+                                <select id="leaveDuration">
+
+                              <option value="">
+                               Select leave duration
+                             </option>
+
+                             <option value="full-day">
+                               Full Day
+                              </option>
+
+                            <option value="half-day">
+                               Half Day
+                            </option>
+
+                            <option value="custom">
+                               Custom Time
+                             </option>
+
+                             </select>
+
+                                <small>
+                                    Select whether the employee is taking
+                                    a full day or half day of leave.
+                                </small>
+
+                            </div>
+
+                            <!-- =====================================
+     Custom Leave / Departure Time
+====================================== -->
+
+<div
+    class="form-group form-group-full"
+    id="leaveTimeGroup"
+    style="display: none;"
+>
+
+    <label for="leaveTime">
+        Leave / Departure Time
+    </label>
+
+    <input
+        type="time"
+        id="leaveTime"
+    >
+
+    <small>
+        Enter the actual time the employee stopped working
+        or left for the selected leave reason.
+    </small>
+
+</div>
+
+
+                            <!-- Notes -->
+
                             <div class="form-group form-group-full">
 
                                 <label for="attendanceNotes">
@@ -305,6 +389,7 @@
 
                         </div>
 
+
                         <div class="form-actions">
 
                             <button
@@ -316,6 +401,7 @@
                             </button>
 
                         </div>
+
 
                         <p
                             id="attendanceMessage"
@@ -349,6 +435,7 @@
 
                     </div>
 
+
                     <div class="attendance-summary">
 
                         <h3>
@@ -356,6 +443,7 @@
                         </h3>
 
                         <div class="summary-grid">
+
 
                             <div class="summary-item">
 
@@ -369,6 +457,7 @@
 
                             </div>
 
+
                             <div class="summary-item">
 
                                 <span>
@@ -381,6 +470,7 @@
 
                             </div>
 
+
                             <div class="summary-item">
 
                                 <span>
@@ -392,6 +482,7 @@
                                 </strong>
 
                             </div>
+
 
                             <div class="summary-item">
 
@@ -408,6 +499,7 @@
                         </div>
 
                     </div>
+
 
                     <div class="attendance-calendar">
 
@@ -435,6 +527,7 @@
 
                         </div>
 
+
                         <div id="attendanceCalendarGrid">
 
                             <p class="empty-state">
@@ -444,6 +537,7 @@
                         </div>
 
                     </div>
+
 
                     <div id="attendanceHistory">
 
@@ -460,6 +554,7 @@
         </main>
 
     </div>
+
 
     <script
         type="module"

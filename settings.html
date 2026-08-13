@@ -843,6 +843,237 @@
 
                     </div>
 
+                                        <!-- =====================================
+                         Public Holidays
+                    ====================================== -->
+
+                    <div class="settings-section collapsible-section">
+
+                        <div class="table-header collapsible-header">
+
+                            <h3>
+                                Public Holidays
+                            </h3>
+
+                            <button
+                                type="button"
+                                class="section-toggle-btn"
+                                data-target="publicHolidaysContent"
+                                aria-expanded="false"
+                            >
+                                Expand
+                            </button>
+
+                        </div>
+
+
+                        <div
+                            id="publicHolidaysContent"
+                            class="collapsible-content collapsed"
+                        >
+
+                            <p>
+                                Manage public holidays and company non-working
+                                days used when calculating expected working hours.
+                            </p>
+
+                            <!-- =====================================
+     Automatic South African Holidays
+====================================== -->
+
+<div class="settings-subsection">
+
+    <h4>
+        Automatic South African Public Holidays
+    </h4>
+
+    <p>
+        South African statutory public holidays are
+        automatically synchronised and stored in the
+        attendance system.
+    </p>
+
+
+    <div class="form-group">
+
+        <label>
+            Calendar Year
+        </label>
+
+        <strong id="automaticHolidayYear">
+            -
+        </strong>
+
+    </div>
+
+
+    <div class="form-group">
+
+        <label>
+            Sync Status
+        </label>
+
+        <strong id="automaticHolidaySyncStatus">
+            Not synced
+        </strong>
+
+    </div>
+
+
+    <div class="form-group">
+
+        <label>
+            Last Successful Sync
+        </label>
+
+        <strong id="automaticHolidayLastSync">
+            Never
+        </strong>
+
+    </div>
+
+
+    <div class="form-group">
+
+        <label>
+            Automatic Holidays Loaded
+        </label>
+
+        <strong id="automaticHolidayCount">
+            0
+        </strong>
+
+    </div>
+
+
+    <button
+        type="button"
+        class="refresh-btn"
+        id="syncSouthAfricanHolidaysButton"
+    >
+        Sync South African Holidays Now
+    </button>
+
+
+    <small>
+        The system automatically checks the current
+        year's South African public holiday calendar.
+        Manual holidays configured below are kept
+        separately and are never removed by an
+        automatic synchronisation.
+    </small>
+
+
+    <div
+        class="settings-list"
+        id="automaticHolidayList"
+    >
+
+        <p class="empty-row">
+            No automatic public holidays loaded yet.
+        </p>
+
+    </div>
+
+</div>
+
+
+                            <!-- Add Holiday -->
+
+                            <div class="settings-subsection">
+
+                                <h4>
+                                    Add Manual / Special Holiday
+                                </h4>
+
+
+                                <div class="form-group">
+
+                                    <label for="publicHolidayDate">
+                                        Holiday Date
+                                    </label>
+
+                                    <input
+                                        type="date"
+                                        id="publicHolidayDate"
+                                    >
+
+                                </div>
+
+
+                                <div class="form-group">
+
+                                    <label for="publicHolidayName">
+                                        Holiday Name
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="publicHolidayName"
+                                        placeholder="e.g. Human Rights Day"
+                                        autocomplete="off"
+                                    >
+
+                                </div>
+
+
+                                <div class="form-group">
+
+                                    <label>
+
+                                        <input
+                                            type="checkbox"
+                                            id="publicHolidayRecurring"
+                                        >
+
+                                        Repeat every year
+
+                                    </label>
+
+                                    <small>
+                                        Useful for holidays that always occur
+                                        on the same calendar date.
+                                    </small>
+
+                                </div>
+
+
+                                <button
+                                    type="button"
+                                    class="refresh-btn"
+                                    id="addPublicHolidayButton"
+                                >
+                                    Add Manual Holiday
+                                </button>
+
+                            </div>
+
+
+                            <!-- Holiday List -->
+
+                            <div class="settings-subsection">
+
+                                <h4>
+                                    Configured Holidays
+                                </h4>
+
+                                <div
+                                    class="settings-list"
+                                    id="publicHolidayList"
+                                >
+
+                                    <p class="empty-row">
+                                        No public holidays have been added yet.
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
 
 
                     <!-- =====================================

@@ -33,6 +33,7 @@ import {
     serverTimestamp,
     Timestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
 import {
     applySidebarPermissions,
     protectPage
@@ -61,6 +62,26 @@ const attendanceDate =
 const attendanceStatus =
     document.getElementById(
         "attendanceStatus"
+    );
+
+const leaveDurationGroup =
+    document.getElementById(
+        "leaveDurationGroup"
+    );
+
+const leaveDuration =
+    document.getElementById(
+        "leaveDuration"
+    );
+
+const leaveTimeGroup =
+    document.getElementById(
+        "leaveTimeGroup"
+    );
+
+const leaveTime =
+    document.getElementById(
+        "leaveTime"
     );
 
 const attendanceNotes =
@@ -130,13 +151,32 @@ const logoutButton =
 
 
 // =====================================
+// Leave Statuses
+// =====================================
+
+const LEAVE_STATUSES = [
+    "Annual Leave",
+    "Sick Leave",
+    "Family Responsibility Leave",
+    "Maternity Leave",
+    "Unpaid Leave"
+];
+
+const CHECKOUT_STATUSES = [
+    ...LEAVE_STATUSES,
+    "Medical Appointment",
+    "Half Day"
+];
+
+
+// =====================================
 // Attendance Settings
 // =====================================
 
 let standardWorkStartTime =
     "08:00";
 
-    let unpaidBreakMinutes =
+let unpaidBreakMinutes =
     30;
 
 
@@ -171,35 +211,87 @@ async function initializeAttendanceManagementPage() {
 
     applySidebarPermissions();
 
-    attendanceDate.value =
-        formatLocalDate(
-            new Date()
+    if (
+        attendanceDate
+    ) {
+
+        attendanceDate.value =
+            formatLocalDate(
+                new Date()
+            );
+
+        attendanceDate.addEventListener(
+            "change",
+            loadExistingAttendance
         );
 
-    attendanceManagementForm.addEventListener(
-        "submit",
-        saveAttendance
-    );
+    }
 
-    employeeSelect.addEventListener(
-        "change",
-        handleEmployeeSelection
-    );
+    if (
+        attendanceManagementForm
+    ) {
 
-    attendanceDate.addEventListener(
-        "change",
-        loadExistingAttendance
-    );
+        attendanceManagementForm.addEventListener(
+            "submit",
+            saveAttendance
+        );
 
-    previousMonthButton.addEventListener(
-        "click",
-        showPreviousMonth
-    );
+    }
 
-    nextMonthButton.addEventListener(
-        "click",
-        showNextMonth
-    );
+    if (
+        employeeSelect
+    ) {
+
+        employeeSelect.addEventListener(
+            "change",
+            handleEmployeeSelection
+        );
+
+    }
+
+    if (
+        attendanceStatus
+    ) {
+
+        attendanceStatus.addEventListener(
+            "change",
+            handleAttendanceStatusChange
+        );
+
+    }
+
+    if (
+        leaveDuration
+    ) {
+
+        leaveDuration.addEventListener(
+            "change",
+            handleLeaveDurationChange
+        );
+
+    }
+
+    if (
+        previousMonthButton
+    ) {
+
+        previousMonthButton.addEventListener(
+            "click",
+            showPreviousMonth
+        );
+
+    }
+
+    if (
+        nextMonthButton
+    ) {
+
+        nextMonthButton.addEventListener(
+            "click",
+            showNextMonth
+        );
+
+    }
 
     if (
         logoutButton
@@ -212,21 +304,113 @@ async function initializeAttendanceManagementPage() {
 
     }
 
-
-    // =====================================
-    // Load Settings First
-    // =====================================
+    handleAttendanceStatusChange();
 
     await loadAttendanceSettings();
-
-
-    // =====================================
-    // Load Page Data
-    // =====================================
 
     await loadEmployees();
 
     await buildCalendar();
+
+}
+
+
+// =====================================
+// Leave Duration Visibility
+// =====================================
+
+function handleAttendanceStatusChange() {
+
+    if (
+        !attendanceStatus ||
+        !leaveDurationGroup ||
+        !leaveDuration
+    ) {
+
+        return;
+
+    }
+
+    const selectedStatus =
+        attendanceStatus.value;
+
+    const requiresLeaveDuration =
+        LEAVE_STATUSES.includes(
+            selectedStatus
+        );
+
+    if (
+        requiresLeaveDuration
+    ) {
+
+        leaveDurationGroup.style.display =
+            "";
+
+        leaveDuration.required =
+            true;
+
+        handleLeaveDurationChange();
+
+        return;
+
+    }
+
+    leaveDurationGroup.style.display =
+        "none";
+
+    leaveDuration.required =
+        false;
+
+    leaveDuration.value =
+        "";
+
+    handleLeaveDurationChange();
+
+}
+
+
+// =====================================
+// Custom Leave Time Visibility
+// =====================================
+
+function handleLeaveDurationChange() {
+
+    if (
+        !leaveDuration ||
+        !leaveTimeGroup ||
+        !leaveTime
+    ) {
+
+        return;
+
+    }
+
+    const isCustomTime =
+        leaveDuration.value ===
+        "custom";
+
+    if (
+        isCustomTime
+    ) {
+
+        leaveTimeGroup.style.display =
+            "";
+
+        leaveTime.required =
+            true;
+
+        return;
+
+    }
+
+    leaveTimeGroup.style.display =
+        "none";
+
+    leaveTime.required =
+        false;
+
+    leaveTime.value =
+        "";
 
 }
 
@@ -258,6 +442,9 @@ async function loadAttendanceSettings() {
             standardWorkStartTime =
                 "08:00";
 
+            unpaidBreakMinutes =
+                30;
+
             return;
 
         }
@@ -271,30 +458,25 @@ async function loadAttendanceSettings() {
                 "08:00"
             ).trim();
 
+        unpaidBreakMinutes =
+            Number(
+                settings.unpaidBreakMinutes ??
+                30
+            );
+
+        if (
+            !Number.isFinite(
+                unpaidBreakMinutes
+            )
+            ||
+            unpaidBreakMinutes <
+            0
+        ) {
+
             unpaidBreakMinutes =
-    Number(
-        settings.unpaidBreakMinutes ??
-        30
-    );
+                30;
 
-if (
-    !Number.isFinite(
-        unpaidBreakMinutes
-    )
-    ||
-    unpaidBreakMinutes <
-    0
-) {
-
-    unpaidBreakMinutes =
-        30;
-
-}
-
-
-        // =====================================
-        // Validate Time
-        // =====================================
+        }
 
         const timeParts =
             standardWorkStartTime
@@ -303,10 +485,12 @@ if (
 
         if (
             timeParts.length <
-                2 ||
+            2
+            ||
             !Number.isFinite(
                 timeParts[0]
-            ) ||
+            )
+            ||
             !Number.isFinite(
                 timeParts[1]
             )
@@ -328,6 +512,9 @@ if (
 
         standardWorkStartTime =
             "08:00";
+
+        unpaidBreakMinutes =
+            30;
 
     }
 
@@ -405,9 +592,7 @@ function formatLocalDate(
             "0"
         );
 
-    return (
-        `${year}-${month}-${day}`
-    );
+    return `${year}-${month}-${day}`;
 
 }
 
@@ -417,6 +602,14 @@ function formatLocalDate(
 // =====================================
 
 async function loadEmployees() {
+
+    if (
+        !employeeSelect
+    ) {
+
+        return;
+
+    }
 
     employeeSelect.innerHTML = `
         <option value="">
@@ -446,24 +639,29 @@ async function loadEmployees() {
 
         const employees =
             employeeSnapshot.docs.map(
-                (
+                function (
                     employeeDocument
-                ) => ({
+                ) {
 
-                    id:
-                        employeeDocument.id,
+                    return {
 
-                    ...employeeDocument.data()
+                        id:
+                            employeeDocument.id,
 
-                })
+                        ...employeeDocument.data()
+
+                    };
+
+                }
             );
 
         employees.sort(
-            (
+            function (
                 firstEmployee,
                 secondEmployee
-            ) =>
-                String(
+            ) {
+
+                return String(
                     firstEmployee.name ??
                     ""
                 ).localeCompare(
@@ -471,7 +669,9 @@ async function loadEmployees() {
                         secondEmployee.name ??
                         ""
                     )
-                )
+                );
+
+            }
         );
 
         employeeSelect.innerHTML = `
@@ -546,6 +746,14 @@ async function loadEmployees() {
 
 async function getSelectedEmployee() {
 
+    if (
+        !employeeSelect
+    ) {
+
+        return null;
+
+    }
+
     const employeeId =
         employeeSelect.value;
 
@@ -590,24 +798,74 @@ async function getSelectedEmployee() {
 
 
 // =====================================
+// Reset Attendance Form
+// =====================================
+
+function resetAttendanceRecordFields() {
+
+    if (
+        attendanceStatus
+    ) {
+
+        attendanceStatus.value =
+            "";
+
+    }
+
+    if (
+        leaveDuration
+    ) {
+
+        leaveDuration.value =
+            "";
+
+    }
+
+    if (
+        leaveTime
+    ) {
+
+        leaveTime.value =
+            "";
+
+    }
+
+    handleAttendanceStatusChange();
+
+    handleLeaveDurationChange();
+
+    if (
+        attendanceNotes
+    ) {
+
+        attendanceNotes.value =
+            "";
+
+    }
+
+}
+
+
+// =====================================
 // Load Existing Attendance Record
 // =====================================
 
 async function loadExistingAttendance() {
 
     const selectedDate =
-        attendanceDate.value;
+        attendanceDate
+            ?
+            attendanceDate.value
+            :
+            "";
 
     if (
+        !employeeSelect ||
         !employeeSelect.value ||
         !selectedDate
     ) {
 
-        attendanceStatus.value =
-            "";
-
-        attendanceNotes.value =
-            "";
+        resetAttendanceRecordFields();
 
         showMessage(
             "",
@@ -662,6 +920,30 @@ async function loadExistingAttendance() {
                 attendance.status ??
                 "";
 
+            handleAttendanceStatusChange();
+
+            if (
+                leaveDuration
+            ) {
+
+                leaveDuration.value =
+                    attendance.leaveDuration ??
+                    "";
+
+            }
+
+            if (
+                leaveTime
+            ) {
+
+                leaveTime.value =
+                    attendance.leaveTime ??
+                    "";
+
+            }
+
+            handleLeaveDurationChange();
+
             const existingNotes =
                 String(
                     attendance.notes ??
@@ -676,7 +958,8 @@ async function loadExistingAttendance() {
 
             if (
                 attendance.status ===
-                    "Late" &&
+                "Late"
+                &&
                 existingLateReason
             ) {
 
@@ -704,11 +987,7 @@ async function loadExistingAttendance() {
 
         } else {
 
-            attendanceStatus.value =
-                "";
-
-            attendanceNotes.value =
-                "";
+            resetAttendanceRecordFields();
 
             showMessage(
                 "No attendance record exists for this employee and date.",
@@ -743,6 +1022,15 @@ async function loadExistingAttendance() {
 async function loadAttendanceHistory() {
 
     if (
+        !attendanceHistory
+    ) {
+
+        return;
+
+    }
+
+    if (
+        !employeeSelect ||
         !employeeSelect.value
     ) {
 
@@ -833,7 +1121,8 @@ async function loadAttendanceHistory() {
 
                 const dateDisplay =
                     formatAttendanceDate(
-                        attendance.dateKey
+                        attendance.dateKey ??
+                        attendance.date
                     );
 
                 const statusClass =
@@ -849,7 +1138,8 @@ async function loadAttendanceHistory() {
                     String(
                         attendance.notes ??
                         ""
-                    ).trim() ||
+                    ).trim()
+                    ||
                     "No additional notes.";
 
                 const lateReason =
@@ -894,6 +1184,23 @@ async function loadAttendanceHistory() {
                         ""
                     ).trim();
 
+                const storedLeaveDuration =
+                    String(
+                        attendance.leaveDuration ??
+                        ""
+                    ).trim();
+
+                const storedLeaveTime =
+                    String(
+                        attendance.leaveTime ??
+                        ""
+                    ).trim();
+
+                const leaveDurationDisplay =
+                    formatLeaveDuration(
+                        storedLeaveDuration
+                    );
+
                 const historyCard =
                     document.createElement(
                         "details"
@@ -904,250 +1211,288 @@ async function loadAttendanceHistory() {
 
                 historyCard.innerHTML = `
 
-    <summary class="history-summary">
+                    <summary class="history-summary">
 
-        <div class="history-summary-main">
+                        <div class="history-summary-main">
 
-            <span
-                class="status-badge ${statusClass}"
-            >
-                ${escapeHtml(
-                    attendance.status ??
-                    "Unknown"
-                )}
-            </span>
+                            <span
+                                class="status-badge ${statusClass}"
+                            >
+                                ${escapeHtml(
+                                    attendance.status ??
+                                    "Unknown"
+                                )}
+                            </span>
 
-            <div class="history-summary-date">
+                            <div class="history-summary-date">
 
-                <strong>
-                    ${escapeHtml(
-                        dateDisplay
-                    )}
-                </strong>
+                                <strong>
+                                    ${escapeHtml(
+                                        dateDisplay
+                                    )}
+                                </strong>
 
-                <span>
-                    ${escapeHtml(
-                        checkInTime
-                    )}
-                </span>
+                                <span>
+                                    ${escapeHtml(
+                                        checkInTime
+                                    )}
+                                </span>
 
-            </div>
+                                ${
+                                    leaveDurationDisplay
+                                        ?
+                                        `
+                                        <span>
+                                            ${escapeHtml(
+                                                leaveDurationDisplay
+                                            )}
+                                        </span>
+                                        `
+                                        :
+                                        ""
+                                }
 
-        </div>
+                            </div>
 
-        <div class="history-summary-method">
-            ${escapeHtml(
-                method
-            )}
-        </div>
+                        </div>
 
-    </summary>
+                        <div class="history-summary-method">
+                            ${escapeHtml(
+                                method
+                            )}
+                        </div>
 
-
-    <div class="history-expanded-clean">
-
-
-        <!-- =====================================
-             Time Summary
-        ====================================== -->
-
-        <div class="history-time-grid">
-
-            <div class="history-time-item">
-
-                <span class="history-time-label">
-                    Check In
-                </span>
-
-                <strong>
-                    ${escapeHtml(
-                        checkInTime
-                    )}
-                </strong>
-
-            </div>
+                    </summary>
 
 
-            <div class="history-time-item">
+                    <div class="history-expanded-clean">
 
-                <span class="history-time-label">
-                    Check Out
-                </span>
+                        <div class="history-time-grid">
 
-                <strong>
-                    ${escapeHtml(
-                        checkOutTime
-                    )}
-                </strong>
+                            <div class="history-time-item">
 
-            </div>
+                                <span class="history-time-label">
+                                    Check In
+                                </span>
 
+                                <strong>
+                                    ${escapeHtml(
+                                        checkInTime
+                                    )}
+                                </strong>
 
-            <div class="history-time-item">
-
-                <span class="history-time-label">
-                    Hours Worked
-                </span>
-
-                <strong>
-                    ${escapeHtml(
-                        hoursWorked
-                    )}
-                </strong>
-
-            </div>
-
-        </div>
+                            </div>
 
 
-        <!-- =====================================
-             Early Exit
-        ====================================== -->
+                            <div class="history-time-item">
 
-        <div class="history-clean-row">
+                                <span class="history-time-label">
+                                    Check Out
+                                </span>
 
-            <span class="history-clean-label">
-                Early Exit
-            </span>
+                                <strong>
+                                    ${escapeHtml(
+                                        checkOutTime
+                                    )}
+                                </strong>
 
-            <span
-                class="${
-                    earlyExit
-                        ?
-                        "history-value-badge history-value-warning"
-                        :
-                        "history-value-badge history-value-normal"
-                }"
-            >
-                ${
-                    attendance.checkOutTime
-                        ?
-                        earlyExit
-                            ?
-                            "Yes"
-                            :
-                            "No"
-                        :
-                        "-"
-                }
-            </span>
-
-        </div>
+                            </div>
 
 
-        ${
-            earlyExit
-                ?
-                `
+                            <div class="history-time-item">
 
-                <div class="history-clean-row">
+                                <span class="history-time-label">
+                                    Hours Worked
+                                </span>
 
-                    <span class="history-clean-label">
-                        Early Exit Reason
-                    </span>
+                                <strong>
+                                    ${escapeHtml(
+                                        hoursWorked
+                                    )}
+                                </strong>
 
-                    <span class="history-clean-value">
+                            </div>
+
+                        </div>
+
                         ${
-                            earlyExitReason
+                            leaveDurationDisplay
                                 ?
-                                escapeHtml(
-                                    earlyExitReason
-                                )
+                                `
+                                <div class="history-clean-row">
+
+                                    <span class="history-clean-label">
+                                        Leave Duration
+                                    </span>
+
+                                    <span class="history-clean-value">
+                                        ${escapeHtml(
+                                            leaveDurationDisplay
+                                        )}
+                                    </span>
+
+                                </div>
+                                `
                                 :
-                                "No reason recorded."
+                                ""
                         }
-                    </span>
 
-                </div>
+                        ${
+                            storedLeaveDuration ===
+                            "custom"
+                            &&
+                            storedLeaveTime
+                                ?
+                                `
+                                <div class="history-clean-row">
 
+                                    <span class="history-clean-label">
+                                        Leave / Departure Time
+                                    </span>
 
-                ${
-                    earlyExitNote
-                        ?
-                        `
+                                    <span class="history-clean-value">
+                                        ${escapeHtml(
+                                            storedLeaveTime
+                                        )}
+                                    </span>
+
+                                </div>
+                                `
+                                :
+                                ""
+                        }
 
                         <div class="history-clean-row">
 
                             <span class="history-clean-label">
-                                Early Exit Details
+                                Early Exit
+                            </span>
+
+                            <span
+                                class="${
+                                    earlyExit
+                                        ?
+                                        "history-value-badge history-value-warning"
+                                        :
+                                        "history-value-badge history-value-normal"
+                                }"
+                            >
+                                ${
+                                    attendance.checkOutTime
+                                        ?
+                                        earlyExit
+                                            ?
+                                            "Yes"
+                                            :
+                                            "No"
+                                        :
+                                        "-"
+                                }
+                            </span>
+
+                        </div>
+
+                        ${
+                            earlyExit
+                                ?
+                                `
+
+                                <div class="history-clean-row">
+
+                                    <span class="history-clean-label">
+                                        Early Exit Reason
+                                    </span>
+
+                                    <span class="history-clean-value">
+                                        ${
+                                            earlyExitReason
+                                                ?
+                                                escapeHtml(
+                                                    earlyExitReason
+                                                )
+                                                :
+                                                "No reason recorded."
+                                        }
+                                    </span>
+
+                                </div>
+
+                                ${
+                                    earlyExitNote
+                                        ?
+                                        `
+
+                                        <div class="history-clean-row">
+
+                                            <span class="history-clean-label">
+                                                Early Exit Details
+                                            </span>
+
+                                            <span class="history-clean-value">
+                                                ${escapeHtml(
+                                                    earlyExitNote
+                                                )}
+                                            </span>
+
+                                        </div>
+
+                                        `
+                                        :
+                                        ""
+                                }
+
+                                `
+                                :
+                                ""
+                        }
+
+                        ${
+                            isLate
+                                ?
+                                `
+
+                                <div class="history-clean-row history-late-row">
+
+                                    <span class="history-clean-label">
+                                        Reason for Lateness
+                                    </span>
+
+                                    <span class="history-clean-value">
+                                        ${
+                                            lateReason
+                                                ?
+                                                escapeHtml(
+                                                    lateReason
+                                                )
+                                                :
+                                                "No late reason was recorded."
+                                        }
+                                    </span>
+
+                                </div>
+
+                                `
+                                :
+                                ""
+                        }
+
+                        <div class="history-clean-row history-notes-row">
+
+                            <span class="history-clean-label">
+                                Notes
                             </span>
 
                             <span class="history-clean-value">
                                 ${escapeHtml(
-                                    earlyExitNote
+                                    notes
                                 )}
                             </span>
 
                         </div>
 
-                        `
-                        :
-                        ""
-                }
+                    </div>
 
-                `
-                :
-                ""
-        }
-
-
-        <!-- =====================================
-             Late Reason
-        ====================================== -->
-
-        ${
-            isLate
-                ?
-                `
-
-                <div class="history-clean-row history-late-row">
-
-                    <span class="history-clean-label">
-                        Reason for Lateness
-                    </span>
-
-                    <span class="history-clean-value">
-                        ${
-                            lateReason
-                                ?
-                                escapeHtml(
-                                    lateReason
-                                )
-                                :
-                                "No late reason was recorded."
-                        }
-                    </span>
-
-                </div>
-
-                `
-                :
-                ""
-        }
-
-
-        <!-- =====================================
-             Notes
-        ====================================== -->
-
-        <div class="history-clean-row history-notes-row">
-
-            <span class="history-clean-label">
-                Notes
-            </span>
-
-            <span class="history-clean-value">
-                ${escapeHtml(
-                    notes
-                )}
-            </span>
-
-        </div>
-
-
-    </div>
-
-`;
+                `;
 
                 attendanceHistory.appendChild(
                     historyCard
@@ -1177,6 +1522,39 @@ async function loadAttendanceHistory() {
 
 
 // =====================================
+// Format Leave Duration
+// =====================================
+
+function formatLeaveDuration(
+    value
+) {
+
+    switch (
+        value
+    ) {
+
+        case "full-day":
+
+            return "Full Day";
+
+        case "half-day":
+
+            return "Half Day";
+
+        case "custom":
+
+            return "Custom Time";
+
+        default:
+
+            return "";
+
+    }
+
+}
+
+
+// =====================================
 // Load Attendance Summary
 // =====================================
 
@@ -1185,6 +1563,7 @@ async function loadAttendanceSummary() {
     resetAttendanceSummary();
 
     if (
+        !employeeSelect ||
         !employeeSelect.value
     ) {
 
@@ -1253,13 +1632,11 @@ async function loadAttendanceSummary() {
 
                         break;
 
-
                     case "Late":
 
                         late++;
 
                         break;
-
 
                     case "Absent":
 
@@ -1267,18 +1644,13 @@ async function loadAttendanceSummary() {
 
                         break;
 
-
                     case "Annual Leave":
-
                     case "Sick Leave":
-
                     case "Family Responsibility Leave":
-
                     case "Maternity Leave":
-
                     case "Unpaid Leave":
-
                     case "Public Holiday":
+                    case "Half Day":
 
                         leave++;
 
@@ -1289,17 +1661,41 @@ async function loadAttendanceSummary() {
             }
         );
 
-        summaryOnTime.textContent =
-            onTime;
+        if (
+            summaryOnTime
+        ) {
 
-        summaryLate.textContent =
-            late;
+            summaryOnTime.textContent =
+                onTime;
 
-        summaryAbsent.textContent =
-            absent;
+        }
 
-        summaryLeave.textContent =
-            leave;
+        if (
+            summaryLate
+        ) {
+
+            summaryLate.textContent =
+                late;
+
+        }
+
+        if (
+            summaryAbsent
+        ) {
+
+            summaryAbsent.textContent =
+                absent;
+
+        }
+
+        if (
+            summaryLeave
+        ) {
+
+            summaryLeave.textContent =
+                leave;
+
+        }
 
     } catch (
         error
@@ -1321,17 +1717,41 @@ async function loadAttendanceSummary() {
 
 function resetAttendanceSummary() {
 
-    summaryOnTime.textContent =
-        "0";
+    if (
+        summaryOnTime
+    ) {
 
-    summaryLate.textContent =
-        "0";
+        summaryOnTime.textContent =
+            "0";
 
-    summaryAbsent.textContent =
-        "0";
+    }
 
-    summaryLeave.textContent =
-        "0";
+    if (
+        summaryLate
+    ) {
+
+        summaryLate.textContent =
+            "0";
+
+    }
+
+    if (
+        summaryAbsent
+    ) {
+
+        summaryAbsent.textContent =
+            "0";
+
+    }
+
+    if (
+        summaryLeave
+    ) {
+
+        summaryLeave.textContent =
+            "0";
+
+    }
 
 }
 
@@ -1346,16 +1766,13 @@ function calculateHoursWorked(
 
     if (
         !attendance.checkOutTime
+        &&
+        !attendance.checkOutTimestamp
     ) {
 
         return "In progress";
 
     }
-
-
-    // =====================================
-    // Get Standard Start Time
-    // =====================================
 
     const standardStartParts =
         String(
@@ -1382,11 +1799,6 @@ function calculateHoursWorked(
             :
             0;
 
-
-    // =====================================
-    // Firebase Timestamp Method
-    // =====================================
-
     const checkInTimestamp =
         attendance.checkInTimestamp ??
         attendance.scanTimestamp;
@@ -1395,12 +1807,15 @@ function calculateHoursWorked(
         attendance.checkOutTimestamp;
 
     if (
-        checkInTimestamp &&
-        checkOutTimestamp &&
+        checkInTimestamp
+        &&
+        checkOutTimestamp
+        &&
         typeof checkInTimestamp.toDate ===
-            "function" &&
+        "function"
+        &&
         typeof checkOutTimestamp.toDate ===
-            "function"
+        "function"
     ) {
 
         const actualCheckInDate =
@@ -1408,11 +1823,6 @@ function calculateHoursWorked(
 
         const checkOutDate =
             checkOutTimestamp.toDate();
-
-
-        // =====================================
-        // Build Scheduled Start Date
-        // =====================================
 
         const standardStartDate =
             new Date(
@@ -1426,11 +1836,6 @@ function calculateHoursWorked(
             0
         );
 
-
-        // =====================================
-        // Effective Work Start
-        // =====================================
-
         const effectiveCheckInDate =
             actualCheckInDate <
             standardStartDate
@@ -1438,11 +1843,6 @@ function calculateHoursWorked(
                 standardStartDate
                 :
                 actualCheckInDate;
-
-
-        // =====================================
-        // Calculate Difference
-        // =====================================
 
         const differenceMilliseconds =
             checkOutDate.getTime()
@@ -1459,68 +1859,25 @@ function calculateHoursWorked(
         }
 
         const elapsedMinutes =
-    Math.floor(
-        differenceMilliseconds /
-        60000
-    );
+            Math.floor(
+                differenceMilliseconds /
+                60000
+            );
 
-let totalMinutes =
-    elapsedMinutes;
+        const totalMinutes =
+            deductUnpaidBreak(
+                elapsedMinutes
+            );
 
-
-// =====================================
-// Deduct Unpaid Break
-// =====================================
-
-if (
-    elapsedMinutes >=
-    360
-) {
-
-    totalMinutes =
-        Math.max(
-            0,
-            elapsedMinutes -
-            unpaidBreakMinutes
-        );
-
-}
-
-
-const hours =
-    Math.floor(
-        totalMinutes /
-        60
-    );
-
-        const minutes =
-            totalMinutes %
-            60;
-
-        return (
-            hours
-            +
-            "h "
-            +
-            String(
-                minutes
-            ).padStart(
-                2,
-                "0"
-            )
-            +
-            "m"
+        return formatMinutesAsHours(
+            totalMinutes
         );
 
     }
 
-
-    // =====================================
-    // Fallback for Older Records
-    // =====================================
-
     if (
-        attendance.time &&
+        attendance.time
+        &&
         attendance.checkOutTime
     ) {
 
@@ -1539,106 +1896,142 @@ const hours =
                 .map(Number);
 
         if (
-            checkInParts.length >=
-                2 &&
-            checkOutParts.length >=
-                2
+            checkInParts.length <
+            2
+            ||
+            checkOutParts.length <
+            2
+            ||
+            checkInParts.some(
+                Number.isNaN
+            )
+            ||
+            checkOutParts.some(
+                Number.isNaN
+            )
         ) {
 
-            const actualCheckInMinutes =
-                (
-                    checkInParts[0] *
-                    60
-                )
-                +
-                checkInParts[1];
+            return "Not available";
 
-            const standardStartMinutes =
-                (
-                    standardStartHour *
-                    60
-                )
-                +
-                standardStartMinute;
+        }
 
-            const effectiveCheckInMinutes =
-                Math.max(
-                    actualCheckInMinutes,
-                    standardStartMinutes
-                );
+        const actualCheckInMinutes =
+            (
+                checkInParts[0] *
+                60
+            )
+            +
+            checkInParts[1];
 
-            const checkOutMinutes =
-                (
-                    checkOutParts[0] *
-                    60
-                )
-                +
-                checkOutParts[1];
+        const standardStartMinutes =
+            (
+                standardStartHour *
+                60
+            )
+            +
+            standardStartMinute;
 
-            const elapsedMinutes =
-    checkOutMinutes
-    -
-    effectiveCheckInMinutes;
+        const effectiveCheckInMinutes =
+            Math.max(
+                actualCheckInMinutes,
+                standardStartMinutes
+            );
 
-if (
-    elapsedMinutes >=
-    0
+        const checkOutMinutes =
+            (
+                checkOutParts[0] *
+                60
+            )
+            +
+            checkOutParts[1];
+
+        const elapsedMinutes =
+            checkOutMinutes -
+            effectiveCheckInMinutes;
+
+        if (
+            elapsedMinutes <
+            0
+        ) {
+
+            return "Unable to calculate";
+
+        }
+
+        const totalMinutes =
+            deductUnpaidBreak(
+                elapsedMinutes
+            );
+
+        return formatMinutesAsHours(
+            totalMinutes
+        );
+
+    }
+
+    return "Not available";
+
+}
+
+
+// =====================================
+// Deduct Unpaid Break
+// =====================================
+
+function deductUnpaidBreak(
+    elapsedMinutes
 ) {
-
-    let totalMinutes =
-        elapsedMinutes;
-
-
-    // =====================================
-    // Deduct Unpaid Break
-    // =====================================
 
     if (
         elapsedMinutes >=
         360
     ) {
 
-        totalMinutes =
-            Math.max(
-                0,
-                elapsedMinutes -
-                unpaidBreakMinutes
-            );
+        return Math.max(
+            0,
+            elapsedMinutes -
+            unpaidBreakMinutes
+        );
 
     }
 
-                const hours =
-                    Math.floor(
-                        totalMinutes /
-                        60
-                    );
+    return elapsedMinutes;
 
-                const minutes =
-                    totalMinutes %
-                    60;
+}
 
-                return (
-                    hours
-                    +
-                    "h "
-                    +
-                    String(
-                        minutes
-                    ).padStart(
-                        2,
-                        "0"
-                    )
-                    +
-                    "m"
-                );
 
-            }
+// =====================================
+// Format Minutes As Hours
+// =====================================
 
-        }
+function formatMinutesAsHours(
+    totalMinutes
+) {
 
-    }
+    const hours =
+        Math.floor(
+            totalMinutes /
+            60
+        );
 
-    return "Not available";
+    const minutes =
+        totalMinutes %
+        60;
+
+    return (
+        hours
+        +
+        "h "
+        +
+        String(
+            minutes
+        ).padStart(
+            2,
+            "0"
+        )
+        +
+        "m"
+    );
 
 }
 
@@ -1663,6 +2056,18 @@ function formatAttendanceDate(
         new Date(
             `${dateKey}T00:00:00`
         );
+
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+
+        return String(
+            dateKey
+        );
+
+    }
 
     return date.toLocaleDateString(
         "en-ZA",
@@ -1723,15 +2128,47 @@ async function saveAttendance(
     event.preventDefault();
 
     const selectedDate =
-        attendanceDate.value;
+        attendanceDate
+            ?
+            attendanceDate.value
+            :
+            "";
 
     const selectedStatus =
-        attendanceStatus.value;
+        attendanceStatus
+            ?
+            attendanceStatus.value
+            :
+            "";
+
+    const selectedLeaveDuration =
+        leaveDuration
+            ?
+            leaveDuration.value
+            :
+            "";
+
+    const selectedLeaveTime =
+        leaveTime
+            ?
+            leaveTime.value
+            :
+            "";
 
     const notes =
-        attendanceNotes.value.trim();
+        attendanceNotes
+            ?
+            attendanceNotes.value.trim()
+            :
+            "";
+
+
+    // =====================================
+    // Validation
+    // =====================================
 
     if (
+        !employeeSelect ||
         !employeeSelect.value
     ) {
 
@@ -1770,11 +2207,50 @@ async function saveAttendance(
 
     }
 
-    saveAttendanceButton.disabled =
-        true;
+    if (
+        LEAVE_STATUSES.includes(
+            selectedStatus
+        )
+        &&
+        !selectedLeaveDuration
+    ) {
 
-    saveAttendanceButton.textContent =
-        "Saving...";
+        showMessage(
+            "Please select Full Day, Half Day or Custom Time.",
+            "red"
+        );
+
+        return;
+
+    }
+
+    if (
+        selectedLeaveDuration ===
+        "custom"
+        &&
+        !selectedLeaveTime
+    ) {
+
+        showMessage(
+            "Please enter the employee's leave / departure time.",
+            "red"
+        );
+
+        return;
+
+    }
+
+    if (
+        saveAttendanceButton
+    ) {
+
+        saveAttendanceButton.disabled =
+            true;
+
+        saveAttendanceButton.textContent =
+            "Saving...";
+
+    }
 
     showMessage(
         "Saving attendance...",
@@ -1790,12 +2266,9 @@ async function saveAttendance(
             !employee
         ) {
 
-            showMessage(
-                "Employee not found.",
-                "red"
+            throw new Error(
+                "Employee not found."
             );
-
-            return;
 
         }
 
@@ -1815,226 +2288,285 @@ async function saveAttendance(
             );
 
         const recordAlreadyExists =
-    existingSnapshot.exists();
+            existingSnapshot.exists();
 
-const existingAttendance =
-    recordAlreadyExists
-        ?
-        existingSnapshot.data()
-        :
-        null;
+        const existingAttendance =
+            recordAlreadyExists
+                ?
+                existingSnapshot.data()
+                :
+                null;
 
+        const now =
+            new Date();
 
-// =====================================
-// Current Date / Time
-// =====================================
+        const currentTime =
+            now.toLocaleTimeString(
+                "en-ZA",
+                {
 
-const now =
-    new Date();
+                    hour:
+                        "2-digit",
 
-const currentTime =
-    now.toLocaleTimeString(
-        "en-ZA",
-        {
-            hour:
-                "2-digit",
+                    minute:
+                        "2-digit",
 
-            minute:
-                "2-digit",
+                    hour12:
+                        false
 
-            hour12:
-                false
-        }
-    );
+                }
+            );
 
+        const employeeAlreadyCheckedIn =
+            Boolean(
+                existingAttendance
+                &&
+                (
+                    existingAttendance.time
+                    ||
+                    existingAttendance.scanTimestamp
+                    ||
+                    existingAttendance.checkInTimestamp
+                )
+            );
 
-// =====================================
-// Statuses That End The Working Day
-// =====================================
+        const employeeAlreadyCheckedOut =
+            Boolean(
+                existingAttendance
+                &&
+                (
+                    existingAttendance.checkOutTime
+                    ||
+                    existingAttendance.checkOutTimestamp
+                )
+            );
 
-const checkoutStatuses = [
+        const isCheckoutStatus =
+            CHECKOUT_STATUSES.includes(
+                selectedStatus
+            );
 
-    "Annual Leave",
-    "Sick Leave",
-    "Family Responsibility Leave",
-    "Maternity Leave",
-    "Unpaid Leave",
-    "Medical Appointment",
-    "Half Day"
+        const isCustomLeaveTime =
+            LEAVE_STATUSES.includes(
+                selectedStatus
+            )
+            &&
+            selectedLeaveDuration ===
+            "custom"
+            &&
+            Boolean(
+                selectedLeaveTime
+            );
 
-];
+        const shouldWriteCheckout =
+            recordAlreadyExists
+            &&
+            employeeAlreadyCheckedIn
+            &&
+            isCheckoutStatus
+            &&
+            (
+                !employeeAlreadyCheckedOut
+                ||
+                isCustomLeaveTime
+            );
 
+        const attendanceData = {
 
-// =====================================
-// Determine Automatic Checkout
-// =====================================
+            employeeNumber:
+                employee.employeeNumber,
 
-const employeeAlreadyCheckedIn =
-    Boolean(
-        existingAttendance &&
-        (
-            existingAttendance.time ||
-            existingAttendance.scanTimestamp ||
-            existingAttendance.checkInTimestamp
-        )
-    );
+            name:
+                employee.name,
 
-const employeeAlreadyCheckedOut =
-    Boolean(
-        existingAttendance &&
-        (
-            existingAttendance.checkOutTime ||
-            existingAttendance.checkOutTimestamp
-        )
-    );
+            department:
+                employee.department ??
+                "Unassigned",
 
-const shouldAutoCheckOut =
-    recordAlreadyExists &&
-    employeeAlreadyCheckedIn &&
-    !employeeAlreadyCheckedOut &&
-    checkoutStatuses.includes(
-        selectedStatus
-    );
-                
-       const attendanceData = {
+            date:
+                selectedDate,
 
-    employeeNumber:
-        employee.employeeNumber,
+            dateKey:
+                selectedDate,
 
-    name:
-        employee.name,
+            status:
+                selectedStatus,
 
-    department:
-        employee.department ??
-        "Unassigned",
+            leaveDuration:
+                LEAVE_STATUSES.includes(
+                    selectedStatus
+                )
+                    ?
+                    selectedLeaveDuration
+                    :
+                    "",
 
-    date:
-        selectedDate,
+            leaveTime:
+                LEAVE_STATUSES.includes(
+                    selectedStatus
+                )
+                &&
+                selectedLeaveDuration ===
+                "custom"
+                    ?
+                    selectedLeaveTime
+                    :
+                    "",
 
-    dateKey:
-        selectedDate,
+            notes:
+                notes,
 
-    status:
-        selectedStatus,
+            updatedAt:
+                serverTimestamp()
 
-    notes:
-        notes,
-
-    updatedAt:
-        serverTimestamp()
-
-};
-
-
-// =====================================
-// New Manual Attendance Record
-// =====================================
-
-if (
-    !recordAlreadyExists
-) {
-
-    attendanceData.checkInMethod =
-        "Manual";
-
-    attendanceData.time =
-        currentTime;
-
-    attendanceData.createdAt =
-        serverTimestamp();
-
-}
-
-
-// =====================================
-// Automatic Checkout For Leave
-// =====================================
-
-if (
-    shouldAutoCheckOut
-) {
-
-    attendanceData.checkOutTime =
-        currentTime;
-
-    attendanceData.checkOutTimestamp =
-        Timestamp.fromDate(
-            now
-        );
-
-    attendanceData.checkOutMethod =
-        "Manual Adjustment";
+        };
 
 
-    // =====================================
-    // Determine Early Exit
-    // =====================================
-
-    const employeeEndTime =
-        String(
-            employee.endTime ??
-            ""
-        ).trim();
-
-    if (
-        employeeEndTime
-    ) {
-
-        const endParts =
-            employeeEndTime
-                .split(":")
-                .map(Number);
+        // =====================================
+        // New Manual Attendance Record
+        // =====================================
 
         if (
-            endParts.length >=
-                2 &&
-            Number.isFinite(
-                endParts[0]
-            ) &&
-            Number.isFinite(
-                endParts[1]
-            )
+            !recordAlreadyExists
         ) {
 
-            const scheduledEndMinutes =
-                (
-                    endParts[0] *
-                    60
-                )
-                +
-                endParts[1];
+            attendanceData.checkInMethod =
+                "Manual";
 
-            const currentMinutes =
-                (
-                    now.getHours() *
-                    60
-                )
-                +
-                now.getMinutes();
+            attendanceData.createdAt =
+                serverTimestamp();
 
-            attendanceData.earlyExit =
-                currentMinutes <
-                scheduledEndMinutes;
+            if (
+                !LEAVE_STATUSES.includes(
+                    selectedStatus
+                )
+            ) {
+
+                attendanceData.time =
+                    currentTime;
+
+            }
 
         }
 
-    }
 
-}
+        // =====================================
+        // Automatic Checkout For Leave / Exit
+        // =====================================
 
+        if (
+            shouldWriteCheckout
+        ) {
 
-// =====================================
-// Save Attendance Record
-// =====================================
+            let effectiveCheckOutDate =
+                new Date(
+                    now
+                );
 
-await setDoc(
-    attendanceReference,
-    attendanceData,
-    {
-        merge:
-            true
-    }
-);
+            let effectiveCheckOutTime =
+                currentTime;
+
+            if (
+                isCustomLeaveTime
+            ) {
+
+                const customDateTime =
+                    buildDateTimeFromDateAndTime(
+                        selectedDate,
+                        selectedLeaveTime
+                    );
+
+                if (
+                    !customDateTime
+                ) {
+
+                    throw new Error(
+                        "Invalid custom leave time."
+                    );
+
+                }
+
+                effectiveCheckOutDate =
+                    customDateTime;
+
+                effectiveCheckOutTime =
+                    selectedLeaveTime;
+
+            }
+
+            attendanceData.checkOutTime =
+                effectiveCheckOutTime;
+
+            attendanceData.checkOutTimestamp =
+                Timestamp.fromDate(
+                    effectiveCheckOutDate
+                );
+
+            attendanceData.checkOutMethod =
+                "Manual Adjustment";
+
+            const employeeEndTime =
+                String(
+                    employee.endTime ??
+                    ""
+                ).trim();
+
+            if (
+                employeeEndTime
+            ) {
+
+                const endParts =
+                    employeeEndTime
+                        .split(":")
+                        .map(Number);
+
+                if (
+                    endParts.length >=
+                    2
+                    &&
+                    Number.isFinite(
+                        endParts[0]
+                    )
+                    &&
+                    Number.isFinite(
+                        endParts[1]
+                    )
+                ) {
+
+                    const scheduledEndMinutes =
+                        (
+                            endParts[0] *
+                            60
+                        )
+                        +
+                        endParts[1];
+
+                    const effectiveCheckoutMinutes =
+                        (
+                            effectiveCheckOutDate.getHours() *
+                            60
+                        )
+                        +
+                        effectiveCheckOutDate.getMinutes();
+
+                    attendanceData.earlyExit =
+                        effectiveCheckoutMinutes <
+                        scheduledEndMinutes;
+
+                }
+
+            }
+
+        }
+
+        await setDoc(
+            attendanceReference,
+            attendanceData,
+            {
+                merge:
+                    true
+            }
+        );
 
         showMessage(
             recordAlreadyExists
@@ -2042,13 +2574,14 @@ await setDoc(
                 "Attendance record updated."
                 :
                 "Attendance record created.",
-
             recordAlreadyExists
                 ?
                 "var(--orange-primary)"
                 :
                 "var(--green-primary)"
         );
+
+        await loadExistingAttendance();
 
         await loadAttendanceHistory();
 
@@ -2072,13 +2605,92 @@ await setDoc(
 
     } finally {
 
-        saveAttendanceButton.disabled =
-            false;
+        if (
+            saveAttendanceButton
+        ) {
 
-        saveAttendanceButton.textContent =
-            "Save Attendance";
+            saveAttendanceButton.disabled =
+                false;
+
+            saveAttendanceButton.textContent =
+                "Save Attendance";
+
+        }
 
     }
+
+}
+
+
+// =====================================
+// Build Date + Time
+// =====================================
+
+function buildDateTimeFromDateAndTime(
+    dateKey,
+    timeValue
+) {
+
+    const dateParts =
+        String(
+            dateKey
+        )
+            .split("-")
+            .map(Number);
+
+    const timeParts =
+        String(
+            timeValue
+        )
+            .split(":")
+            .map(Number);
+
+    if (
+        dateParts.length !==
+        3
+        ||
+        timeParts.length <
+        2
+        ||
+        !dateParts.every(
+            Number.isFinite
+        )
+        ||
+        !timeParts.slice(
+            0,
+            2
+        ).every(
+            Number.isFinite
+        )
+    ) {
+
+        return null;
+
+    }
+
+    const result =
+        new Date(
+            dateParts[0],
+            dateParts[1] -
+            1,
+            dateParts[2],
+            timeParts[0],
+            timeParts[1],
+            0,
+            0
+        );
+
+    if (
+        Number.isNaN(
+            result.getTime()
+        )
+    ) {
+
+        return null;
+
+    }
+
+    return result;
 
 }
 
@@ -2089,10 +2701,20 @@ await setDoc(
 
 async function buildCalendar() {
 
+    if (
+        !calendarGrid ||
+        !calendarTitle
+    ) {
+
+        return;
+
+    }
+
     calendarGrid.innerHTML =
         "";
 
     if (
+        !employeeSelect ||
         !employeeSelect.value
     ) {
 
@@ -2183,11 +2805,20 @@ async function buildCalendar() {
                 const record =
                     attendanceDocument.data();
 
-                attendanceByDate[
+                const recordDate =
                     record.date ??
-                    record.dateKey
-                ] =
-                    record;
+                    record.dateKey;
+
+                if (
+                    recordDate
+                ) {
+
+                    attendanceByDate[
+                        recordDate
+                    ] =
+                        record;
+
+                }
 
             }
         );
@@ -2299,9 +2930,9 @@ function displayCalendar(
 
     for (
         let blankIndex =
-            0;
+        0;
         blankIndex <
-            firstDayOfMonth;
+        firstDayOfMonth;
         blankIndex++
     ) {
 
@@ -2321,9 +2952,9 @@ function displayCalendar(
 
     for (
         let day =
-            1;
+        1;
         day <=
-            totalDaysInMonth;
+        totalDaysInMonth;
         day++
     ) {
 
@@ -2388,9 +3019,38 @@ function createCalendarDay(
             `calendar-${statusClass}`
         );
 
-        dayCell.title =
+        let title =
             attendanceRecord.status ??
             "Attendance recorded";
+
+        const durationLabel =
+            formatLeaveDuration(
+                attendanceRecord.leaveDuration
+            );
+
+        if (
+            durationLabel
+        ) {
+
+            title +=
+                ` — ${durationLabel}`;
+
+        }
+
+        if (
+            attendanceRecord.leaveDuration ===
+            "custom"
+            &&
+            attendanceRecord.leaveTime
+        ) {
+
+            title +=
+                ` (${attendanceRecord.leaveTime})`;
+
+        }
+
+        dayCell.title =
+            title;
 
     }
 
@@ -2399,11 +3059,13 @@ function createCalendarDay(
 
     const isToday =
         day ===
-            today.getDate() &&
+        today.getDate()
+        &&
         calendarMonth ===
-            today.getMonth() &&
+        today.getMonth()
+        &&
         calendarYear ===
-            today.getFullYear();
+        today.getFullYear();
 
     if (
         isToday
@@ -2428,8 +3090,14 @@ function createCalendarDay(
         "click",
         async function () {
 
-            attendanceDate.value =
-                currentDateKey;
+            if (
+                attendanceDate
+            ) {
+
+                attendanceDate.value =
+                    currentDateKey;
+
+            }
 
             await loadExistingAttendance();
 
