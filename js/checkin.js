@@ -392,11 +392,11 @@ earlyExitOtherSection.hidden =
         "#0b5ed7";
 
     message.innerHTML =
-        "Ready for employee attendance.";
+    "Ready for employee attendance.";
 
-        
+updateRegisteredDeviceDisplay();
 
-        startRegisteredEmployeeAttendance();
+startRegisteredEmployeeAttendance();
 
 }
 
@@ -1574,6 +1574,8 @@ if (
         );
 
         resetCheckInForm();
+
+        updateRegisteredDeviceDisplay();
 
     } catch (error) {
 
@@ -2945,6 +2947,8 @@ lateCheckoutMinutes:
         resultMessage;
 
     resetCheckInForm();
+
+    updateRegisteredDeviceDisplay();
 
     }
 
