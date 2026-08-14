@@ -13,13 +13,13 @@ import {
     addDoc,
     getDocs,
     getDoc,
+    setDoc,
     updateDoc,
     query,
     where,
     runTransaction,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-
 
 // =====================================================
 // Office Boundary
@@ -69,6 +69,194 @@ const TEST_MODE =
 
 const DEVICE_REGISTRATION_KEY =
     "attendanceDeviceRegistration";
+
+    // =====================================================
+// Generate Device Registration Token
+// =====================================================
+
+function generateDeviceRegistrationToken() {
+
+    if (
+        crypto.randomUUID
+    ) {
+
+        return crypto.randomUUID();
+
+    }
+
+    return (
+        Date.now().toString(36)
+        +
+        "-"
+        +
+        Math.random()
+            .toString(36)
+            .substring(2)
+        +
+        "-"
+        +
+        Math.random()
+            .toString(36)
+            .substring(2)
+    );
+
+}
+
+// =====================================================
+// Get Firebase Device Registration
+// =====================================================
+
+async function getFirebaseDeviceRegistration(
+    employeeNumber
+) {
+
+    const safeEmployeeNumber =
+        String(
+            employeeNumber ??
+            ""
+        ).trim();
+
+    if (
+        !safeEmployeeNumber
+    ) {
+
+        return null;
+
+    }
+
+    const registrationReference =
+        doc(
+            db,
+            "employeeDeviceRegistrations",
+            safeEmployeeNumber
+        );
+
+    const registrationSnapshot =
+        await getDoc(
+            registrationReference
+        );
+
+    if (
+        !registrationSnapshot.exists()
+    ) {
+
+        return null;
+
+    }
+
+    return {
+
+        reference:
+            registrationReference,
+
+        ...registrationSnapshot.data()
+
+    };
+
+}
+
+// =====================================================
+// Create Firebase Device Registration
+// =====================================================
+
+async function createFirebaseDeviceRegistration(
+    employee
+) {
+
+    const employeeNumber =
+        String(
+            employee.employeeNumber ??
+            ""
+        ).trim();
+
+    if (
+        !employeeNumber
+    ) {
+
+        throw new Error(
+            "EMPLOYEE_NUMBER_MISSING"
+        );
+
+    }
+
+    const registrationToken =
+        generateDeviceRegistrationToken();
+
+    const registrationReference =
+        doc(
+            db,
+            "employeeDeviceRegistrations",
+            employeeNumber
+        );
+
+    await setDoc(
+        registrationReference,
+        {
+
+            employeeNumber:
+                employeeNumber,
+
+            registrationToken:
+                registrationToken,
+
+            active:
+                true,
+
+            deviceId:
+                getDeviceId(),
+
+            fingerprint:
+                getFingerprint(),
+
+            registeredAt:
+                serverTimestamp(),
+
+            updatedAt:
+                serverTimestamp()
+
+        }
+    );
+
+    return registrationToken;
+
+}
+
+// =====================================================
+// Save Local Device Registration
+// =====================================================
+
+function saveLocalDeviceRegistration(
+    employeeNumber,
+    registrationToken
+) {
+
+    const registration = {
+
+        employeeNumber:
+            String(
+                employeeNumber ??
+                ""
+            ).trim(),
+
+        registrationToken:
+            String(
+                registrationToken ??
+                ""
+            ).trim(),
+
+        registeredAt:
+            new Date().toISOString()
+
+    };
+
+    localStorage.setItem(
+        DEVICE_REGISTRATION_KEY,
+        JSON.stringify(
+            registration
+        )
+    );
+
+}
 
 // =====================================================
 // Location Tolerance
@@ -955,67 +1143,147 @@ function getRegisteredEmployeeNumber() {
 
 async function loadRegisteredEmployee() {
 
-    const registeredEmployeeNumber =
-        getRegisteredEmployeeNumber();
+    try {
 
-    if (
-        !registeredEmployeeNumber
+        const storedRegistration =
+            localStorage.getItem(
+                DEVICE_REGISTRATION_KEY
+            );
+
+        if (
+            !storedRegistration
+        ) {
+
+            return null;
+
+        }
+
+        const localRegistration =
+            JSON.parse(
+                storedRegistration
+            );
+
+        const employeeNumber =
+            String(
+                localRegistration.employeeNumber ??
+                ""
+            ).trim();
+
+        const localToken =
+            String(
+                localRegistration.registrationToken ??
+                ""
+            ).trim();
+
+        if (
+            !employeeNumber ||
+            !localToken
+        ) {
+
+            localStorage.removeItem(
+                DEVICE_REGISTRATION_KEY
+            );
+
+            return null;
+
+        }
+
+
+        // =============================================
+        // Validate Registration Against Firebase
+        // =============================================
+
+        const firebaseRegistration =
+            await getFirebaseDeviceRegistration(
+                employeeNumber
+            );
+
+        if (
+            !firebaseRegistration ||
+            firebaseRegistration.active !== true ||
+            String(
+                firebaseRegistration.registrationToken ??
+                ""
+            ).trim() !==
+            localToken
+        ) {
+
+            localStorage.removeItem(
+                DEVICE_REGISTRATION_KEY
+            );
+
+            return null;
+
+        }
+
+
+        // =============================================
+        // Load Current Employee Record
+        // =============================================
+
+        const employeeQuery =
+            query(
+                collection(
+                    db,
+                    "employees"
+                ),
+                where(
+                    "employeeNumber",
+                    "==",
+                    employeeNumber
+                )
+            );
+
+        const employeeSnapshot =
+            await getDocs(
+                employeeQuery
+            );
+
+        if (
+            employeeSnapshot.empty
+        ) {
+
+            return null;
+
+        }
+
+        const employeeDocument =
+            employeeSnapshot.docs[
+                0
+            ];
+
+        const employee = {
+
+            id:
+                employeeDocument.id,
+
+            ...employeeDocument.data()
+
+        };
+
+        if (
+            employee.active ===
+            false
+        ) {
+
+            return null;
+
+        }
+
+        return employee;
+
+    } catch (
+        error
     ) {
 
-        return null;
-
-    }
-
-    const employeeQuery =
-        query(
-            collection(
-                db,
-                "employees"
-            ),
-            where(
-                "employeeNumber",
-                "==",
-                registeredEmployeeNumber
-            )
+        console.error(
+            "Unable to load registered employee:",
+            error
         );
 
-    const employeeSnapshot =
-        await getDocs(
-            employeeQuery
-        );
-
-    if (
-        employeeSnapshot.empty
-    ) {
-
         return null;
 
     }
-
-    const employeeDocument =
-        employeeSnapshot.docs[
-            0
-        ];
-
-    const employee = {
-
-        id:
-            employeeDocument.id,
-
-        ...employeeDocument.data()
-
-    };
-
-    if (
-        employee.active ===
-        false
-    ) {
-
-        return null;
-
-    }
-
-    return employee;
 
 }
 
@@ -1213,8 +1481,50 @@ if (
 
     }
 
-    registerEmployeeOnDevice(
-        employee
+
+    // =============================================
+    // Check Existing Firebase Registration
+    // =============================================
+
+    const existingRegistration =
+        await getFirebaseDeviceRegistration(
+            employee.employeeNumber
+        );
+
+    if (
+        existingRegistration &&
+        existingRegistration.active ===
+        true
+    ) {
+
+        message.style.color =
+            "red";
+
+        message.innerHTML =
+            "❌ This employee already has a registered device."
+            +
+            "<br>Please contact an administrator to reset the device registration.";
+
+        checkInButton.disabled =
+            false;
+
+        return;
+
+    }
+
+
+    // =============================================
+    // Create New Registration
+    // =============================================
+
+    const registrationToken =
+        await createFirebaseDeviceRegistration(
+            employee
+        );
+
+    saveLocalDeviceRegistration(
+        employee.employeeNumber,
+        registrationToken
     );
 
 }
