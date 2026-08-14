@@ -1095,7 +1095,7 @@ function updateRegisteredDeviceDisplay() {
     }
 
 
-    // Hide Employee Number field
+    // Employee Number
     employeeNumberInput.style.setProperty(
         "display",
         "none",
@@ -1103,7 +1103,7 @@ function updateRegisteredDeviceDisplay() {
     );
 
 
-    // Hide PIN field
+    // PIN
     pinInput.style.setProperty(
         "display",
         "none",
@@ -1111,7 +1111,7 @@ function updateRegisteredDeviceDisplay() {
     );
 
 
-    // Hide Continue button
+    // Continue Button
     checkInButton.style.setProperty(
         "display",
         "none",
@@ -1119,7 +1119,7 @@ function updateRegisteredDeviceDisplay() {
     );
 
 
-    // Hide Employee Number label
+    // Employee Number Label
     const employeeNumberLabel =
         document.querySelector(
             'label[for="employeeNumber"]'
@@ -1138,7 +1138,7 @@ function updateRegisteredDeviceDisplay() {
     }
 
 
-    // Hide PIN label
+    // PIN Label
     const pinLabel =
         document.querySelector(
             'label[for="pin"]'
