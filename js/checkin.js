@@ -1094,14 +1094,67 @@ function updateRegisteredDeviceDisplay() {
 
     }
 
-    employeeNumberInput.style.display =
-        "none";
 
-    pinInput.style.display =
-        "none";
+    // Hide Employee Number field
+    employeeNumberInput.style.setProperty(
+        "display",
+        "none",
+        "important"
+    );
 
-    checkInButton.style.display =
-        "none";
+
+    // Hide PIN field
+    pinInput.style.setProperty(
+        "display",
+        "none",
+        "important"
+    );
+
+
+    // Hide Continue button
+    checkInButton.style.setProperty(
+        "display",
+        "none",
+        "important"
+    );
+
+
+    // Hide Employee Number label
+    const employeeNumberLabel =
+        document.querySelector(
+            'label[for="employeeNumber"]'
+        );
+
+    if (
+        employeeNumberLabel
+    ) {
+
+        employeeNumberLabel.style.setProperty(
+            "display",
+            "none",
+            "important"
+        );
+
+    }
+
+
+    // Hide PIN label
+    const pinLabel =
+        document.querySelector(
+            'label[for="pin"]'
+        );
+
+    if (
+        pinLabel
+    ) {
+
+        pinLabel.style.setProperty(
+            "display",
+            "none",
+            "important"
+        );
+
+    }
 
 }
 
