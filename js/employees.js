@@ -1480,6 +1480,14 @@ function displayEmployees(employeeList) {
                     </button>
 
                     <button
+    type="button"
+    class="employee-action-btn reset-device-btn"
+    data-id="${employee.id}"
+>
+    Reset Device
+</button>
+
+                    <button
                         type="button"
                         class="employee-action-btn status-btn"
                         data-id="${employee.id}"
@@ -1572,6 +1580,24 @@ function handleEmployeeAction(event) {
 
     }
 
+    // =====================================
+// Reset Registered Device
+// =====================================
+
+    if (
+    button.classList.contains(
+        "reset-device-btn"
+    )
+) {
+
+    resetEmployeeDevice(
+        employeeId
+    );
+
+    return;
+
+}
+
     if (
         button.classList.contains(
             "status-btn"
@@ -1617,6 +1643,104 @@ function findEmployee(employeeId) {
 
         }
     );
+
+}
+
+// =====================================
+// Reset Employee Registered Device
+// =====================================
+
+async function resetEmployeeDevice(
+    employeeId
+) {
+
+    const employee =
+        findEmployee(
+            employeeId
+        );
+
+    if (
+        !employee
+    ) {
+
+        showNotification(
+            "❌ Employee could not be found.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    const confirmed =
+        window.confirm(
+            `Reset the registered device for ${employee.name ?? "this employee"}?\n\n`
+            +
+            "They will need to register their device again the next time they scan the attendance QR code."
+        );
+
+    if (
+        !confirmed
+    ) {
+
+        return;
+
+    }
+
+    try {
+
+        const employeeNumber =
+            String(
+                employee.employeeNumber ??
+                ""
+            ).trim();
+
+        if (
+            !employeeNumber
+        ) {
+
+            throw new Error(
+                "Employee number is missing."
+            );
+
+        }
+
+        const registrationReference =
+            doc(
+                db,
+                "employeeDeviceRegistrations",
+                employeeNumber
+            );
+
+        await deleteDoc(
+            registrationReference
+        );
+
+        await writeAuditLog(
+            "Reset Employee Device",
+            employee.name ?? employeeNumber,
+            `Registered device reset for Employee Number: ${employeeNumber}`
+        );
+
+        showNotification(
+            "✅ Registered device reset successfully."
+        );
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Reset employee device error:",
+            error
+        );
+
+        showNotification(
+            "❌ Registered device could not be reset.",
+            "error"
+        );
+
+    }
 
 }
 

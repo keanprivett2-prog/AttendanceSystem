@@ -1354,72 +1354,100 @@ function updateRegisteredDeviceDisplay() {
         getRegisteredEmployeeNumber() !==
         "";
 
+    const employeeNumberLabel =
+        document.querySelector(
+            'label[for="employeeNumber"]'
+        );
+
+    const pinLabel =
+        document.querySelector(
+            'label[for="pin"]'
+        );
+
+
     if (
-        !isRegistered
+        isRegistered
     ) {
+
+        employeeNumberInput.style.setProperty(
+            "display",
+            "none",
+            "important"
+        );
+
+        pinInput.style.setProperty(
+            "display",
+            "none",
+            "important"
+        );
+
+        checkInButton.style.setProperty(
+            "display",
+            "none",
+            "important"
+        );
+
+        if (
+            employeeNumberLabel
+        ) {
+
+            employeeNumberLabel.style.setProperty(
+                "display",
+                "none",
+                "important"
+            );
+
+        }
+
+        if (
+            pinLabel
+        ) {
+
+            pinLabel.style.setProperty(
+                "display",
+                "none",
+                "important"
+            );
+
+        }
 
         return;
 
     }
 
 
-    // Employee Number
-    employeeNumberInput.style.setProperty(
-        "display",
-        "none",
-        "important"
+    // =====================================
+    // Not Registered - Show Login Fields
+    // =====================================
+
+    employeeNumberInput.style.removeProperty(
+        "display"
     );
 
-
-    // PIN
-    pinInput.style.setProperty(
-        "display",
-        "none",
-        "important"
+    pinInput.style.removeProperty(
+        "display"
     );
 
-
-    // Continue Button
-    checkInButton.style.setProperty(
-        "display",
-        "none",
-        "important"
+    checkInButton.style.removeProperty(
+        "display"
     );
-
-
-    // Employee Number Label
-    const employeeNumberLabel =
-        document.querySelector(
-            'label[for="employeeNumber"]'
-        );
 
     if (
         employeeNumberLabel
     ) {
 
-        employeeNumberLabel.style.setProperty(
-            "display",
-            "none",
-            "important"
+        employeeNumberLabel.style.removeProperty(
+            "display"
         );
 
     }
-
-
-    // PIN Label
-    const pinLabel =
-        document.querySelector(
-            'label[for="pin"]'
-        );
 
     if (
         pinLabel
     ) {
 
-        pinLabel.style.setProperty(
-            "display",
-            "none",
-            "important"
+        pinLabel.style.removeProperty(
+            "display"
         );
 
     }
@@ -1466,6 +1494,8 @@ let employee =
 if (
     !employee
 ) {
+
+    updateRegisteredDeviceDisplay();
 
     employee =
         await authenticateEmployee();
