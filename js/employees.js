@@ -86,6 +86,11 @@ const employeeStartTimeInput =
 const employeeEndTimeInput =
     document.getElementById("employeeEndTime");
 
+    const employeeWorkArrangementInput =
+    document.getElementById(
+        "employeeWorkArrangement"
+    );
+
 const employeePinInput =
     document.getElementById("employeePin");
 
@@ -919,6 +924,9 @@ const employeeStartTime =
 const employeeEndTime =
     employeeEndTimeInput.value.trim();
 
+const employeeWorkArrangement =
+    employeeWorkArrangementInput.value.trim();
+
 const employeePin =
     employeePinInput.value.trim();
 
@@ -930,11 +938,12 @@ const employeePin =
     employeeDepartment === "" ||
     employeeStartTime === "" ||
     employeeEndTime === "" ||
+    employeeWorkArrangement === "" ||
     employeePin === ""
 ) {
 
     showNotification(
-        "⚠️ Please complete all employee fields.",
+        "Please complete all employee fields.",
         "warning"
     );
 
@@ -1026,26 +1035,28 @@ const employeePin =
        if (editingEmployeeId) {
 
     await updateExistingEmployee(
-        employeeNumber,
-        employeeName,
-        employeeRole,
-        employeeDepartment,
-        employeeStartTime,
-        employeeEndTime,
-        employeePin
-    );
+    employeeNumber,
+    employeeName,
+    employeeRole,
+    employeeDepartment,
+    employeeStartTime,
+    employeeEndTime,
+    employeeWorkArrangement,
+    employeePin
+);
 
 } else {
 
     await createNewEmployee(
-        employeeNumber,
-        employeeName,
-        employeeRole,
-        employeeDepartment,
-        employeeStartTime,
-        employeeEndTime,
-        employeePin
-    );
+    employeeNumber,
+    employeeName,
+    employeeRole,
+    employeeDepartment,
+    employeeStartTime,
+    employeeEndTime,
+    employeeWorkArrangement,
+    employeePin
+);
 
 }
         closeEmployeeModal();
@@ -1090,6 +1101,7 @@ async function createNewEmployee(
     employeeDepartment,
     employeeStartTime,
     employeeEndTime,
+    employeeWorkArrangement,
     employeePin
 ) {
 
@@ -1115,6 +1127,9 @@ async function createNewEmployee(
 
             endTime:
                 employeeEndTime,
+
+                workArrangement:
+    employeeWorkArrangement,
 
             pin:
                 employeePin,
@@ -1150,6 +1165,7 @@ async function updateExistingEmployee(
     employeeDepartment,
     employeeStartTime,
     employeeEndTime,
+    employeeWorkArrangement,
     employeePin
 ) {
 
@@ -1197,6 +1213,9 @@ async function updateExistingEmployee(
 
             endTime:
                 employeeEndTime,
+
+                workArrangement:
+    employeeWorkArrangement,
 
             pin:
                 employeePin
@@ -4017,8 +4036,12 @@ employeeDepartmentInput.value =
 
 employeeStartTimeInput.value =
     employee.startTime ?? "08:00";
+
 employeeEndTimeInput.value =
     employee.endTime ?? "17:00";
+
+employeeWorkArrangementInput.value =
+    employee.workArrangement ?? "Office";
 
 employeePinInput.value =
     employee.pin ?? "";

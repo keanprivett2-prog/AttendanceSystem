@@ -103,6 +103,16 @@ const clock =
         "clock"
     );
 
+    const hybridWorkLocationContainer =
+    document.getElementById(
+        "hybridWorkLocationContainer"
+    );
+
+const hybridWorkLocation =
+    document.getElementById(
+        "hybridWorkLocation"
+    );
+
 
 // =====================================================
 // Late Reason Elements
@@ -1246,6 +1256,34 @@ const attendanceStatus =
             false;
 
     }
+
+}
+
+// =====================================================
+// Employee Work Arrangement
+// =====================================================
+
+function getEmployeeWorkArrangement(
+    employee
+) {
+
+    const arrangement =
+        String(
+            employee.workArrangement ??
+            "Office"
+        ).trim();
+
+    if (
+        arrangement === "Remote"
+        ||
+        arrangement === "Hybrid"
+    ) {
+
+        return arrangement;
+
+    }
+
+    return "Office";
 
 }
 

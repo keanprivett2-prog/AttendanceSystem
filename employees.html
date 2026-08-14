@@ -437,26 +437,64 @@
 
                 <!-- Employee End Time -->
 
-                <div class="form-group">
+<div class="form-group">
 
-                    <label for="employeeEndTime">
-                        End Time
-                    </label>
+    <label for="employeeEndTime">
+        End Time
+    </label>
 
-                    <input
-                        type="time"
-                        id="employeeEndTime"
-                        required
-                    >
+    <input
+        type="time"
+        id="employeeEndTime"
+        required
+    >
 
-                    <small>
-                        The employee's normal scheduled finishing time.
-                    </small>
+    <small>
+        The employee's normal scheduled finishing time.
+    </small>
 
-                </div>
+</div>
 
 
-                <!-- Employee PIN -->
+<!-- Employee Work Arrangement -->
+
+<div class="form-group">
+
+    <label for="employeeWorkArrangement">
+        Work Arrangement
+    </label>
+
+    <select
+        id="employeeWorkArrangement"
+        required
+    >
+
+        <option value="">
+            Select work arrangement
+        </option>
+
+        <option value="Office">
+            Office
+        </option>
+
+        <option value="Remote">
+            Remote
+        </option>
+
+        <option value="Hybrid">
+            Hybrid
+        </option>
+
+    </select>
+
+    <small>
+        Determines whether the employee works in-office, remotely, or on a hybrid basis.
+    </small>
+
+</div>
+
+
+<!-- Employee PIN -->
 
                 <div class="form-group">
 
