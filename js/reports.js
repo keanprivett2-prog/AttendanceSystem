@@ -64,6 +64,11 @@ const statusFilter =
         "statusFilter"
     );
 
+    const workLocationFilter =
+    document.getElementById(
+        "workLocationFilter"
+    );
+
 const generateReportButton =
     document.getElementById(
         "generateReportButton"
@@ -117,6 +122,16 @@ const checkedOutCount =
 const earlyExitCount =
     document.getElementById(
         "earlyExitCount"
+    );
+
+    const officeDaysCount =
+    document.getElementById(
+        "officeDaysCount"
+    );
+
+const remoteDaysCount =
+    document.getElementById(
+        "remoteDaysCount"
     );
 
 const totalHoursWorked =
@@ -820,6 +835,13 @@ async function generateReport() {
     const selectedStatus =
         statusFilter.value;
 
+        const selectedWorkLocation =
+    workLocationFilter
+        ?
+        workLocationFilter.value
+        :
+        "";
+
 
     if (
         !startDate ||
@@ -941,6 +963,33 @@ async function generateReport() {
                 );
 
         }
+
+        if (
+    selectedWorkLocation !==
+    ""
+) {
+
+    records =
+        records.filter(
+            (record) => {
+
+                const recordWorkLocation =
+                    String(
+                        record.workLocation ??
+                        "Office"
+                    ).trim()
+                    ||
+                    "Office";
+
+                return (
+                    recordWorkLocation ===
+                    selectedWorkLocation
+                );
+
+            }
+        );
+
+}
 
 
         currentReportRecords =
@@ -1469,6 +1518,14 @@ const pageRecords =
                     record
                 );
 
+                const workLocation =
+    String(
+        record.workLocation ??
+        "Office"
+    ).trim()
+    ||
+    "Office";
+
             const isLate =
                 normalizeStatus(
                     record.status
@@ -1510,6 +1567,12 @@ const pageRecords =
                         "-"
                     )}
                 </td>
+
+                <td>
+    ${escapeHtml(
+        workLocation
+    )}
+</td>
 
                 <td>
                     ${escapeHtml(
@@ -1739,6 +1802,50 @@ function updateSummaryCards(
             }
         ).length;
 
+        const officeDays =
+    records.filter(
+        function (
+            record
+        ) {
+
+            const workLocation =
+                String(
+                    record.workLocation ??
+                    "Office"
+                ).trim()
+                ||
+                "Office";
+
+            return (
+                workLocation ===
+                "Office"
+            );
+
+        }
+    ).length;
+
+const remoteDays =
+    records.filter(
+        function (
+            record
+        ) {
+
+            const workLocation =
+                String(
+                    record.workLocation ??
+                    "Office"
+                ).trim()
+                ||
+                "Office";
+
+            return (
+                workLocation ===
+                "Remote"
+            );
+
+        }
+    ).length;
+
 
     // =====================================
     // Hours Worked
@@ -1838,6 +1945,24 @@ function updateSummaryCards(
 
     earlyExitCount.textContent =
         earlyExits;
+
+        if (
+    officeDaysCount
+) {
+
+    officeDaysCount.textContent =
+        officeDays;
+
+}
+
+if (
+    remoteDaysCount
+) {
+
+    remoteDaysCount.textContent =
+        remoteDays;
+
+}
 
     totalHoursWorked.textContent =
         formatMinutesAsHours(
@@ -3061,7 +3186,7 @@ function showTableMessage(message) {
         <tr>
 
             <td
-                colspan="11"
+                colspan="12"
                 class="empty-row"
             >
                 ${escapeHtml(message)}
@@ -3097,6 +3222,7 @@ function exportReportToCsv() {
         "Employee Number",
         "Employee Name",
         "Department",
+        "Work Location",
         "Check In",
         "Check Out",
         "Hours Worked",
@@ -3124,7 +3250,15 @@ function exportReportToCsv() {
         "",
 
     record.department ??
-        "",
+
+           "",
+
+           String(
+    record.workLocation ??
+    "Office"
+).trim()
+||
+"Office",
 
     record.time ??
         "",
@@ -3255,7 +3389,8 @@ function escapeCsvValue(value) {
 function printReport() {
 
     if (
-        currentReportRecords.length === 0
+        currentReportRecords.length ===
+        0
     ) {
 
         alert(
@@ -3265,6 +3400,145 @@ function printReport() {
         return;
 
     }
+
+
+    // =====================================
+    // Remember Current Collapsed Sections
+    // =====================================
+
+    const collapsibleContents =
+        document.querySelectorAll(
+            ".collapsible-content"
+        );
+
+    const collapsedStates =
+        [];
+
+    collapsibleContents.forEach(
+        function (
+            content
+        ) {
+
+            collapsedStates.push({
+                element:
+                    content,
+
+                wasCollapsed:
+                    content.classList.contains(
+                        "collapsed"
+                    )
+            });
+
+            content.classList.remove(
+                "collapsed"
+            );
+
+        }
+    );
+
+
+    // =====================================
+    // Update Toggle Buttons For Printing
+    // =====================================
+
+    sectionToggleButtons.forEach(
+        function (
+            button
+        ) {
+
+            button.textContent =
+                "Collapse";
+
+            button.setAttribute(
+                "aria-expanded",
+                "true"
+            );
+
+        }
+    );
+
+
+    // =====================================
+    // Restore Page After Printing
+    // =====================================
+
+    const restoreReportSections =
+        function () {
+
+            collapsedStates.forEach(
+                function (
+                    state
+                ) {
+
+                    if (
+                        state.wasCollapsed
+                    ) {
+
+                        state.element.classList.add(
+                            "collapsed"
+                        );
+
+                    }
+
+                }
+            );
+
+            sectionToggleButtons.forEach(
+                function (
+                    button
+                ) {
+
+                    const targetId =
+                        button.dataset.target;
+
+                    const content =
+                        document.getElementById(
+                            targetId
+                        );
+
+                    const isCollapsed =
+                        content
+                            ?
+                            content.classList.contains(
+                                "collapsed"
+                            )
+                            :
+                            false;
+
+                    button.textContent =
+                        isCollapsed
+                            ?
+                            "Expand"
+                            :
+                            "Collapse";
+
+                    button.setAttribute(
+                        "aria-expanded",
+                        String(
+                            !isCollapsed
+                        )
+                    );
+
+                }
+            );
+
+            window.removeEventListener(
+                "afterprint",
+                restoreReportSections
+            );
+
+        };
+
+
+    window.addEventListener(
+        "afterprint",
+        restoreReportSections
+    );
+
+
+    // =====================================
+    // Print Expanded Report
+    // =====================================
 
     window.print();
 

@@ -64,6 +64,11 @@ const attendanceStatus =
         "attendanceStatus"
     );
 
+    const attendanceWorkLocation =
+    document.getElementById(
+        "attendanceWorkLocation"
+    );
+
 const leaveDurationGroup =
     document.getElementById(
         "leaveDurationGroup"
@@ -527,6 +532,50 @@ async function loadAttendanceSettings() {
 
 async function handleEmployeeSelection() {
 
+    if (
+        employeeSelect &&
+        employeeSelect.value &&
+        attendanceWorkLocation
+    ) {
+
+        const selectedOption =
+            employeeSelect.options[
+                employeeSelect.selectedIndex
+            ];
+
+        const workArrangement =
+            String(
+                selectedOption.dataset.workArrangement ??
+                "Office"
+            ).trim();
+
+        if (
+            workArrangement ===
+            "Remote"
+        ) {
+
+            attendanceWorkLocation.value =
+                "Remote";
+
+        } else if (
+            workArrangement ===
+            "Office"
+        ) {
+
+            attendanceWorkLocation.value =
+                "Office";
+
+        } else {
+
+            // Hybrid employees require
+            // the administrator to choose.
+            attendanceWorkLocation.value =
+                "";
+
+        }
+
+    }
+
     await loadExistingAttendance();
 
     await loadAttendanceHistory();
@@ -536,6 +585,8 @@ async function handleEmployeeSelection() {
     await buildCalendar();
 
 }
+
+   
 
 
 // =====================================
@@ -708,6 +759,14 @@ async function loadEmployees() {
                     employee.department ??
                     "";
 
+                    option.dataset.workArrangement =
+    String(
+        employee.workArrangement ??
+        "Office"
+    ).trim()
+    ||
+    "Office";
+
                 employeeSelect.appendChild(
                     option
                 );
@@ -811,6 +870,15 @@ function resetAttendanceRecordFields() {
             "";
 
     }
+
+    if (
+    attendanceWorkLocation
+) {
+
+    attendanceWorkLocation.value =
+        "";
+
+}
 
     if (
         leaveDuration
@@ -919,6 +987,20 @@ async function loadExistingAttendance() {
             attendanceStatus.value =
                 attendance.status ??
                 "";
+
+                if (
+    attendanceWorkLocation
+) {
+
+    attendanceWorkLocation.value =
+        String(
+            attendance.workLocation ??
+            "Office"
+        ).trim()
+        ||
+        "Office";
+
+}
 
             handleAttendanceStatusChange();
 
@@ -2163,6 +2245,13 @@ async function saveAttendance(
             :
             "";
 
+            const selectedWorkLocation =
+    attendanceWorkLocation
+        ?
+        attendanceWorkLocation.value
+        :
+        "";
+
     const selectedLeaveDuration =
         leaveDuration
             ?
@@ -2228,6 +2317,19 @@ async function saveAttendance(
         return;
 
     }
+
+    if (
+    !selectedWorkLocation
+) {
+
+    showMessage(
+        "Please select a work location.",
+        "red"
+    );
+
+    return;
+
+}
 
     if (
         LEAVE_STATUSES.includes(
@@ -2413,6 +2515,9 @@ async function saveAttendance(
 
             status:
                 selectedStatus,
+
+                workLocation:
+    selectedWorkLocation,
 
             leaveDuration:
                 LEAVE_STATUSES.includes(
@@ -3044,6 +3149,17 @@ function createCalendarDay(
         let title =
             attendanceRecord.status ??
             "Attendance recorded";
+
+            const workLocation =
+    String(
+        attendanceRecord.workLocation ??
+        "Office"
+    ).trim()
+    ||
+    "Office";
+
+title +=
+    ` — ${workLocation}`;
 
         const durationLabel =
             formatLeaveDuration(

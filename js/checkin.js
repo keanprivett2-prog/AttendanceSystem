@@ -63,6 +63,13 @@ const OFFICE_BOUNDARY = [
 const TEST_MODE =
     true;
 
+    // =====================================================
+// Registered Employee Device
+// =====================================================
+
+const DEVICE_REGISTRATION_KEY =
+    "attendanceDeviceRegistration";
+
 // =====================================================
 // Location Tolerance
 // =====================================================
@@ -386,6 +393,10 @@ earlyExitOtherSection.hidden =
 
     message.innerHTML =
         "Ready for employee attendance.";
+
+        
+
+        startRegisteredEmployeeAttendance();
 
 }
 
@@ -892,6 +903,208 @@ async function getTodayAttendanceRecord(
 
 }
 
+// =====================================================
+// Get Registered Employee
+// =====================================================
+
+function getRegisteredEmployeeNumber() {
+
+    try {
+
+        const storedRegistration =
+            localStorage.getItem(
+                DEVICE_REGISTRATION_KEY
+            );
+
+        if (
+            !storedRegistration
+        ) {
+
+            return "";
+
+        }
+
+        const registration =
+            JSON.parse(
+                storedRegistration
+            );
+
+        return String(
+            registration.employeeNumber ??
+            ""
+        ).trim();
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Unable to read registered employee:",
+            error
+        );
+
+        return "";
+
+    }
+
+}
+
+// =====================================================
+// Load Registered Employee
+// =====================================================
+
+async function loadRegisteredEmployee() {
+
+    const registeredEmployeeNumber =
+        getRegisteredEmployeeNumber();
+
+    if (
+        !registeredEmployeeNumber
+    ) {
+
+        return null;
+
+    }
+
+    const employeeQuery =
+        query(
+            collection(
+                db,
+                "employees"
+            ),
+            where(
+                "employeeNumber",
+                "==",
+                registeredEmployeeNumber
+            )
+        );
+
+    const employeeSnapshot =
+        await getDocs(
+            employeeQuery
+        );
+
+    if (
+        employeeSnapshot.empty
+    ) {
+
+        return null;
+
+    }
+
+    const employeeDocument =
+        employeeSnapshot.docs[
+            0
+        ];
+
+    const employee = {
+
+        id:
+            employeeDocument.id,
+
+        ...employeeDocument.data()
+
+    };
+
+    if (
+        employee.active ===
+        false
+    ) {
+
+        return null;
+
+    }
+
+    return employee;
+
+}
+
+// =====================================================
+// Register Employee On This Device
+// =====================================================
+
+function registerEmployeeOnDevice(
+    employee
+) {
+
+    const registration = {
+
+        employeeNumber:
+            String(
+                employee.employeeNumber ??
+                ""
+            ).trim(),
+
+        registeredAt:
+            new Date().toISOString()
+
+    };
+
+    localStorage.setItem(
+        DEVICE_REGISTRATION_KEY,
+        JSON.stringify(
+            registration
+        )
+    );
+
+}
+
+// =====================================================
+// Start Registered Employee Attendance
+// =====================================================
+
+async function startRegisteredEmployeeAttendance() {
+
+    const registeredEmployeeNumber =
+        getRegisteredEmployeeNumber();
+
+    if (
+        !registeredEmployeeNumber
+    ) {
+
+        return;
+
+    }
+
+    message.style.color =
+        "#0b5ed7";
+
+    message.innerHTML =
+        "Registered device detected. Starting attendance...";
+
+    await checkIn();
+
+}
+
+// =====================================================
+// Registered Device Display
+// =====================================================
+
+function updateRegisteredDeviceDisplay() {
+
+    const isRegistered =
+        getRegisteredEmployeeNumber() !==
+        "";
+
+    if (
+        !isRegistered
+    ) {
+
+        return;
+
+    }
+
+    employeeNumberInput.style.display =
+        "none";
+
+    pinInput.style.display =
+        "none";
+
+    checkInButton.style.display =
+        "none";
+
+}
+
 
 // =====================================================
 // Main Check-In
@@ -925,15 +1138,31 @@ async function checkIn() {
 
         hybridWorkLocationContainer.style.display =
     "none";
-        const employee =
-    await authenticateEmployee();
 
-if (!employee) {
+let employee =
+    await loadRegisteredEmployee();
 
-    checkInButton.disabled =
-        false;
+if (
+    !employee
+) {
 
-    return;
+    employee =
+        await authenticateEmployee();
+
+    if (
+        !employee
+    ) {
+
+        checkInButton.disabled =
+            false;
+
+        return;
+
+    }
+
+    registerEmployeeOnDevice(
+        employee
+    );
 
 }
 
