@@ -1134,6 +1134,14 @@ async function loadAttendanceHistory() {
                     attendance.checkInMethod ??
                     "Unknown";
 
+                    const workLocation =
+    String(
+        attendance.workLocation ??
+        "Office"
+    ).trim()
+    ||
+    "Office";
+
                 const notes =
                     String(
                         attendance.notes ??
@@ -1314,6 +1322,20 @@ async function loadAttendanceHistory() {
                             </div>
 
                         </div>
+
+                        <div class="history-clean-row">
+
+    <span class="history-clean-label">
+        Work Location
+    </span>
+
+    <span class="history-clean-value">
+        ${escapeHtml(
+            workLocation
+        )}
+    </span>
+
+</div>
 
                         ${
                             leaveDurationDisplay

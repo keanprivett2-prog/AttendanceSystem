@@ -321,6 +321,19 @@ function initializeSystem() {
         checkIn
     );
 
+    employeeNumberInput.addEventListener(
+    "input",
+    () => {
+
+        hybridWorkLocation.value =
+            "";
+
+        hybridWorkLocationContainer.style.display =
+            "none";
+
+    }
+);
+
     submitLateReasonButton.addEventListener(
         "click",
         submitLateReason
@@ -909,6 +922,9 @@ async function checkIn() {
         // Authenticate Employee
         // =================================================
 
+
+        hybridWorkLocationContainer.style.display =
+    "none";
         const employee =
     await authenticateEmployee();
 
@@ -920,6 +936,8 @@ if (!employee) {
     return;
 
 }
+
+
 
 
 // =================================================
@@ -945,6 +963,7 @@ if (
     return;
 
 }
+
 
 if (
     existingAttendance
@@ -976,6 +995,59 @@ if (
         false;
 
     return;
+
+}
+
+// =================================================
+// Work Arrangement
+// =================================================
+
+const workArrangement =
+    getEmployeeWorkArrangement(
+        employee
+    );
+
+let selectedWorkLocation =
+    workArrangement;
+
+if (
+    workArrangement ===
+    "Hybrid"
+) {
+
+    hybridWorkLocationContainer.style.display =
+        "block";
+
+    selectedWorkLocation =
+        hybridWorkLocation.value;
+
+    if (
+        selectedWorkLocation ===
+        ""
+    ) {
+
+        message.style.color =
+            "#0b5ed7";
+
+        message.innerHTML =
+            "Please select where you are working today.";
+
+        checkInButton.disabled =
+            false;
+
+        hybridWorkLocation.focus();
+
+        return;
+
+    }
+
+} else {
+
+    hybridWorkLocationContainer.style.display =
+        "none";
+
+    hybridWorkLocation.value =
+        "";
 
 }
 
@@ -1030,25 +1102,49 @@ const attendanceStatus =
         // =================================================
 
         message.style.color =
-            "#0b5ed7";
+    "#0b5ed7";
 
-        message.innerHTML =
-            "Getting your current location...";
+let location = null;
 
-        const location =
-            await getCurrentLocation();
+if (
+    selectedWorkLocation ===
+    "Office"
 
-        const distanceMetres =
-            calculateDistanceFromOfficeBoundary(
-                location.latitude,
-                location.longitude
-            );
+    
+) {
 
-        let locationStatus =
-            getLocationStatus(
-                location.latitude,
-                location.longitude
-            );
+    message.innerHTML =
+        "Getting your current location...";
+
+    location =
+        await getCurrentLocation();
+
+}
+
+let distanceMetres =
+    0;
+
+let locationStatus =
+    "Remote";
+
+        if (
+    selectedWorkLocation ===
+    "Office"
+) {
+
+    distanceMetres =
+        calculateDistanceFromOfficeBoundary(
+            location.latitude,
+            location.longitude
+        );
+
+    locationStatus =
+        getLocationStatus(
+            location.latitude,
+            location.longitude
+        );
+
+}
 
         if (
     locationStatus ===
@@ -1065,10 +1161,13 @@ const attendanceStatus =
 
 
         // =================================================
-        // GPS Accuracy
-        // =================================================
+// GPS Accuracy
+// =================================================
 
-        if (
+if (
+    selectedWorkLocation ===
+    "Office"
+    &&
     location.accuracy >
     MAX_GPS_ACCURACY_METRES
 ) {
@@ -1084,9 +1183,12 @@ const attendanceStatus =
         // =================================================
 
         if (
-            locationStatus !==
-            "At Office"
-        ) {
+    selectedWorkLocation ===
+    "Office"
+    &&
+    locationStatus !==
+    "At Office"
+) {
 
             message.style.color =
                 "red";
@@ -1167,6 +1269,9 @@ const attendanceStatus =
                 locationStatus:
                     locationStatus,
 
+                    selectedWorkLocation:
+        selectedWorkLocation,
+
                 scanTime:
                     scanTime
 
@@ -1212,14 +1317,15 @@ const attendanceStatus =
         // =================================================
 
         await saveAttendanceToFirebase(
-            employee,
-            attendanceStatus,
-            location,
-            distanceMetres,
-            locationStatus,
-            scanTime,
-            ""
-        );
+    employee,
+    attendanceStatus,
+    location,
+    distanceMetres,
+    locationStatus,
+    scanTime,
+    "",
+    selectedWorkLocation
+);
 
         saveAttendance(
             employee,
@@ -1299,31 +1405,72 @@ async function beginCheckOut(
     const checkOutTime =
         new Date();
 
+        const workLocation =
+    String(
+        attendanceRecord.workLocation ??
+        getEmployeeWorkArrangement(
+            employee
+        )
+    ).trim();
+
 
     // =================================================
     // Verify Check-Out Location
     // =================================================
 
     message.style.color =
-        "#0b5ed7";
+    "#0b5ed7";
+
+let location =
+    null;
+
+if (
+    workLocation ===
+    "Office"
+) {
 
     message.innerHTML =
         "Verifying your check-out location...";
 
-    const location =
+    location =
         await getCurrentLocation();
 
-    const distanceMetres =
+}
+
+if (
+    workLocation ===
+    "Remote"
+) {
+
+    message.innerHTML =
+        "Processing remote check-out...";
+
+}
+
+    let distanceMetres =
+    0;
+
+let locationStatus =
+    "Remote";
+
+if (
+    workLocation ===
+    "Office"
+) {
+
+    distanceMetres =
         calculateDistanceFromOfficeBoundary(
             location.latitude,
             location.longitude
         );
 
-    let locationStatus =
+    locationStatus =
         getLocationStatus(
             location.latitude,
             location.longitude
         );
+
+}
 
 
     // Allow small GPS boundary tolerance.
@@ -1344,15 +1491,18 @@ async function beginCheckOut(
 
     // GPS accuracy check.
 
-    if (
-        location.accuracy >
-        MAX_GPS_ACCURACY_METRES
-    ) {
+if (
+    workLocation ===
+    "Office"
+    &&
+    location.accuracy >
+    MAX_GPS_ACCURACY_METRES
+) {
 
-        locationStatus =
-            "Location Uncertain";
+    locationStatus =
+        "Location Uncertain";
 
-    }
+}
 
 
     // =================================================
@@ -1360,9 +1510,12 @@ async function beginCheckOut(
     // =================================================
 
     if (
-        locationStatus !==
-        "At Office"
-    ) {
+    workLocation ===
+    "Office"
+    &&
+    locationStatus !==
+    "At Office"
+) {
 
         message.style.color =
             "red";
@@ -2281,6 +2434,7 @@ async function submitLateReason() {
             location,
             distanceMetres,
             locationStatus,
+            selectedWorkLocation,
             scanTime
 
         } =
@@ -2292,14 +2446,15 @@ async function submitLateReason() {
         // =================================================
 
         await saveAttendanceToFirebase(
-            employee,
-            attendanceStatus,
-            location,
-            distanceMetres,
-            locationStatus,
-            scanTime,
-            reason
-        );
+    employee,
+    attendanceStatus,
+    location,
+    distanceMetres,
+    locationStatus,
+    scanTime,
+    reason,
+    selectedWorkLocation
+);
 
         saveAttendance(
             employee,
@@ -2576,7 +2731,8 @@ async function saveAttendanceToFirebase(
     distanceMetres,
     locationStatus,
     scanTime,
-    lateReason = ""
+    lateReason = "",
+    selectedWorkLocation = "Office"
 ) {
 
     const submittedTime =
@@ -2773,33 +2929,51 @@ scheduledEndTime:
                     checkInMethod:
                         "QR Code",
 
-                    latitude:
-                        location.latitude,
+                    workLocation:
+    selectedWorkLocation,
 
-                    longitude:
-                        location.longitude,
+latitude:
+    location?.latitude ??
+    null,
 
-                    locationAccuracyMetres:
-                        Math.round(
-                            location.accuracy
-                        ),
+longitude:
+    location?.longitude ??
+    null,
 
-                    distanceFromOfficeMetres:
-                        Math.round(
-                            distanceMetres
-                        ),
+locationAccuracyMetres:
+    location
+        ?
+        Math.round(
+            location.accuracy
+        )
+        :
+        null,
 
-                    locationStatus:
-                        locationStatus,
+distanceFromOfficeMetres:
+    selectedWorkLocation ===
+    "Office"
+        ?
+        Math.round(
+            distanceMetres
+        )
+        :
+        null,
+
+locationStatus:
+    locationStatus,
 
                     mapsLink:
-                        "https://www.google.com/maps?q="
-                        +
-                        location.latitude
-                        +
-                        ","
-                        +
-                        location.longitude,
+    location
+        ?
+        "https://www.google.com/maps?q="
+        +
+        location.latitude
+        +
+        ","
+        +
+        location.longitude
+        :
+        "",
 
                     deviceId:
                         deviceId,
@@ -2965,14 +3139,19 @@ function showSuccessfulAttendance(
 
 
     resultMessage +=
-        "<br>"
-        +
-        "Location Status: "
-        +
-        escapeHtml(
-            locationStatus
-        )
-        +
+    "<br>"
+    +
+    "Location Status: "
+    +
+    escapeHtml(
+        locationStatus
+    );
+
+if (
+    location
+) {
+
+    resultMessage +=
         "<br>"
         +
         "Distance from Office Boundary: "
@@ -2992,6 +3171,8 @@ function showSuccessfulAttendance(
         )
         +
         " metres";
+
+}
 
     message.innerHTML =
         resultMessage;
@@ -3073,6 +3254,12 @@ function resetCheckInForm() {
 
     pinInput.value =
         "";
+
+        hybridWorkLocation.value =
+    "";
+
+hybridWorkLocationContainer.style.display =
+    "none";
 
     employeeNumberInput.disabled =
         false;
@@ -3691,6 +3878,7 @@ async function authenticateEmployee() {
         return null;
 
     }
+    
 
     const employee =
         await validateEmployee();
