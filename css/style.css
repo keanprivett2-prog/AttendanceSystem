@@ -738,25 +738,40 @@ button:disabled {
 ===================================================== */
 
 .stats-grid {
-    display:
-        grid;
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 18px;
+    margin: 24px 0;
+}
 
-    grid-template-columns:
-        repeat(4, minmax(0, 1fr));
+/* First four cards */
+.stats-grid .stat-card:nth-child(-n + 4) {
+    grid-column: span 3;
+}
 
-    gap:
-        18px;
-
-    margin:
-        24px 0;
+/* Last three cards */
+.stats-grid .stat-card:nth-child(n + 5) {
+    grid-column: span 4;
 }
 
 .stat-card {
-    padding:
-        22px;
+    position: relative;
 
-    text-align:
-        left;
+    min-height: 150px;
+
+    padding: 28px;
+
+    overflow: hidden;
+
+    background: #ffffff;
+
+    border: 1px solid var(--border-light);
+
+    border-radius: 16px;
+
+    box-shadow: var(--shadow-sm);
+
+    text-align: left;
 
     transition:
         transform var(--transition),
@@ -764,48 +779,37 @@ button:disabled {
 }
 
 .stat-card:hover {
-    transform:
-        translateY(-2px);
+    transform: translateY(-3px);
 
-    box-shadow:
-        var(--shadow-md);
+    box-shadow: var(--shadow-md);
 }
 
 .stat-card h4 {
-    margin:
-        0;
+    position: relative;
+    z-index: 2;
 
-    color:
-        var(--text-muted);
+    margin: 0;
 
-    font-size:
-        13px;
+    color: #64748b;
 
-    font-weight:
-        700;
-
-    text-transform:
-        uppercase;
-
-    letter-spacing:
-        0.45px;
+    font-size: 14px;
+    font-weight: 700;
 }
 
 .stat-card span {
-    display:
-        block;
+    position: relative;
+    z-index: 2;
 
-    margin-top:
-        12px;
+    display: block;
 
-    color:
-        var(--primary);
+    margin-top: 25px;
 
-    font-size:
-        34px;
+    color: #0f172a;
 
-    font-weight:
-        800;
+    font-size: 38px;
+    font-weight: 800;
+
+    letter-spacing: -1px;
 }
 
 
@@ -1044,6 +1048,11 @@ button:disabled {
             repeat(2, minmax(0, 1fr));
     }
 
+    .stats-grid .stat-card:nth-child(n) {
+        grid-column:
+            auto;
+    }
+
     .attendance-layout {
         grid-template-columns:
             1fr;
@@ -1139,4 +1148,27 @@ button:disabled {
             24px;
     }
 
+}
+
+.topbar {
+    min-height: 86px;
+    padding: 16px 24px;
+    margin-bottom: 26px;
+
+    background: #ffffff;
+
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+
+    box-shadow: var(--shadow-sm);
+}
+
+.topbar h1 {
+    font-size: 27px;
+    color: #0f3154;
+}
+
+.topbar p {
+    margin-top: 4px;
+    margin-bottom: 0;
 }
