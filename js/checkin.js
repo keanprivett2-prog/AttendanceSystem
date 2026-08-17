@@ -4,8 +4,19 @@
 // =====================================================
 
 import {
-    db
+    db,
+    firebaseConfig
 } from "../firebase/firebase.js";
+
+import {
+    initializeApp
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+
+import {
+    getAuth,
+    signInWithEmailAndPassword,
+    signOut
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 import {
     collection,
@@ -20,6 +31,21 @@ import {
     runTransaction,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+// =====================================================
+// Employee Attendance Authentication
+// =====================================================
+
+const attendanceAuthApp =
+    initializeApp(
+        firebaseConfig,
+        "attendance-employee-auth"
+    );
+
+const attendanceAuth =
+    getAuth(
+        attendanceAuthApp
+    );
 
 // =====================================================
 // Office Boundary
@@ -1456,6 +1482,207 @@ function updateRegisteredDeviceDisplay() {
 
 
 // =====================================================
+// Authenticate Employee
+// =====================================================
+
+async function authenticateEmployee() {
+
+    if (
+        !validateInputs()
+    ) {
+
+        return null;
+
+    }
+
+    const employeeNumber =
+        employeeNumberInput.value
+            .trim();
+
+    const enteredPin =
+        pinInput.value
+            .trim();
+
+    const employeeAuthEmail =
+        `${employeeNumber}@attendance.local`;
+
+    try {
+
+        const userCredential =
+            await signInWithEmailAndPassword(
+                attendanceAuth,
+                employeeAuthEmail,
+                enteredPin
+            );
+
+        const authenticatedUser =
+            userCredential.user;
+
+
+        // =============================================
+        // Load Employee Record
+        // =============================================
+
+        const employeeQuery =
+            query(
+                collection(
+                    db,
+                    "employees"
+                ),
+                where(
+                    "employeeNumber",
+                    "==",
+                    employeeNumber
+                )
+            );
+
+        const employeeSnapshot =
+            await getDocs(
+                employeeQuery
+            );
+
+        if (
+            employeeSnapshot.empty
+        ) {
+
+            await signOut(
+                attendanceAuth
+            );
+
+            message.style.color =
+                "red";
+
+            message.innerHTML =
+                "❌ Employee record could not be found.";
+
+            return null;
+
+        }
+
+        const employeeDocument =
+            employeeSnapshot.docs[0];
+
+        const employee = {
+
+            id:
+                employeeDocument.id,
+
+            ...employeeDocument.data()
+
+        };
+
+
+        // =============================================
+        // Confirm Auth Account Matches Employee
+        // =============================================
+
+        if (
+            employee.authUid &&
+            employee.authUid !==
+            authenticatedUser.uid
+        ) {
+
+            await signOut(
+                attendanceAuth
+            );
+
+            message.style.color =
+                "red";
+
+            message.innerHTML =
+                "❌ Employee authentication account does not match.";
+
+            return null;
+
+        }
+
+
+        // =============================================
+        // Active Employee Check
+        // =============================================
+
+        if (
+            employee.active ===
+            false
+        ) {
+
+            await signOut(
+                attendanceAuth
+            );
+
+            message.style.color =
+                "red";
+
+            message.innerHTML =
+                "❌ This employee account is inactive.";
+
+            return null;
+
+        }
+
+
+        // =============================================
+        // Clear Temporary Auth Session
+        // =============================================
+
+        await signOut(
+            attendanceAuth
+        );
+
+        return employee;
+
+    } catch (error) {
+
+        console.error(
+            "Employee authentication error:",
+            error
+        );
+
+        try {
+
+            await signOut(
+                attendanceAuth
+            );
+
+        } catch (signOutError) {
+
+            console.error(
+                "Employee Auth sign-out error:",
+                signOutError
+            );
+
+        }
+
+        message.style.color =
+            "red";
+
+        if (
+            error.code ===
+            "auth/invalid-credential" ||
+            error.code ===
+            "auth/wrong-password" ||
+            error.code ===
+            "auth/user-not-found"
+        ) {
+
+            message.innerHTML =
+                "❌ Invalid Employee Number or PIN.";
+
+        } else {
+
+            message.innerHTML =
+                "❌ Employee authentication failed.";
+
+        }
+
+        return null;
+
+    }
+
+}
+
+
+// =====================================================
 // Main Check-In
 // =====================================================
 
@@ -1481,197 +1708,193 @@ async function checkIn() {
     try {
 
         // =================================================
-        // Authenticate Employee
+        // Load Registered Employee / Authenticate
         // =================================================
 
-
         hybridWorkLocationContainer.style.display =
-    "none";
+            "none";
 
-let employee =
-    await loadRegisteredEmployee();
+        let employee =
+            await loadRegisteredEmployee();
 
-if (
-    !employee
-) {
+        if (
+            !employee
+        ) {
 
-    updateRegisteredDeviceDisplay();
+            updateRegisteredDeviceDisplay();
 
-    employee =
-        await authenticateEmployee();
+            employee =
+                await authenticateEmployee();
 
-    if (
-        !employee
-    ) {
+            if (
+                !employee
+            ) {
 
-        checkInButton.disabled =
-            false;
+                checkInButton.disabled =
+                    false;
 
-        return;
+                return;
 
-    }
-
-
-    // =============================================
-    // Check Existing Firebase Registration
-    // =============================================
-
-    const existingRegistration =
-        await getFirebaseDeviceRegistration(
-            employee.employeeNumber
-        );
-
-    if (
-        existingRegistration &&
-        existingRegistration.active ===
-        true
-    ) {
-
-        message.style.color =
-            "red";
-
-        message.innerHTML =
-            "❌ This employee already has a registered device."
-            +
-            "<br>Please contact an administrator to reset the device registration.";
-
-        checkInButton.disabled =
-            false;
-
-        return;
-
-    }
+            }
 
 
-    // =============================================
-    // Create New Registration
-    // =============================================
+            // =============================================
+            // Check Existing Firebase Registration
+            // =============================================
 
-    const registrationToken =
-        await createFirebaseDeviceRegistration(
-            employee
-        );
+            const existingRegistration =
+                await getFirebaseDeviceRegistration(
+                    employee.employeeNumber
+                );
 
-    saveLocalDeviceRegistration(
-        employee.employeeNumber,
-        registrationToken
-    );
+            if (
+                existingRegistration &&
+                existingRegistration.active ===
+                true
+            ) {
 
-}
+                message.style.color =
+                    "red";
 
+                message.innerHTML =
+                    "❌ This employee already has a registered device."
+                    +
+                    "<br>Please contact an administrator to reset the device registration.";
 
+                checkInButton.disabled =
+                    false;
 
+                return;
 
-// =================================================
-// Check Existing Attendance
-// =================================================
-
-const existingAttendance =
-    await getTodayAttendanceRecord(
-        employee
-    );
-
-if (
-    existingAttendance
-    &&
-    !existingAttendance.checkOutTime
-) {
-
-    await beginCheckOut(
-        employee,
-        existingAttendance
-    );
-
-    return;
-
-}
+            }
 
 
-if (
-    existingAttendance
-    &&
-    existingAttendance.checkOutTime
-) {
+            // =============================================
+            // Create New Registration
+            // =============================================
 
-    message.style.color =
-        "orange";
+            const registrationToken =
+                await createFirebaseDeviceRegistration(
+                    employee
+                );
 
-    message.innerHTML =
-        "⚠️ Your attendance for today is already complete."
-        +
-        "<br>Check In: "
-        +
-        escapeHtml(
-            existingAttendance.time ??
-            "-"
-        )
-        +
-        "<br>Check Out: "
-        +
-        escapeHtml(
-            existingAttendance.checkOutTime ??
-            "-"
-        );
+            saveLocalDeviceRegistration(
+                employee.employeeNumber,
+                registrationToken
+            );
 
-    checkInButton.disabled =
-        false;
+        }
 
-    return;
 
-}
+        // =================================================
+        // Check Existing Attendance
+        // =================================================
 
-// =================================================
-// Work Arrangement
-// =================================================
+        const existingAttendance =
+            await getTodayAttendanceRecord(
+                employee
+            );
 
-const workArrangement =
-    getEmployeeWorkArrangement(
-        employee
-    );
+        if (
+            existingAttendance &&
+            !existingAttendance.checkOutTime
+        ) {
 
-let selectedWorkLocation =
-    workArrangement;
+            await beginCheckOut(
+                employee,
+                existingAttendance
+            );
 
-if (
-    workArrangement ===
-    "Hybrid"
-) {
+            return;
 
-    hybridWorkLocationContainer.style.display =
-        "block";
+        }
 
-    selectedWorkLocation =
-        hybridWorkLocation.value;
 
-    if (
-        selectedWorkLocation ===
-        ""
-    ) {
+        if (
+            existingAttendance &&
+            existingAttendance.checkOutTime
+        ) {
 
-        message.style.color =
-            "#0b5ed7";
+            message.style.color =
+                "orange";
 
-        message.innerHTML =
-            "Please select where you are working today.";
+            message.innerHTML =
+                "⚠️ Your attendance for today is already complete."
+                +
+                "<br>Check In: "
+                +
+                escapeHtml(
+                    existingAttendance.time ??
+                    "-"
+                )
+                +
+                "<br>Check Out: "
+                +
+                escapeHtml(
+                    existingAttendance.checkOutTime ??
+                    "-"
+                );
 
-        checkInButton.disabled =
-            false;
+            checkInButton.disabled =
+                false;
 
-        hybridWorkLocation.focus();
+            return;
 
-        return;
+        }
 
-    }
 
-} else {
+        // =================================================
+        // Work Arrangement
+        // =================================================
 
-    hybridWorkLocationContainer.style.display =
-        "none";
+        const workArrangement =
+            getEmployeeWorkArrangement(
+                employee
+            );
 
-    hybridWorkLocation.value =
-        "";
+        let selectedWorkLocation =
+            workArrangement;
 
-}
+        if (
+            workArrangement ===
+            "Hybrid"
+        ) {
+
+            hybridWorkLocationContainer.style.display =
+                "block";
+
+            selectedWorkLocation =
+                hybridWorkLocation.value;
+
+            if (
+                selectedWorkLocation ===
+                ""
+            ) {
+
+                message.style.color =
+                    "#0b5ed7";
+
+                message.innerHTML =
+                    "Please select where you are working today.";
+
+                checkInButton.disabled =
+                    false;
+
+                hybridWorkLocation.focus();
+
+                return;
+
+            }
+
+        } else {
+
+            hybridWorkLocationContainer.style.display =
+                "none";
+
+            hybridWorkLocation.value =
+                "";
+
+        }
 
 
         // =================================================
@@ -1709,14 +1932,14 @@ if (
             await getAttendanceSettings();
 
         const employeeLateThreshold =
-    employee.startTime ??
-    attendanceSettings.lateThreshold;
+            employee.startTime ??
+            attendanceSettings.lateThreshold;
 
-const attendanceStatus =
-    getAttendanceStatus(
-        scanTime,
-        employeeLateThreshold
-    );
+        const attendanceStatus =
+            getAttendanceStatus(
+                scanTime,
+                employeeLateThreshold
+            );
 
 
         // =================================================
@@ -1724,80 +1947,78 @@ const attendanceStatus =
         // =================================================
 
         message.style.color =
-    "#0b5ed7";
+            "#0b5ed7";
 
-let location = null;
-
-if (
-    selectedWorkLocation ===
-    "Office"
-
-    
-) {
-
-    message.innerHTML =
-        "Getting your current location...";
-
-    location =
-        await getCurrentLocation();
-
-}
-
-let distanceMetres =
-    0;
-
-let locationStatus =
-    "Remote";
+        let location =
+            null;
 
         if (
-    selectedWorkLocation ===
-    "Office"
-) {
+            selectedWorkLocation ===
+            "Office"
+        ) {
 
-    distanceMetres =
-        calculateDistanceFromOfficeBoundary(
-            location.latitude,
-            location.longitude
-        );
+            message.innerHTML =
+                "Getting your current location...";
 
-    locationStatus =
-        getLocationStatus(
-            location.latitude,
-            location.longitude
-        );
+            location =
+                await getCurrentLocation();
 
-}
+        }
+
+        let distanceMetres =
+            0;
+
+        let locationStatus =
+            "Remote";
 
         if (
-    locationStatus ===
-    "Outside Office"
-    &&
-    distanceMetres <=
-    OFFICE_BUFFER_METRES
-) {
+            selectedWorkLocation ===
+            "Office"
+        ) {
 
-    locationStatus =
-        "At Office";
+            distanceMetres =
+                calculateDistanceFromOfficeBoundary(
+                    location.latitude,
+                    location.longitude
+                );
 
-}
+            locationStatus =
+                getLocationStatus(
+                    location.latitude,
+                    location.longitude
+                );
+
+        }
+
+
+        if (
+            locationStatus ===
+            "Outside Office" &&
+            distanceMetres <=
+            OFFICE_BUFFER_METRES
+        ) {
+
+            locationStatus =
+                "At Office";
+
+        }
 
 
         // =================================================
-// GPS Accuracy
-// =================================================
+        // GPS Accuracy
+        // =================================================
 
-if (
-    selectedWorkLocation ===
-    "Office"
-    &&
-    location.accuracy >
-    MAX_GPS_ACCURACY_METRES
-) {
+        if (
+            selectedWorkLocation ===
+            "Office" &&
+            location.accuracy >
+            MAX_GPS_ACCURACY_METRES
+        ) {
 
-    locationStatus =
-        "Location Uncertain";
+            locationStatus =
+                "Location Uncertain";
 
-}
+        }
 
 
         // =================================================
@@ -1805,12 +2026,11 @@ if (
         // =================================================
 
         if (
-    selectedWorkLocation ===
-    "Office"
-    &&
-    locationStatus !==
-    "At Office"
-) {
+            selectedWorkLocation ===
+            "Office" &&
+            locationStatus !==
+            "At Office"
+        ) {
 
             message.style.color =
                 "red";
@@ -1891,8 +2111,8 @@ if (
                 locationStatus:
                     locationStatus,
 
-                    selectedWorkLocation:
-        selectedWorkLocation,
+                selectedWorkLocation:
+                    selectedWorkLocation,
 
                 scanTime:
                     scanTime
@@ -1939,15 +2159,15 @@ if (
         // =================================================
 
         await saveAttendanceToFirebase(
-    employee,
-    attendanceStatus,
-    location,
-    distanceMetres,
-    locationStatus,
-    scanTime,
-    "",
-    selectedWorkLocation
-);
+            employee,
+            attendanceStatus,
+            location,
+            distanceMetres,
+            locationStatus,
+            scanTime,
+            "",
+            selectedWorkLocation
+        );
 
         saveAttendance(
             employee,
@@ -4276,63 +4496,9 @@ async function securityCheck(
 
 }
 
-    const attendance =
-        JSON.parse(
-            localStorage.getItem(
-                "attendance"
-            )
-        )
-        ||
-        [];
+   
 
-    const today =
-        new Date()
-            .toLocaleDateString(
-                "en-ZA"
-            );
 
-    const alreadyCheckedIn =
-        attendance.some(
-            record => {
-
-                return (
-                    record.employeeNumber ===
-                    employee.employeeNumber
-                    &&
-                    record.date ===
-                    today
-                );
-
-            }
-        );
-
-    if (
-        alreadyCheckedIn
-    ) {
-
-        return {
-
-            allowed:
-                false,
-
-            message:
-                "⚠️ You have already checked in today."
-
-        };
-
-    }
-
-    return {
-
-        allowed:
-            true,
-
-        message:
-            ""
-
-    };
-
-}
 
 
 // =====================================================
@@ -4388,159 +4554,93 @@ function validateInputs() {
 }
 
 
-// =====================================================
-// Validate Employee
-// =====================================================
 
-async function validateEmployee() {
 
-    const employeeNumber =
-        employeeNumberInput.value
-            .trim();
 
-    const employeeQuery =
-        query(
-            collection(
-                db,
-                "employees"
-            ),
-            where(
-                "employeeNumber",
-                "==",
-                employeeNumber
-            )
-        );
-
-    const employeeSnapshot =
-        await getDocs(
-            employeeQuery
-        );
-
-    if (
-        employeeSnapshot.empty
-    ) {
-
-        message.style.color =
-            "red";
-
-        message.innerHTML =
-            "❌ Employee Number not found.";
-
-        employeeNumberInput.focus();
-
-        return null;
-
-    }
-
-    const employeeDocument =
-        employeeSnapshot.docs[
-            0
-        ];
-
-    return {
-
-        id:
-            employeeDocument.id,
-
-        ...employeeDocument.data()
-
-    };
-
-}
 
 
 // =====================================================
 // Validate PIN
 // =====================================================
 
-function validatePin(
-    employee
+
+
+
+// =================================================
+// Authenticate Employee
+// =================================================
+
+hybridWorkLocationContainer.style.display =
+    "none";
+
+let employee =
+    await loadRegisteredEmployee();
+
+if (
+    !employee
 ) {
 
-    const enteredPin =
-        pinInput.value
-            .trim();
+    updateRegisteredDeviceDisplay();
 
-    if (
-        String(
-            employee.pin ??
-            ""
-        )
-        !==
-        enteredPin
-    ) {
-
-        message.style.color =
-            "red";
-
-        message.innerHTML =
-            "❌ Incorrect PIN.";
-
-        pinInput.focus();
-
-        return false;
-
-    }
-
-    return true;
-
-}
-
-
-// =====================================================
-// Authenticate Employee
-// =====================================================
-
-async function authenticateEmployee() {
-
-    if (
-        !validateInputs()
-    ) {
-
-        return null;
-
-    }
-    
-
-    const employee =
-        await validateEmployee();
+    employee =
+        await authenticateEmployee();
 
     if (
         !employee
     ) {
 
-        return null;
+        checkInButton.disabled =
+            false;
+
+        return;
 
     }
 
+
+    // =============================================
+    // Check Existing Firebase Registration
+    // =============================================
+
+    const existingRegistration =
+        await getFirebaseDeviceRegistration(
+            employee.employeeNumber
+        );
+
     if (
-        employee.active ===
-        false
+        existingRegistration &&
+        existingRegistration.active ===
+        true
     ) {
 
         message.style.color =
             "red";
 
         message.innerHTML =
-            "❌ This employee has been disabled."
+            "❌ This employee already has a registered device."
             +
-            "<br>Please contact your administrator.";
+            "<br>Please contact an administrator to reset the device registration.";
 
-        return null;
+        checkInButton.disabled =
+            false;
+
+        return;
 
     }
 
-    if (
-        !validatePin(
+
+    // =============================================
+    // Create New Registration
+    // =============================================
+
+    const registrationToken =
+        await createFirebaseDeviceRegistration(
             employee
-        )
-    ) {
+        );
 
-        return null;
-
-    }
-
-    return employee;
+    saveLocalDeviceRegistration(
+        employee.employeeNumber,
+        registrationToken
+    );
 
 }
 

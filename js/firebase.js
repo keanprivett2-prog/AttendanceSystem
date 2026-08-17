@@ -6,7 +6,7 @@ import { getFirestore } from
     "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 // Firebase Configuration
-const firebaseConfig = {
+export const firebaseConfig = {
     apiKey: "AIzaSyAjDSlD5XGcMocLK0-kotjlxYLYV81_l-U",
     authDomain: "attendancesystem-359f7.firebaseapp.com",
     projectId: "attendancesystem-359f7",
