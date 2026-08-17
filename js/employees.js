@@ -24,10 +24,7 @@ import {
     getAuth,
     signOut,
     deleteUser,
-    createUserWithEmailAndPassword,
-    signInWithEmailAndPassword,
-    updatePassword,
-    updateEmail
+    createUserWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 import {
@@ -70,17 +67,6 @@ const employeeAuth =
     // =====================================
 // Employee Authentication Helpers
 // =====================================
-
-function getEmployeeAuthEmail(
-    employeeNumber
-) {
-
-    return `${String(
-        employeeNumber ?? ""
-    ).trim()}@attendance.local`;
-
-}
-
 
 async function clearEmployeeAuthSession() {
 
@@ -1005,12 +991,15 @@ const employeePin =
    if (
     employeeNumber === "" ||
     employeeName === "" ||
-       employeeRole === "" ||
+    employeeRole === "" ||
     employeeDepartment === "" ||
     employeeStartTime === "" ||
     employeeEndTime === "" ||
     employeeWorkArrangement === "" ||
-    employeePin === ""
+    (
+        !editingEmployeeId &&
+        employeePin === ""
+    )
 ) {
 
     showNotification(
@@ -1035,6 +1024,7 @@ const employeePin =
 }
 
     if (
+    !editingEmployeeId &&
     !/^\d{6}$/.test(
         employeePin
     )
@@ -1112,8 +1102,7 @@ const employeePin =
     employeeDepartment,
     employeeStartTime,
     employeeEndTime,
-    employeeWorkArrangement,
-    employeePin
+    employeeWorkArrangement
 );
 
 } else {
@@ -1337,6 +1326,10 @@ active:
 // Update Employee
 // =====================================
 
+// =====================================
+// Update Employee
+// =====================================
+
 async function updateExistingEmployee(
     employeeNumber,
     employeeName,
@@ -1344,8 +1337,7 @@ async function updateExistingEmployee(
     employeeDepartment,
     employeeStartTime,
     employeeEndTime,
-    employeeWorkArrangement,
-    employeePin
+    employeeWorkArrangement
 ) {
 
     const employeeReference =
@@ -1355,10 +1347,16 @@ async function updateExistingEmployee(
             editingEmployeeId
         );
 
+
+    // =====================================
+    // Load Existing Employee
+    // =====================================
+
     const previousEmployeeSnapshot =
         await getDoc(
             employeeReference
         );
+
 
     if (
         !previousEmployeeSnapshot.exists()
@@ -1370,143 +1368,62 @@ async function updateExistingEmployee(
 
     }
 
+
     const previousEmployee =
         previousEmployeeSnapshot.data();
 
-    const previousEmployeeNumber =
-        String(
-            previousEmployee.employeeNumber ??
-            ""
-        ).trim();
 
-    const previousPin =
-        String(
-            previousEmployee.pin ??
-            ""
-        ).trim();
+    // =====================================
+    // Update Employee Details
+    //
+    // Authentication details are NOT
+    // changed here.
+    //
+    // PIN changes must use Reset PIN.
+    // =====================================
 
-    await clearEmployeeAuthSession();
+    await updateDoc(
+        employeeReference,
+        {
+            employeeNumber:
 
-    try {
-
-        let employeeAuthUser =
-            null;
-
-        if (
-            previousEmployee.authUid
-        ) {
-
-            const userCredential =
-                await signInWithEmailAndPassword(
-                    employeeAuth,
-                    getEmployeeAuthEmail(
-                        previousEmployeeNumber
-                    ),
-                    previousPin
-                );
-
-            employeeAuthUser =
-                userCredential.user;
-
-            if (
-                employeeAuthUser.uid !==
-                previousEmployee.authUid
-            ) {
-
-                throw new Error(
-                    "Employee authentication account does not match the employee record."
-                );
-
-            }
-
-            if (
-                previousEmployeeNumber !==
-                employeeNumber
-            ) {
-
-                await updateEmail(
-                    employeeAuthUser,
-                    getEmployeeAuthEmail(
-                        employeeNumber
-                    )
-                );
-
-            }
-
-            if (
-                previousPin !==
-                employeePin
-            ) {
-
-                await updatePassword(
-                    employeeAuthUser,
-                    employeePin
-                );
-
-            }
-
-        } else {
-
-            const userCredential =
-                await createUserWithEmailAndPassword(
-                    employeeAuth,
-                    getEmployeeAuthEmail(
-                        employeeNumber
-                    ),
-                    employeePin
-                );
-
-            employeeAuthUser =
-                userCredential.user;
-
-        }
-
-        await updateDoc(
-            employeeReference,
-            {
                 employeeNumber,
 
-                name:
-                    employeeName,
+            name:
+                employeeName,
 
-                role:
-                    employeeRole,
+            role:
+                employeeRole,
 
-                department:
-                    employeeDepartment,
+            department:
+                employeeDepartment,
 
-                startTime:
-                    employeeStartTime,
+            startTime:
+                employeeStartTime,
 
-                endTime:
-                    employeeEndTime,
+            endTime:
+                employeeEndTime,
 
-                workArrangement:
-                    employeeWorkArrangement,
+            workArrangement:
+                employeeWorkArrangement
+        }
+    );
 
-                pin:
-                    employeePin,
 
-                authUid:
-                    employeeAuthUser.uid
-            }
-        );
+    // =====================================
+    // Audit Log
+    // =====================================
 
-        await writeAuditLog(
-            "Updated Employee",
-            employeeName,
-            `Previous: Employee Number: ${previousEmployee.employeeNumber}, Name: ${previousEmployee.name}, Role: ${previousEmployee.role ?? "-"}, Department: ${previousEmployee.department}, Start Time: ${previousEmployee.startTime ?? "-"}, End Time: ${previousEmployee.endTime ?? "-"} | Updated: Employee Number: ${employeeNumber}, Name: ${employeeName}, Role: ${employeeRole}, Department: ${employeeDepartment}, Start Time: ${employeeStartTime}, End Time: ${employeeEndTime}`
-        );
+    await writeAuditLog(
+        "Updated Employee",
+        employeeName,
+        `Previous: Employee Number: ${previousEmployee.employeeNumber}, Name: ${previousEmployee.name}, Role: ${previousEmployee.role ?? "-"}, Department: ${previousEmployee.department}, Start Time: ${previousEmployee.startTime ?? "-"}, End Time: ${previousEmployee.endTime ?? "-"}, Work Arrangement: ${previousEmployee.workArrangement ?? "-"} | Updated: Employee Number: ${employeeNumber}, Name: ${employeeName}, Role: ${employeeRole}, Department: ${employeeDepartment}, Start Time: ${employeeStartTime}, End Time: ${employeeEndTime}, Work Arrangement: ${employeeWorkArrangement}`
+    );
 
-        showNotification(
-            "✅ Employee updated successfully."
-        );
 
-    } finally {
-
-        await clearEmployeeAuthSession();
-
-    }
+    showNotification(
+        "✅ Employee updated successfully."
+    );
 
 }
 // =====================================
@@ -4443,8 +4360,12 @@ employeeEndTimeInput.value =
 employeeWorkArrangementInput.value =
     employee.workArrangement ?? "Office";
 
-employeePinInput.value =
-    employee.pin ?? "";
+employeePinInput.value = "";
+
+employeePinInput.disabled = true;
+
+employeePinInput.placeholder =
+    "Use Reset PIN to change employee PIN";
 
     saveEmployeeButton.textContent =
         "Update Employee";
@@ -4502,9 +4423,6 @@ async function deleteSelectedEmployee() {
         return;
     }
 
-    let employeeAuthUser =
-        null;
-
     try {
 
         const employee =
@@ -4520,64 +4438,6 @@ async function deleteSelectedEmployee() {
 
         }
 
-        const employeeNumber =
-            String(
-                employee.employeeNumber ??
-                ""
-            ).trim();
-
-        const employeePin =
-            String(
-                employee.pin ??
-                ""
-            ).trim();
-
-        await clearEmployeeAuthSession();
-
-        // =====================================
-        // Sign Into Hidden Employee Auth Account
-        // =====================================
-
-        if (
-            employee.authUid
-        ) {
-
-            if (
-                !employeeNumber ||
-                !employeePin
-            ) {
-
-                throw new Error(
-                    "Employee authentication details are incomplete."
-                );
-
-            }
-
-            const userCredential =
-                await signInWithEmailAndPassword(
-                    employeeAuth,
-                    getEmployeeAuthEmail(
-                        employeeNumber
-                    ),
-                    employeePin
-                );
-
-            employeeAuthUser =
-                userCredential.user;
-
-            if (
-                employeeAuthUser.uid !==
-                employee.authUid
-            ) {
-
-                throw new Error(
-                    "Employee authentication account does not match the employee record."
-                );
-
-            }
-
-        }
-
 
         // =====================================
         // Audit Log
@@ -4588,6 +4448,45 @@ async function deleteSelectedEmployee() {
             employee.name,
             `Employee Number: ${employee.employeeNumber}`
         );
+
+
+        // =====================================
+        // Delete Device Registration
+        // =====================================
+
+        const employeeNumber =
+            String(
+                employee.employeeNumber ??
+                ""
+            ).trim();
+
+        if (
+            employeeNumber
+        ) {
+
+            const deviceReference =
+                doc(
+                    db,
+                    "employeeDeviceRegistrations",
+                    employeeNumber
+                );
+
+            try {
+
+                await deleteDoc(
+                    deviceReference
+                );
+
+            } catch (deviceDeleteError) {
+
+                console.warn(
+                    "Device registration could not be deleted:",
+                    deviceDeleteError
+                );
+
+            }
+
+        }
 
 
         // =====================================
@@ -4607,21 +4506,20 @@ async function deleteSelectedEmployee() {
 
 
         // =====================================
-        // Delete Hidden Firebase Auth User
+        // IMPORTANT
+        //
+        // The hidden Firebase Auth account is
+        // intentionally not deleted here.
+        //
+        // On the free/client-only setup we
+        // cannot securely delete another
+        // user's Auth account without their
+        // current credentials.
+        //
+        // Once the employee Firestore record
+        // is removed, the attendance system
+        // will no longer accept that account.
         // =====================================
-
-        if (
-            employeeAuthUser
-        ) {
-
-            await deleteUser(
-                employeeAuthUser
-            );
-
-            employeeAuthUser =
-                null;
-
-        }
 
 
         closeDeleteConfirmation();
@@ -4643,10 +4541,6 @@ async function deleteSelectedEmployee() {
             "❌ Employee could not be deleted.",
             "error"
         );
-
-    } finally {
-
-        await clearEmployeeAuthSession();
 
     }
 
