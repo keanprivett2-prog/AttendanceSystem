@@ -43,6 +43,7 @@ import {
     getDoc,
     updateDoc,
     deleteDoc,
+    deleteField,
     doc,
     query,
     where,
@@ -4839,15 +4840,18 @@ async function saveEmployeePin() {
 
 
         await updateDoc(
-            employeeReference,
-            {
-                authUid:
-                    employeeAuthUser.uid,
+    employeeReference,
+    {
+        authUid:
+            employeeAuthUser.uid,
 
-                authEmail:
-                    employeeAuthEmail
-            }
-        );
+        authEmail:
+            employeeAuthEmail,
+
+        pin:
+            deleteField()
+    }
+);
 
 
         // =====================================
