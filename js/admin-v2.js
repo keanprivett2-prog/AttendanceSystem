@@ -25,7 +25,8 @@ import {
     query,
     where,
     doc,
-    getDoc
+    getDoc,
+    onSnapshot
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 import {
@@ -238,6 +239,82 @@ async function loadCompanyBranding() {
 
 }
 
+// =====================================
+// Live Dashboard Attendance Listener
+// =====================================
+
+function startAttendanceListener(
+    employeeRecords
+) {
+
+    const todayDateKey =
+        formatLocalDateKey(
+            new Date()
+        );
+
+    const attendanceQuery =
+        query(
+            collection(
+                db,
+                "attendance"
+            ),
+            where(
+                "dateKey",
+                "==",
+                todayDateKey
+            )
+        );
+
+    onSnapshot(
+        attendanceQuery,
+        function (
+            attendanceSnapshot
+        ) {
+
+            const attendanceRecords =
+                attendanceSnapshot.docs.map(
+                    (
+                        attendanceDocument
+                    ) => ({
+
+                        id:
+                            attendanceDocument.id,
+
+                        ...attendanceDocument.data()
+
+                    })
+                );
+
+            displayRecentActivity(
+                attendanceRecords
+            );
+
+            displayAttendanceTable(
+                attendanceRecords
+            );
+
+            updateDashboardStatistics(
+                attendanceRecords,
+                employeeRecords
+            );
+
+        },
+        function (
+            error
+        ) {
+
+            console.error(
+                "Live attendance listener error:",
+                error
+            );
+
+            showDashboardErrorState();
+
+        }
+    );
+
+}
+
 
 // =====================================
 // Load Dashboard Attendance
@@ -249,57 +326,25 @@ async function loadAttendance() {
 
         showDashboardLoadingState();
 
-        const todayDateKey =
-            formatLocalDateKey(
-                new Date()
-            );
-
-        const attendanceQuery =
-            query(
+        const employeeSnapshot =
+            await getDocs(
                 collection(
                     db,
-                    "attendance"
-                ),
-                where(
-                    "dateKey",
-                    "==",
-                    todayDateKey
+                    "employees"
                 )
-            );
-
-        const [
-            attendanceSnapshot,
-            employeeSnapshot
-        ] =
-            await Promise.all([
-                getDocs(
-                    attendanceQuery
-                ),
-                getDocs(
-                    collection(
-                        db,
-                        "employees"
-                    )
-                )
-            ]);
-
-        const attendanceRecords =
-            attendanceSnapshot.docs.map(
-                (attendanceDocument) => ({
-                    id:
-                        attendanceDocument.id,
-
-                    ...attendanceDocument.data()
-                })
             );
 
         const employeeRecords =
             employeeSnapshot.docs.map(
-                (employeeDocument) => ({
+                (
+                    employeeDocument
+                ) => ({
+
                     id:
                         employeeDocument.id,
 
                     ...employeeDocument.data()
+
                 })
             );
 
@@ -307,20 +352,13 @@ async function loadAttendance() {
             employeeRecords
         );
 
-        displayRecentActivity(
-            attendanceRecords
-        );
-
-        displayAttendanceTable(
-            attendanceRecords
-        );
-
-        updateDashboardStatistics(
-            attendanceRecords,
+        startAttendanceListener(
             employeeRecords
         );
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Load dashboard attendance error:",
@@ -332,7 +370,6 @@ async function loadAttendance() {
     }
 
 }
-
 
 // =====================================
 // Format Local Date Key
