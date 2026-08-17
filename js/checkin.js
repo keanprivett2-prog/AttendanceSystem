@@ -1480,7 +1480,6 @@ function updateRegisteredDeviceDisplay() {
 
 }
 
-
 // =====================================================
 // Authenticate Employee
 // =====================================================
@@ -1490,37 +1489,19 @@ async function authenticateEmployee() {
     if (
         !validateInputs()
     ) {
-
         return null;
-
     }
 
     const employeeNumber =
-        employeeNumberInput.value
-            .trim();
+        employeeNumberInput.value.trim();
 
     const enteredPin =
-        pinInput.value
-            .trim();
-
-    const employeeAuthEmail =
-        `${employeeNumber}@attendance.local`;
+        pinInput.value.trim();
 
     try {
 
-        const userCredential =
-            await signInWithEmailAndPassword(
-                attendanceAuth,
-                employeeAuthEmail,
-                enteredPin
-            );
-
-        const authenticatedUser =
-            userCredential.user;
-
-
         // =============================================
-        // Load Employee Record
+        // Load Employee Record First
         // =============================================
 
         const employeeQuery =
@@ -1545,39 +1526,77 @@ async function authenticateEmployee() {
             employeeSnapshot.empty
         ) {
 
-            await signOut(
-                attendanceAuth
-            );
-
             message.style.color =
                 "red";
 
             message.innerHTML =
-                "❌ Employee record could not be found.";
+                "❌ Invalid Employee Number or PIN.";
 
             return null;
-
         }
 
         const employeeDocument =
             employeeSnapshot.docs[0];
 
         const employee = {
-
             id:
                 employeeDocument.id,
 
             ...employeeDocument.data()
-
         };
 
 
         // =============================================
-        // Confirm Auth Account Matches Employee
+        // Active Employee Check
         // =============================================
 
         if (
-            employee.authUid &&
+            employee.active ===
+            false
+        ) {
+
+            message.style.color =
+                "red";
+
+            message.innerHTML =
+                "❌ This employee account is inactive.";
+
+            return null;
+        }
+
+
+        // =============================================
+        // Determine Hidden Auth Email
+        // =============================================
+
+        const employeeAuthEmail =
+            String(
+                employee.authEmail ??
+                `${employeeNumber}@attendance.local`
+            ).trim();
+
+
+        // =============================================
+        // Authenticate With Firebase
+        // =============================================
+
+        const userCredential =
+            await signInWithEmailAndPassword(
+                attendanceAuth,
+                employeeAuthEmail,
+                enteredPin
+            );
+
+        const authenticatedUser =
+            userCredential.user;
+
+
+        // =============================================
+        // Verify Auth UID
+        // =============================================
+
+        if (
+            !employee.authUid ||
             employee.authUid !==
             authenticatedUser.uid
         ) {
@@ -1593,31 +1612,6 @@ async function authenticateEmployee() {
                 "❌ Employee authentication account does not match.";
 
             return null;
-
-        }
-
-
-        // =============================================
-        // Active Employee Check
-        // =============================================
-
-        if (
-            employee.active ===
-            false
-        ) {
-
-            await signOut(
-                attendanceAuth
-            );
-
-            message.style.color =
-                "red";
-
-            message.innerHTML =
-                "❌ This employee account is inactive.";
-
-            return null;
-
         }
 
 
@@ -1650,7 +1644,6 @@ async function authenticateEmployee() {
                 "Employee Auth sign-out error:",
                 signOutError
             );
-
         }
 
         message.style.color =
@@ -1672,13 +1665,10 @@ async function authenticateEmployee() {
 
             message.innerHTML =
                 "❌ Employee authentication failed.";
-
         }
 
         return null;
-
     }
-
 }
 
 

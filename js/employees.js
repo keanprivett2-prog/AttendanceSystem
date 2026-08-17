@@ -1180,7 +1180,7 @@ async function createNewEmployee(
     // =====================================
 
     const employeeAuthEmail =
-        `${employeeNumber}@attendance.local`;
+    `${employeeNumber}.${crypto.randomUUID()}@attendance.local`;
 
     let employeeAuthUser =
         null;
@@ -1240,8 +1240,8 @@ async function createNewEmployee(
                 authUid:
     employeeAuthUser.uid,
 
-pin:
-    employeePin,
+authEmail:
+    employeeAuthEmail,
 
 active:
     true,
@@ -4716,6 +4716,11 @@ async function saveEmployeePin() {
     const confirmedPin =
         confirmEmployeePin.value.trim();
 
+
+    // =====================================
+    // Validate PIN
+    // =====================================
+
     if (
         !pin ||
         !confirmedPin
@@ -4727,8 +4732,8 @@ async function saveEmployeePin() {
         );
 
         return;
-
     }
+
 
     if (
         !/^\d{6}$/.test(
@@ -4742,8 +4747,8 @@ async function saveEmployeePin() {
         );
 
         return;
-
     }
+
 
     if (
         pin !==
@@ -4756,8 +4761,8 @@ async function saveEmployeePin() {
         );
 
         return;
-
     }
+
 
     try {
 
@@ -4771,8 +4776,8 @@ async function saveEmployeePin() {
             throw new Error(
                 "Employee could not be found."
             );
-
         }
+
 
         const employeeNumber =
             String(
@@ -4780,99 +4785,49 @@ async function saveEmployeePin() {
                 ""
             ).trim();
 
-        const currentPin =
-            String(
-                employee.pin ??
-                ""
-            ).trim();
 
-        if (
-            !employeeNumber
-        ) {
+        if (!employeeNumber) {
 
             throw new Error(
                 "Employee number is missing."
             );
-
         }
+
+
+        // =====================================
+        // Clear Secondary Auth Session
+        // =====================================
 
         await clearEmployeeAuthSession();
 
-        let employeeAuthUser =
-            null;
 
         // =====================================
-        // Existing Firebase Auth Employee
+        // Create New Hidden Authentication
+        // Identity
         // =====================================
 
-        if (
-            employee.authUid
-        ) {
+        const employeeAuthEmail =
+            `${employeeNumber}.${crypto.randomUUID()}@attendance.local`;
 
-            if (
-                !currentPin
-            ) {
 
-                throw new Error(
-                    "Current employee PIN is missing."
-                );
-
-            }
-
-            const userCredential =
-                await signInWithEmailAndPassword(
-                    employeeAuth,
-                    getEmployeeAuthEmail(
-                        employeeNumber
-                    ),
-                    currentPin
-                );
-
-            employeeAuthUser =
-                userCredential.user;
-
-            if (
-                employeeAuthUser.uid !==
-                employee.authUid
-            ) {
-
-                throw new Error(
-                    "Employee authentication account does not match the employee record."
-                );
-
-            }
-
-            await updatePassword(
-                employeeAuthUser,
+        const userCredential =
+            await createUserWithEmailAndPassword(
+                employeeAuth,
+                employeeAuthEmail,
                 pin
             );
 
-        }
 
-        // =====================================
-        // Existing Legacy Employee
-        // No Firebase Auth Account Yet
-        // =====================================
-
-        else {
-
-            const userCredential =
-                await createUserWithEmailAndPassword(
-                    employeeAuth,
-                    getEmployeeAuthEmail(
-                        employeeNumber
-                    ),
-                    pin
-                );
-
-            employeeAuthUser =
-                userCredential.user;
-
-        }
+        const employeeAuthUser =
+            userCredential.user;
 
 
         // =====================================
-        // Update Firestore
+        // Update Employee Authentication Link
+        //
+        // IMPORTANT:
+        // The PIN is deliberately NOT stored
+        // in Firestore.
         // =====================================
 
         const employeeReference =
@@ -4882,14 +4837,15 @@ async function saveEmployeePin() {
                 employeeToResetPin
             );
 
+
         await updateDoc(
             employeeReference,
             {
-                pin:
-                    pin,
-
                 authUid:
-                    employeeAuthUser.uid
+                    employeeAuthUser.uid,
+
+                authEmail:
+                    employeeAuthEmail
             }
         );
 
@@ -4901,7 +4857,7 @@ async function saveEmployeePin() {
         await writeAuditLog(
             "Reset PIN",
             employee.name,
-            "Employee PIN was reset."
+            "Employee PIN was reset and a new authentication identity was created."
         );
 
 
@@ -4909,9 +4865,11 @@ async function saveEmployeePin() {
 
         await loadEmployees();
 
+
         showNotification(
             "✅ Employee PIN reset successfully."
         );
+
 
     } catch (error) {
 
@@ -4920,10 +4878,12 @@ async function saveEmployeePin() {
             error
         );
 
+
         showNotification(
             "❌ Employee PIN could not be reset.",
             "error"
         );
+
 
     } finally {
 
