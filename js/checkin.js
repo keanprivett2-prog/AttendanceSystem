@@ -61,7 +61,7 @@ const OFFICE_BOUNDARY = [
 // become fully active.
 
 const TEST_MODE =
-    true;
+    false;
 
     // =====================================================
 // Registered Employee Device
@@ -4264,21 +4264,17 @@ async function securityCheck(
     employee
 ) {
 
-    if (
-        TEST_MODE
-    ) {
+    return {
 
-        return {
+        allowed:
+            true,
 
-            allowed:
-                true,
+        message:
+            ""
 
-            message:
-                ""
+    };
 
-        };
-
-    }
+}
 
     const attendance =
         JSON.parse(
