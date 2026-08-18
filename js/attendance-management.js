@@ -59,6 +59,11 @@ const attendanceDate =
         "attendanceDate"
     );
 
+    const attendanceEndDate =
+    document.getElementById(
+        "attendanceEndDate"
+    );
+
 const attendanceStatus =
     document.getElementById(
         "attendanceStatus"
@@ -217,20 +222,50 @@ async function initializeAttendanceManagementPage() {
     applySidebarPermissions();
 
     if (
-        attendanceDate
-    ) {
+    attendanceDate
+) {
 
-        attendanceDate.value =
-            formatLocalDate(
-                new Date()
-            );
-
-        attendanceDate.addEventListener(
-            "change",
-            loadExistingAttendance
+    attendanceDate.value =
+        formatLocalDate(
+            new Date()
         );
 
+    // Keep To Date matched to From Date
+    // for normal single-day attendance entries.
+
+    if (
+        attendanceEndDate
+    ) {
+
+        attendanceEndDate.value =
+            attendanceDate.value;
+
     }
+
+    attendanceDate.addEventListener(
+        "change",
+        function () {
+
+            if (
+                attendanceEndDate &&
+                (
+                    !attendanceEndDate.value ||
+                    attendanceEndDate.value <
+                    attendanceDate.value
+                )
+            ) {
+
+                attendanceEndDate.value =
+                    attendanceDate.value;
+
+            }
+
+            loadExistingAttendance();
+
+        }
+    );
+
+}
 
     if (
         attendanceManagementForm
@@ -339,26 +374,56 @@ function handleAttendanceStatusChange() {
     const selectedStatus =
         attendanceStatus.value;
 
+        const isMaternityLeave =
+    selectedStatus ===
+    "Maternity Leave";
+
     const requiresLeaveDuration =
         LEAVE_STATUSES.includes(
             selectedStatus
         );
 
     if (
-        requiresLeaveDuration
+    requiresLeaveDuration
+) {
+
+    leaveDurationGroup.style.display =
+        "";
+
+    leaveDuration.required =
+        true;
+
+
+    // =====================================
+    // Maternity Leave Is Always Full Day
+    // =====================================
+
+    if (
+        isMaternityLeave
     ) {
 
-        leaveDurationGroup.style.display =
-            "";
+        leaveDuration.value =
+            "full-day";
 
-        leaveDuration.required =
+        leaveDuration.disabled =
             true;
 
-        handleLeaveDurationChange();
+    } else {
 
-        return;
+    leaveDuration.disabled =
+        false;
 
-    }
+    leaveDuration.value =
+        "";
+
+}
+
+
+    handleLeaveDurationChange();
+
+    return;
+
+}
 
     leaveDurationGroup.style.display =
         "none";
@@ -368,6 +433,9 @@ function handleAttendanceStatusChange() {
 
     leaveDuration.value =
         "";
+
+        leaveDuration.disabled =
+    false;
 
     handleLeaveDurationChange();
 
@@ -2302,6 +2370,83 @@ function createStatusClass(
 
 }
 
+// =====================================
+// Build Attendance Date Range
+// =====================================
+
+function buildAttendanceDateRange(
+    startDateValue,
+    endDateValue,
+    status
+) {
+
+    const dates =
+        [];
+
+    const startDateParts =
+        startDateValue
+            .split("-")
+            .map(Number);
+
+    const endDateParts =
+        endDateValue
+            .split("-")
+            .map(Number);
+
+    const currentDate =
+        new Date(
+            startDateParts[0],
+            startDateParts[1] - 1,
+            startDateParts[2]
+        );
+
+    const endDate =
+        new Date(
+            endDateParts[0],
+            endDateParts[1] - 1,
+            endDateParts[2]
+        );
+
+    const includeWeekends =
+        status ===
+        "Maternity Leave";
+
+    while (
+        currentDate <=
+        endDate
+    ) {
+
+        const dayOfWeek =
+            currentDate.getDay();
+
+        const isWeekend =
+            dayOfWeek === 0 ||
+            dayOfWeek === 6;
+
+        if (
+            includeWeekends ||
+            !isWeekend
+        ) {
+
+            dates.push(
+                formatLocalDate(
+                    currentDate
+                )
+            );
+
+        }
+
+        currentDate.setDate(
+            currentDate.getDate() +
+            1
+        );
+
+    }
+
+    return dates;
+
+}
+
 
 // =====================================
 // Save Attendance
@@ -2319,6 +2464,13 @@ async function saveAttendance(
             attendanceDate.value
             :
             "";
+
+            const selectedEndDate =
+    attendanceEndDate
+        ?
+        attendanceEndDate.value
+        :
+        selectedDate;
 
     const selectedStatus =
         attendanceStatus
@@ -2388,6 +2540,34 @@ async function saveAttendance(
     }
 
     if (
+    !selectedEndDate
+) {
+
+    showMessage(
+        "Please select a To Date.",
+        "red"
+    );
+
+    return;
+
+}
+
+
+if (
+    selectedEndDate <
+    selectedDate
+) {
+
+    showMessage(
+        "To Date cannot be before From Date.",
+        "red"
+    );
+
+    return;
+
+}
+
+    if (
         !selectedStatus
     ) {
 
@@ -2446,6 +2626,80 @@ async function saveAttendance(
 
     }
 
+    // =====================================
+// Build Dates To Save
+// =====================================
+
+const attendanceDates =
+    buildAttendanceDateRange(
+        selectedDate,
+        selectedEndDate,
+        selectedStatus
+    );
+
+
+if (
+    attendanceDates.length ===
+    0
+) {
+
+    showMessage(
+        "The selected date range contains no applicable working days.",
+        "red"
+    );
+
+    return;
+
+}
+
+
+// =====================================
+// Confirm Multi-Day Update
+// =====================================
+
+if (
+    attendanceDates.length >
+    1
+) {
+
+    const weekendMessage =
+        selectedStatus ===
+        "Maternity Leave"
+            ?
+            "Weekends are included for Maternity Leave."
+            :
+            "Weekends will be excluded.";
+
+    const confirmed =
+        window.confirm(
+            `This will update ${attendanceDates.length} attendance records.\n\n`
+            +
+            `From: ${selectedDate}\n`
+            +
+            `To: ${selectedEndDate}\n`
+            +
+            `Status: ${selectedStatus}\n\n`
+            +
+            weekendMessage
+            +
+            "\n\nContinue?"
+        );
+
+    if (
+        !confirmed
+    ) {
+
+        showMessage(
+            "Attendance update cancelled.",
+            "var(--text-secondary)"
+        );
+
+        return;
+
+    }
+
+}
+
     if (
         saveAttendanceButton
     ) {
@@ -2478,385 +2732,346 @@ async function saveAttendance(
 
         }
 
-        const attendanceDocumentId =
-            `${employee.employeeNumber}_${selectedDate}`;
+        // =====================================
+// Save Every Applicable Date
+// =====================================
 
-        const attendanceReference =
-            doc(
-                db,
-                "attendance",
-                attendanceDocumentId
-            );
+let createdCount =
+    0;
 
-        const existingSnapshot =
-            await getDoc(
-                attendanceReference
-            );
+let updatedCount =
+    0;
 
-        const recordAlreadyExists =
-            existingSnapshot.exists();
+const now =
+    new Date();
 
-        const existingAttendance =
-            recordAlreadyExists
-                ?
-                existingSnapshot.data()
-                :
-                null;
+const currentTime =
+    now.toLocaleTimeString(
+        "en-ZA",
+        {
+            hour:
+                "2-digit",
 
-        const now =
-            new Date();
+            minute:
+                "2-digit",
 
-        const currentTime =
-            now.toLocaleTimeString(
-                "en-ZA",
-                {
+            hour12:
+                false
+        }
+    );
 
-                    hour:
-                        "2-digit",
 
-                    minute:
-                        "2-digit",
+for (
+    const dateToSave
+    of attendanceDates
+) {
 
-                    hour12:
-                        false
+    const attendanceDocumentId =
+        `${employee.employeeNumber}_${dateToSave}`;
 
-                }
-            );
+    const attendanceReference =
+        doc(
+            db,
+            "attendance",
+            attendanceDocumentId
+        );
 
-        const employeeAlreadyCheckedIn =
-            Boolean(
-                existingAttendance
-                &&
-                (
-                    existingAttendance.time
-                    ||
-                    existingAttendance.scanTimestamp
-                    ||
-                    existingAttendance.checkInTimestamp
-                )
-            );
+    const existingSnapshot =
+        await getDoc(
+            attendanceReference
+        );
 
-        const employeeAlreadyCheckedOut =
-            Boolean(
-                existingAttendance
-                &&
-                (
-                    existingAttendance.checkOutTime
-                    ||
-                    existingAttendance.checkOutTimestamp
-                )
-            );
+    const recordAlreadyExists =
+        existingSnapshot.exists();
 
-        const isCheckoutStatus =
-            CHECKOUT_STATUSES.includes(
+    const existingAttendance =
+        recordAlreadyExists
+            ?
+            existingSnapshot.data()
+            :
+            null;
+
+
+    // =====================================
+    // Existing Check-In / Check-Out State
+    // =====================================
+
+    const employeeAlreadyCheckedIn =
+        Boolean(
+            existingAttendance
+            &&
+            (
+                existingAttendance.time
+                ||
+                existingAttendance.scanTimestamp
+                ||
+                existingAttendance.checkInTimestamp
+            )
+        );
+
+    const employeeAlreadyCheckedOut =
+        Boolean(
+            existingAttendance
+            &&
+            (
+                existingAttendance.checkOutTime
+                ||
+                existingAttendance.checkOutTimestamp
+            )
+        );
+
+
+    const isCheckoutStatus =
+        CHECKOUT_STATUSES.includes(
+            selectedStatus
+        );
+
+    const isCustomLeaveTime =
+        LEAVE_STATUSES.includes(
+            selectedStatus
+        )
+        &&
+        selectedLeaveDuration ===
+        "custom"
+        &&
+        Boolean(
+            selectedLeaveTime
+        );
+
+    const shouldWriteCheckout =
+        recordAlreadyExists
+        &&
+        employeeAlreadyCheckedIn
+        &&
+        isCheckoutStatus
+        &&
+        (
+            !employeeAlreadyCheckedOut
+            ||
+            isCustomLeaveTime
+        );
+
+
+    // =====================================
+    // Attendance Record
+    // =====================================
+
+    const attendanceData = {
+
+        employeeNumber:
+            employee.employeeNumber,
+
+        name:
+            employee.name,
+
+        department:
+            employee.department ??
+            "Unassigned",
+
+        date:
+            dateToSave,
+
+        dateKey:
+            dateToSave,
+
+        status:
+            selectedStatus,
+
+        workLocation:
+            selectedWorkLocation,
+
+        leaveDuration:
+            LEAVE_STATUSES.includes(
                 selectedStatus
-            );
+            )
+                ?
+                selectedLeaveDuration
+                :
+                "",
 
-        const isCustomLeaveTime =
+        leaveTime:
             LEAVE_STATUSES.includes(
                 selectedStatus
             )
             &&
             selectedLeaveDuration ===
             "custom"
-            &&
-            Boolean(
+                ?
                 selectedLeaveTime
-            );
+                :
+                "",
 
-        const shouldWriteCheckout =
-            recordAlreadyExists
-            &&
-            employeeAlreadyCheckedIn
-            &&
-            isCheckoutStatus
-            &&
-            (
-                !employeeAlreadyCheckedOut
-                ||
-                isCustomLeaveTime
-            );
+        notes:
+            notes,
 
-        const attendanceData = {
+        updatedAt:
+            serverTimestamp()
 
-            employeeNumber:
-                employee.employeeNumber,
-
-            name:
-                employee.name,
-
-            department:
-                employee.department ??
-                "Unassigned",
-
-            date:
-                selectedDate,
-
-            dateKey:
-                selectedDate,
-
-            status:
-                selectedStatus,
-
-                workLocation:
-    selectedWorkLocation,
-
-            leaveDuration:
-                LEAVE_STATUSES.includes(
-                    selectedStatus
-                )
-                    ?
-                    selectedLeaveDuration
-                    :
-                    "",
-
-            leaveTime:
-                LEAVE_STATUSES.includes(
-                    selectedStatus
-                )
-                &&
-                selectedLeaveDuration ===
-                "custom"
-                    ?
-                    selectedLeaveTime
-                    :
-                    "",
-
-            notes:
-                notes,
-
-            updatedAt:
-                serverTimestamp()
-
-        };
+    };
 
 
-        // =====================================
-        // New Manual Attendance Record
-        // =====================================
+    // =====================================
+    // New Manual Attendance Record
+    // =====================================
+
+    if (
+        !recordAlreadyExists
+    ) {
+
+        attendanceData.checkInMethod =
+            "Manual";
+
+        attendanceData.createdAt =
+            serverTimestamp();
+
+
+        // Leave records do not create a
+        // fake employee check-in time.
 
         if (
-            !recordAlreadyExists
+            !LEAVE_STATUSES.includes(
+                selectedStatus
+            )
         ) {
 
-            attendanceData.checkInMethod =
-                "Manual";
-
-            attendanceData.createdAt =
-                serverTimestamp();
-
-            if (
-                !LEAVE_STATUSES.includes(
-                    selectedStatus
-                )
-            ) {
-
-                attendanceData.time =
-                    currentTime;
-
-            }
-
-        }
-
-
-        // =====================================
-        // Automatic Checkout For Leave / Exit
-        // =====================================
-
-        if (
-            shouldWriteCheckout
-        ) {
-
-            let effectiveCheckOutDate =
-                new Date(
-                    now
-                );
-
-            let effectiveCheckOutTime =
+            attendanceData.time =
                 currentTime;
 
-            if (
-                isCustomLeaveTime
-            ) {
+        }
 
-                const customDateTime =
-                    buildDateTimeFromDateAndTime(
-                        selectedDate,
-                        selectedLeaveTime
-                    );
+    }
 
-                if (
-                    !customDateTime
-                ) {
 
-                    throw new Error(
-                        "Invalid custom leave time."
-                    );
+    // =====================================
+    // Existing Employee Checked In
+    // And Administrator Applies Leave
+    // =====================================
 
-                }
+    if (
+        shouldWriteCheckout
+    ) {
 
-                effectiveCheckOutDate =
-                    customDateTime;
+        let effectiveCheckOutDate =
+            new Date(
+                now
+            );
 
-                effectiveCheckOutTime =
-                    selectedLeaveTime;
+        let effectiveCheckOutTime =
+            currentTime;
 
-            }
 
-            attendanceData.checkOutTime =
-                effectiveCheckOutTime;
+        if (
+            isCustomLeaveTime
+        ) {
 
-            attendanceData.checkOutTimestamp =
-                Timestamp.fromDate(
-                    effectiveCheckOutDate
+            const customDateTime =
+                buildDateTimeFromDateAndTime(
+                    dateToSave,
+                    selectedLeaveTime
                 );
 
-            attendanceData.checkOutMethod =
-                "Manual Adjustment";
-
-            const employeeEndTime =
-                String(
-                    employee.endTime ??
-                    ""
-                ).trim();
-
             if (
-                employeeEndTime
+                !customDateTime
             ) {
 
-                const endParts =
-                    employeeEndTime
-                        .split(":")
-                        .map(Number);
-
-                if (
-                    endParts.length >=
-                    2
-                    &&
-                    Number.isFinite(
-                        endParts[0]
-                    )
-                    &&
-                    Number.isFinite(
-                        endParts[1]
-                    )
-                ) {
-
-                    const scheduledEndMinutes =
-                        (
-                            endParts[0] *
-                            60
-                        )
-                        +
-                        endParts[1];
-
-                    const effectiveCheckoutMinutes =
-                        (
-                            effectiveCheckOutDate.getHours() *
-                            60
-                        )
-                        +
-                        effectiveCheckOutDate.getMinutes();
-
-                    const isApprovedLeave =
-    LEAVE_STATUSES.includes(
-        selectedStatus
-    );
-
-if (
-    isApprovedLeave
-) {
-
-    // Approved leave is not an
-    // unauthorised early exit.
-    attendanceData.earlyExit =
-        false;
-
-    attendanceData.earlyExitReason =
-        "";
-
-    attendanceData.earlyExitNote =
-        "";
-
-} else {
-
-    const isApprovedLeave =
-    LEAVE_STATUSES.includes(
-        selectedStatus
-    );
-
-if (
-    isApprovedLeave
-) {
-
-    attendanceData.earlyExit =
-        false;
-
-    attendanceData.earlyExitReason =
-        "";
-
-    attendanceData.earlyExitNote =
-        "";
-
-} else {
-
-    attendanceData.earlyExit =
-        effectiveCheckoutMinutes <
-        scheduledEndMinutes;
-
-}
-
-}
-
-                }
+                throw new Error(
+                    `Invalid custom leave time for ${dateToSave}.`
+                );
 
             }
+
+            effectiveCheckOutDate =
+                customDateTime;
+
+            effectiveCheckOutTime =
+                selectedLeaveTime;
 
         }
 
-        // =====================================
-// Approved Leave Must Not Count
-// As An Early Exit
-// =====================================
 
-if (
-    LEAVE_STATUSES.includes(
-        selectedStatus
-    )
-) {
+        attendanceData.checkOutTime =
+            effectiveCheckOutTime;
 
-    attendanceData.earlyExit =
-        false;
+        attendanceData.checkOutTimestamp =
+            Timestamp.fromDate(
+                effectiveCheckOutDate
+            );
 
-    attendanceData.earlyExitReason =
-        "";
+        attendanceData.checkOutMethod =
+            "Manual Adjustment";
 
-    attendanceData.earlyExitNote =
-        "";
+    }
+
+
+    // =====================================
+    // Approved Leave Is Not An Early Exit
+    // =====================================
+
+    if (
+        LEAVE_STATUSES.includes(
+            selectedStatus
+        )
+    ) {
+
+        attendanceData.earlyExit =
+            false;
+
+        attendanceData.earlyExitReason =
+            "";
+
+        attendanceData.earlyExitNote =
+            "";
+
+    }
+
+
+    // =====================================
+    // Save / Merge Record
+    // =====================================
+
+    await setDoc(
+        attendanceReference,
+        attendanceData,
+        {
+            merge:
+                true
+        }
+    );
+
+
+    if (
+        recordAlreadyExists
+    ) {
+
+        updatedCount++;
+
+    } else {
+
+        createdCount++;
+
+    }
 
 }
+        
 
-        await setDoc(
-            attendanceReference,
-            attendanceData,
-            {
-                merge:
-                    true
-            }
-        );
+        const totalSaved =
+    createdCount +
+    updatedCount;
 
-        showMessage(
-            recordAlreadyExists
+showMessage(
+    totalSaved === 1
+        ?
+        (
+            createdCount === 1
                 ?
+                "Attendance record created."
+                :
                 "Attendance record updated."
-                :
-                "Attendance record created.",
-            recordAlreadyExists
-                ?
-                "var(--orange-primary)"
-                :
-                "var(--green-primary)"
-        );
+        )
+        :
+        `${totalSaved} attendance records saved. ${createdCount} created, ${updatedCount} updated.`,
+    "var(--green-primary)"
+);
 
         await loadExistingAttendance();
 
@@ -2865,6 +3080,20 @@ if (
         await loadAttendanceSummary();
 
         await buildCalendar();
+
+        // =====================================
+// Reset Date Range After Successful Save
+// =====================================
+
+if (
+    attendanceDate &&
+    attendanceEndDate
+) {
+
+    attendanceEndDate.value =
+        attendanceDate.value;
+
+}
 
     } catch (
         error
