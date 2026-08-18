@@ -84,9 +84,19 @@ const currentlyAtWorkElement =
         "currentlyAtWork"
     );
 
+    const currentlyAtWorkCard =
+    document.getElementById(
+        "currentlyAtWorkCard"
+    );
+
 const checkedOutTodayElement =
     document.getElementById(
         "checkedOutToday"
+    );
+
+    const checkedOutTodayCard =
+    document.getElementById(
+        "checkedOutTodayCard"
     );
 
 const lateTodayElement =
@@ -124,9 +134,19 @@ const earlyExitsTodayElement =
         "earlyExitsToday"
     );
 
+    const earlyExitsTodayCard =
+    document.getElementById(
+        "earlyExitsTodayCard"
+    );
+
 const absentTodayElement =
     document.getElementById(
         "absentToday"
+    );
+
+    const absentTodayCard =
+    document.getElementById(
+        "absentTodayCard"
     );
 
 const totalHoursTodayElement =
@@ -177,7 +197,7 @@ function initializeDashboard() {
 
     }
 
-    if (
+       if (
         lateTodayCard
     ) {
 
@@ -210,6 +230,186 @@ function initializeDashboard() {
         );
 
     }
+
+    if (
+    currentlyAtWorkCard
+) {
+
+    currentlyAtWorkCard.addEventListener(
+        "click",
+        function () {
+
+            const currentlyAtWorkRecords =
+                currentDashboardAttendanceRecords.filter(
+                    function (
+                        record
+                    ) {
+
+                        return (
+                            isPresentStatus(
+                                record.status
+                            )
+                            &&
+                            !record.checkOutTime
+                        );
+
+                    }
+                );
+
+            openDashboardStatModal(
+                "Currently at Work",
+                currentlyAtWorkRecords
+            );
+
+        }
+    );
+
+}
+
+if (
+    checkedOutTodayCard
+) {
+
+    checkedOutTodayCard.addEventListener(
+        "click",
+        function () {
+
+            const checkedOutRecords =
+                currentDashboardAttendanceRecords.filter(
+                    function (
+                        record
+                    ) {
+
+                        return Boolean(
+                            record.checkOutTime
+                        );
+
+                    }
+                );
+
+            openDashboardStatModal(
+                "Checked Out Today",
+                checkedOutRecords
+            );
+
+        }
+    );
+
+}
+
+if (
+    earlyExitsTodayCard
+) {
+
+    earlyExitsTodayCard.addEventListener(
+        "click",
+        function () {
+
+            const earlyExitRecords =
+                currentDashboardAttendanceRecords.filter(
+                    function (
+                        record
+                    ) {
+
+                        return (
+                            record.earlyExit ===
+                            true
+                        );
+
+                    }
+                );
+
+            openDashboardStatModal(
+                "Early Exits Today",
+                earlyExitRecords
+            );
+
+        }
+    );
+
+}
+
+if (
+    absentTodayCard
+) {
+
+    absentTodayCard.addEventListener(
+        "click",
+        function () {
+
+            const absentRecords =
+                currentDashboardAttendanceRecords.filter(
+                    function (
+                        record
+                    ) {
+
+                        return (
+                            normalizeStatus(
+                                record.status
+                            ) ===
+                            "absent"
+                        );
+
+                    }
+                );
+
+            openDashboardStatModal(
+                "Absent",
+                absentRecords
+            );
+
+        }
+    );
+
+}
+
+
+    // =====================================
+    // Close Dashboard Stat Modal
+    // =====================================
+
+    if (
+        dashboardStatModalClose
+    ) {
+
+        dashboardStatModalClose.addEventListener(
+            "click",
+            function () {
+
+                dashboardStatModal.hidden =
+                    true;
+
+            }
+        );
+
+    }
+
+
+    if (
+        dashboardStatModal
+    ) {
+
+        dashboardStatModal.addEventListener(
+            "click",
+            function (
+                event
+            ) {
+
+                if (
+                    event.target ===
+                    dashboardStatModal
+                ) {
+
+                    dashboardStatModal.hidden =
+                        true;
+
+                }
+
+            }
+        );
+
+    }
+
 
     loadCompanyBranding();
 
