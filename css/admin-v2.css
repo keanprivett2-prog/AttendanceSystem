@@ -5619,3 +5619,36 @@ line-height: 1.5;
     }
 
 }
+
+/* =====================================================
+   Attendance Calendar - Selected Date / Range
+===================================================== */
+
+#attendanceCalendarGrid .calendar-day.calendar-selected-date {
+    outline: 3px solid #2563eb !important;
+    outline-offset: -3px;
+
+    box-shadow:
+        0 0 0 2px rgba(37, 99, 235, 0.14),
+        0 4px 10px rgba(15, 23, 42, 0.08);
+
+    position: relative;
+    z-index: 2;
+}
+
+
+/* Stronger emphasis for the selected day number */
+
+#attendanceCalendarGrid
+.calendar-day.calendar-selected-date
+strong {
+    color: #0f3f87;
+}
+
+
+/* Keep existing status backgrounds visible */
+
+#attendanceCalendarGrid
+.calendar-day.calendar-selected-date:hover {
+    transform: translateY(-1px);
+}

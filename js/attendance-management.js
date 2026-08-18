@@ -44,6 +44,8 @@ import {
 // Page Elements
 // =====================================
 
+
+
 const employeeSelect =
     document.getElementById(
         "employeeSelect"
@@ -62,6 +64,11 @@ const attendanceDate =
     const attendanceEndDate =
     document.getElementById(
         "attendanceEndDate"
+    );
+
+    const attendanceDateRangeSummary =
+    document.getElementById(
+        "attendanceDateRangeSummary"
     );
 
 const attendanceStatus =
@@ -243,27 +250,48 @@ async function initializeAttendanceManagementPage() {
     }
 
     attendanceDate.addEventListener(
+    "change",
+    function () {
+
+        if (
+            attendanceEndDate &&
+            (
+                !attendanceEndDate.value ||
+                attendanceEndDate.value <
+                attendanceDate.value
+            )
+        ) {
+
+            attendanceEndDate.value =
+                attendanceDate.value;
+
+        }
+
+        highlightSelectedCalendarDates();
+
+        updateAttendanceDateRangeSummary();
+
+        loadExistingAttendance();
+
+    }
+);
+
+if (
+    attendanceEndDate
+) {
+
+    attendanceEndDate.addEventListener(
         "change",
         function () {
 
-            if (
-                attendanceEndDate &&
-                (
-                    !attendanceEndDate.value ||
-                    attendanceEndDate.value <
-                    attendanceDate.value
-                )
-            ) {
+            highlightSelectedCalendarDates();
 
-                attendanceEndDate.value =
-                    attendanceDate.value;
-
-            }
-
-            loadExistingAttendance();
+            updateAttendanceDateRangeSummary();
 
         }
     );
+
+}
 
 }
 
@@ -290,15 +318,23 @@ async function initializeAttendanceManagementPage() {
     }
 
     if (
-        attendanceStatus
-    ) {
+    attendanceStatus
+) {
 
-        attendanceStatus.addEventListener(
-            "change",
-            handleAttendanceStatusChange
-        );
+    attendanceStatus.addEventListener(
+        "change",
+        function () {
 
-    }
+            handleAttendanceStatusChange();
+
+            highlightSelectedCalendarDates();
+
+            updateAttendanceDateRangeSummary();
+
+        }
+    );
+
+}
 
     if (
         leaveDuration
@@ -345,6 +381,8 @@ async function initializeAttendanceManagementPage() {
     }
 
     handleAttendanceStatusChange();
+
+    updateAttendanceDateRangeSummary();
 
     await loadAttendanceSettings();
 
@@ -2371,6 +2409,79 @@ function createStatusClass(
 }
 
 // =====================================
+// Update Date Range Summary
+// =====================================
+
+function updateAttendanceDateRangeSummary() {
+
+    if (
+        !attendanceDateRangeSummary ||
+        !attendanceDate ||
+        !attendanceEndDate
+    ) {
+
+        return;
+
+    }
+
+    const startDate =
+        attendanceDate.value;
+
+    const endDate =
+        attendanceEndDate.value;
+
+    if (
+        !startDate ||
+        !endDate
+    ) {
+
+        attendanceDateRangeSummary.textContent =
+            "";
+
+        return;
+
+    }
+
+    const selectedStatus =
+        attendanceStatus
+            ?
+            attendanceStatus.value
+            :
+            "";
+
+    const dates =
+        buildAttendanceDateRange(
+            startDate,
+            endDate,
+            selectedStatus
+        );
+
+    const includesWeekends =
+        selectedStatus ===
+        "Maternity Leave";
+
+    if (
+        dates.length ===
+        1
+    ) {
+
+        attendanceDateRangeSummary.textContent =
+            "1 day selected";
+
+        return;
+
+    }
+
+    attendanceDateRangeSummary.textContent =
+        includesWeekends
+            ?
+            `${dates.length} calendar days selected · Weekends included`
+            :
+            `${dates.length} working days selected · Weekends excluded`;
+
+}
+
+// =====================================
 // Build Attendance Date Range
 // =====================================
 
@@ -3466,6 +3577,95 @@ function displayCalendar(
 
     }
 
+    highlightSelectedCalendarDates();
+
+}
+
+// =====================================
+// Highlight Selected Calendar Dates
+// =====================================
+
+function highlightSelectedCalendarDates() {
+
+    const calendarDays =
+        document.querySelectorAll(
+            "#attendanceCalendarGrid .calendar-day"
+        );
+
+    calendarDays.forEach(
+        function (
+            dayCell
+        ) {
+
+            dayCell.classList.remove(
+                "calendar-selected-date"
+            );
+
+        }
+    );
+
+
+    if (
+        !attendanceDate ||
+        !attendanceDate.value
+    ) {
+
+        return;
+
+    }
+
+
+    const startDate =
+        attendanceDate.value;
+
+    const endDate =
+        attendanceEndDate &&
+        attendanceEndDate.value
+            ?
+            attendanceEndDate.value
+            :
+            startDate;
+
+
+    const selectedStatus =
+        attendanceStatus
+            ?
+            attendanceStatus.value
+            :
+            "";
+
+
+    const selectedDates =
+        buildAttendanceDateRange(
+            startDate,
+            endDate,
+            selectedStatus
+        );
+
+
+    selectedDates.forEach(
+        function (
+            dateKey
+        ) {
+
+            const dayCell =
+                document.querySelector(
+                    `#attendanceCalendarGrid .calendar-day[data-date="${dateKey}"]`
+                );
+
+            if (
+                dayCell
+            ) {
+
+                dayCell.classList.add(
+                    "calendar-selected-date"
+                );
+
+            }
+
+        }
+    );
+
 }
 
 
@@ -3494,6 +3694,9 @@ function createCalendarDay(
         formatLocalDate(
             currentDate
         );
+
+        dayCell.dataset.date =
+    currentDateKey;
 
     const attendanceRecord =
         attendanceByDate[
@@ -3626,22 +3829,63 @@ dayCell.innerHTML = `
         "pointer";
 
     dayCell.addEventListener(
-        "click",
-        async function () {
+    "click",
+    async function () {
 
-            if (
-                attendanceDate
-            ) {
+        // Set From Date to clicked calendar date
 
-                attendanceDate.value =
-                    currentDateKey;
+        if (
+            attendanceDate
+        ) {
 
-            }
-
-            await loadExistingAttendance();
+            attendanceDate.value =
+                currentDateKey;
 
         }
-    );
+
+
+        // Set To Date to the same date
+
+        if (
+            attendanceEndDate
+        ) {
+
+            attendanceEndDate.value =
+                currentDateKey;
+
+        }
+
+
+        // Remove previous calendar selection
+
+        document.querySelectorAll(
+            "#attendanceCalendarGrid .calendar-day"
+        ).forEach(
+            function (
+                calendarDay
+            ) {
+
+                calendarDay.classList.remove(
+                    "calendar-selected-date"
+                );
+
+            }
+        );
+
+
+        // Highlight the date that was clicked
+
+        dayCell.classList.add(
+            "calendar-selected-date"
+        );
+
+
+        // Load that day's attendance record
+
+        await loadExistingAttendance();
+
+    }
+);
 
     calendarGrid.appendChild(
         dayCell
