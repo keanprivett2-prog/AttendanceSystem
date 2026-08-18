@@ -94,6 +94,31 @@ const lateTodayElement =
         "lateToday"
     );
 
+    const lateTodayCard =
+    document.getElementById(
+        "lateTodayCard"
+    );
+
+const dashboardStatModal =
+    document.getElementById(
+        "dashboardStatModal"
+    );
+
+const dashboardStatModalTitle =
+    document.getElementById(
+        "dashboardStatModalTitle"
+    );
+
+const dashboardStatModalContent =
+    document.getElementById(
+        "dashboardStatModalContent"
+    );
+
+const dashboardStatModalClose =
+    document.getElementById(
+        "dashboardStatModalClose"
+    );
+
 const earlyExitsTodayElement =
     document.getElementById(
         "earlyExitsToday"
@@ -113,6 +138,13 @@ const logoutButton =
     document.getElementById(
         "logoutButton"
     );
+
+    // =====================================
+// Current Dashboard Attendance
+// =====================================
+
+let currentDashboardAttendanceRecords =
+    [];
 
     // =====================================
 // Attendance Settings
@@ -141,6 +173,40 @@ function initializeDashboard() {
         logoutButton.addEventListener(
             "click",
             logoutAdministrator
+        );
+
+    }
+
+    if (
+        lateTodayCard
+    ) {
+
+        lateTodayCard.addEventListener(
+            "click",
+            function () {
+
+                const lateRecords =
+                    currentDashboardAttendanceRecords.filter(
+                        function (
+                            record
+                        ) {
+
+                            return (
+                                normalizeStatus(
+                                    record.status
+                                ) ===
+                                "late"
+                            );
+
+                        }
+                    );
+
+                openDashboardStatModal(
+                    "Late Today",
+                    lateRecords
+                );
+
+            }
         );
 
     }
@@ -284,6 +350,9 @@ function startAttendanceListener(
 
                     })
                 );
+
+                currentDashboardAttendanceRecords =
+    attendanceRecords;
 
             displayRecentActivity(
                 attendanceRecords
@@ -1189,6 +1258,104 @@ function formatWorkedMinutes(
         +
         "m"
     );
+
+}
+
+// =====================================
+// Open Dashboard Stat Modal
+// =====================================
+
+function openDashboardStatModal(
+    title,
+    records
+) {
+
+    if (
+        !dashboardStatModal ||
+        !dashboardStatModalTitle ||
+        !dashboardStatModalContent
+    ) {
+
+        return;
+
+    }
+
+    dashboardStatModalTitle.textContent =
+        title;
+
+    dashboardStatModalContent.innerHTML =
+        "";
+
+    if (
+        records.length ===
+        0
+    ) {
+
+        dashboardStatModalContent.innerHTML = `
+            <p class="empty-row">
+                No employees found.
+            </p>
+        `;
+
+    } else {
+
+        records.forEach(
+            function (
+                record
+            ) {
+
+                const item =
+                    document.createElement(
+                        "div"
+                    );
+
+                item.className =
+                    "dashboard-stat-employee-item";
+
+                item.innerHTML = `
+
+                    <strong>
+                        ${escapeHtml(
+                            record.name ??
+                            "Unknown Employee"
+                        )}
+                    </strong>
+
+                    <span>
+                        ${escapeHtml(
+                            record.employeeNumber ??
+                            "-"
+                        )}
+                    </span>
+
+                    <span>
+                        ${escapeHtml(
+                            record.department ??
+                            "Unassigned"
+                        )}
+                    </span>
+
+                    <span>
+                        Check In:
+                        ${escapeHtml(
+                            record.time ??
+                            "-"
+                        )}
+                    </span>
+
+                `;
+
+                dashboardStatModalContent.appendChild(
+                    item
+                );
+
+            }
+        );
+
+    }
+
+    dashboardStatModal.hidden =
+        false;
 
 }
 

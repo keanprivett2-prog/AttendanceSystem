@@ -203,15 +203,20 @@
     </div>
 
 
-    <div class="stat-card">
+    <div
+    class="stat-card clickable-stat-card"
+    id="lateTodayCard"
+    role="button"
+    tabindex="0"
+>
 
-        <h3>Late Today</h3>
+    <h3>Late Today</h3>
 
-        <span id="lateToday">
-            0
-        </span>
+    <span id="lateToday">
+        0
+    </span>
 
-    </div>
+</div>
 
 
     <div class="stat-card">
@@ -350,6 +355,46 @@
         </main>
 
     </div>
+
+    <!-- =====================================
+     Dashboard Stat Details Modal
+====================================== -->
+
+<div
+    id="dashboardStatModal"
+    class="dashboard-stat-modal"
+    hidden
+>
+
+    <div class="dashboard-stat-modal-card">
+
+        <div class="dashboard-stat-modal-header">
+
+            <h2 id="dashboardStatModalTitle">
+                Attendance Details
+            </h2>
+
+            <button
+                type="button"
+                id="dashboardStatModalClose"
+                class="dashboard-stat-modal-close"
+            >
+                ×
+            </button>
+
+        </div>
+
+        <div id="dashboardStatModalContent">
+
+            <p class="empty-row">
+                No employees found.
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
 
     <script
     type="module"

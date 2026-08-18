@@ -1385,6 +1385,41 @@ function calculateReportHoursWorked(
 
 }
 
+// =====================================
+// Format Leave Duration
+// =====================================
+
+function formatReportLeaveDuration(
+    value
+) {
+
+    switch (
+        String(
+            value ??
+            ""
+        ).trim()
+    ) {
+
+        case "full-day":
+
+            return "Full Day";
+
+        case "half-day":
+
+            return "Half Day";
+
+        case "custom":
+
+            return "Custom Time";
+
+        default:
+
+            return "-";
+
+    }
+
+}
+
 
 // =====================================
 // Display Report
@@ -1505,26 +1540,64 @@ const pageRecords =
                     record.status
                 );
 
-            const checkInTime =
-                record.time ??
-                "-";
+            const recordStatus =
+    normalizeStatus(
+        record.status
+    );
 
-            const checkOutTime =
-                record.checkOutTime ??
-                "Still at work";
+const isLeaveRecord =
+    recordStatus === "annual leave" ||
+    recordStatus === "sick leave" ||
+    recordStatus === "maternity leave" ||
+    recordStatus === "family responsibility leave" ||
+    recordStatus === "unpaid leave" ||
+    recordStatus === "public holiday";
 
-            const hoursWorked =
-                calculateReportHoursWorked(
-                    record
-                );
+
+const checkInTime =
+    isLeaveRecord
+        ?
+        "N/A"
+        :
+        (
+            record.time ??
+            "-"
+        );
+
+
+const checkOutTime =
+    isLeaveRecord
+        ?
+        "N/A"
+        :
+        (
+            record.checkOutTime ??
+            "Still at work"
+        );
+
+
+const hoursWorked =
+    isLeaveRecord
+        ?
+        "N/A"
+        :
+        calculateReportHoursWorked(
+            record
+        );
 
                 const workLocation =
-    String(
-        record.workLocation ??
-        "Office"
-    ).trim()
-    ||
-    "Office";
+    isLeaveRecord
+        ?
+        "Out of Office"
+        :
+        (
+            String(
+                record.workLocation ??
+                "Office"
+            ).trim()
+            ||
+            "Office"
+        );
 
             const isLate =
                 normalizeStatus(
@@ -1604,6 +1677,14 @@ const pageRecords =
                     </span>
 
                 </td>
+
+                <td>
+    ${escapeHtml(
+        formatReportLeaveDuration(
+            record.leaveDuration
+        )
+    )}
+</td>
 
                 <td>
                     ${
@@ -3186,7 +3267,7 @@ function showTableMessage(message) {
         <tr>
 
             <td
-                colspan="12"
+                colspan="13"
                 class="empty-row"
             >
                 ${escapeHtml(message)}
@@ -3227,6 +3308,7 @@ function exportReportToCsv() {
         "Check Out",
         "Hours Worked",
         "Status",
+        "Leave Duration",
         "Late Reason",
         "Early Exit",
         "Early Exit Reason"
@@ -3272,6 +3354,10 @@ function exportReportToCsv() {
 
     record.status ??
         "",
+
+        formatReportLeaveDuration(
+    record.leaveDuration
+),
 
     normalizeStatus(
         record.status

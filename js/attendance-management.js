@@ -3013,10 +3013,22 @@ for (
                 "",
 
         notes:
-            notes,
+    notes,
 
-        updatedAt:
-            serverTimestamp()
+// Clear old authorised-departure data.
+// It will only be set again when genuinely required.
+
+authorisedDeparture:
+    false,
+
+authorisedDepartureReason:
+    "",
+
+authorisedDepartureNote:
+    "",
+
+updatedAt:
+    serverTimestamp()
 
     };
 
@@ -3134,6 +3146,52 @@ for (
             "";
 
     }
+
+    // =====================================
+// Clear Stale Leave Checkout Data
+// For Normal Working Statuses
+// =====================================
+
+const isNormalWorkingStatus =
+    selectedStatus ===
+    "On Time"
+    ||
+    selectedStatus ===
+    "Late"
+    ||
+    selectedStatus ===
+    "Work From Home"
+    ||
+    selectedStatus ===
+    "Business Trip"
+    ||
+    selectedStatus ===
+    "Training";
+
+
+if (
+    isNormalWorkingStatus
+) {
+
+    attendanceData.checkOutTime =
+        "";
+
+    attendanceData.checkOutTimestamp =
+        null;
+
+    attendanceData.checkOutMethod =
+        "";
+
+    attendanceData.earlyExit =
+        false;
+
+    attendanceData.earlyExitReason =
+        "";
+
+    attendanceData.earlyExitNote =
+        "";
+
+}
 
 
     // =====================================
