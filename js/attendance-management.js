@@ -3193,6 +3193,64 @@ if (
 
 }
 
+// =====================================
+// Clear Attendance Data When Absent
+// =====================================
+
+if (
+    selectedStatus ===
+    "Absent"
+) {
+
+    // No check-in should exist for an absent day.
+
+    attendanceData.time =
+        "";
+
+    attendanceData.scanTimestamp =
+        null;
+
+    attendanceData.checkInTimestamp =
+        null;
+
+    attendanceData.checkInMethod =
+        "";
+
+
+    // No check-out should exist either.
+
+    attendanceData.checkOutTime =
+        "";
+
+    attendanceData.checkOutTimestamp =
+        null;
+
+    attendanceData.checkOutMethod =
+        "";
+
+
+    // Clear departure information.
+
+    attendanceData.earlyExit =
+        false;
+
+    attendanceData.earlyExitReason =
+        "";
+
+    attendanceData.earlyExitNote =
+        "";
+
+    attendanceData.authorisedDeparture =
+        false;
+
+    attendanceData.authorisedDepartureReason =
+        "";
+
+    attendanceData.authorisedDepartureNote =
+        "";
+
+}
+
 
     // =====================================
     // Save / Merge Record

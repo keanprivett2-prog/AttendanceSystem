@@ -166,6 +166,9 @@ const logoutButton =
 let currentDashboardAttendanceRecords =
     [];
 
+    let currentDashboardEmployeeRecords =
+    [];
+
     // =====================================
 // Attendance Settings
 // =====================================
@@ -617,6 +620,9 @@ async function loadAttendance() {
                 })
             );
 
+            currentDashboardEmployeeRecords =
+    employeeRecords;
+
         displayDepartmentSummary(
             employeeRecords
         );
@@ -741,17 +747,29 @@ function displayDepartmentSummary(
                 );
 
             item.className =
-                "department-item";
+    "department-item clickable-department-item";
 
             item.innerHTML = `
                 <span>
                     ${escapeHtml(department)}
                 </span>
+                
 
                 <strong>
                     ${total}
                 </strong>
             `;
+
+            item.addEventListener(
+    "click",
+    function () {
+
+        openDepartmentModal(
+            department
+        );
+
+    }
+);
 
             departmentSummary.appendChild(
                 item
@@ -1514,36 +1532,37 @@ function openDashboardStatModal(
 
                 item.innerHTML = `
 
-                    <strong>
-                        ${escapeHtml(
-                            record.name ??
-                            "Unknown Employee"
-                        )}
-                    </strong>
+    <strong>
+        ${escapeHtml(
+            record.name ??
+            "Unknown Employee"
+        )}
+    </strong>
 
-                    <span>
-                        ${escapeHtml(
-                            record.employeeNumber ??
-                            "-"
-                        )}
-                    </span>
+    <span>
+        ${escapeHtml(
+            record.department ??
+            "Unassigned"
+        )}
+    </span>
 
-                    <span>
-                        ${escapeHtml(
-                            record.department ??
-                            "Unassigned"
-                        )}
-                    </span>
+    <span>
+        Check In:
+        ${escapeHtml(
+            record.time ||
+            "N/A"
+        )}
+    </span>
 
-                    <span>
-                        Check In:
-                        ${escapeHtml(
-                            record.time ??
-                            "-"
-                        )}
-                    </span>
+    <span>
+        Check Out:
+        ${escapeHtml(
+            record.checkOutTime ||
+            "N/A"
+        )}
+    </span>
 
-                `;
+`;
 
                 dashboardStatModalContent.appendChild(
                     item
@@ -1556,6 +1575,111 @@ function openDashboardStatModal(
 
     dashboardStatModal.hidden =
         false;
+
+}
+
+// =====================================
+// Open Department Modal
+// =====================================
+
+function openDepartmentModal(
+    department
+) {
+
+    const departmentEmployees =
+        currentDashboardEmployeeRecords.filter(
+            function (
+                employee
+            ) {
+
+                return (
+                    String(
+                        employee.department ??
+                        "Unassigned"
+                    ).trim() ===
+                    department
+                );
+
+            }
+        );
+
+
+    const departmentRecords =
+        departmentEmployees.map(
+            function (
+                employee
+            ) {
+
+                const attendanceRecord =
+                    currentDashboardAttendanceRecords.find(
+                        function (
+                            record
+                        ) {
+
+                            return (
+                                String(
+                                    record.employeeNumber ??
+                                    ""
+                                ) ===
+                                String(
+                                    employee.employeeNumber ??
+                                    ""
+                                )
+                            );
+
+                        }
+                    );
+
+
+                return {
+
+                    name:
+                        employee.name ??
+                        "Unknown Employee",
+
+                    department:
+                        department,
+
+                    time:
+                        attendanceRecord
+                            ?
+                            (
+                                attendanceRecord.time ||
+                                "N/A"
+                            )
+                            :
+                            "N/A",
+
+                    checkOutTime:
+                        attendanceRecord
+                            ?
+                            (
+                                attendanceRecord.checkOutTime ||
+                                "N/A"
+                            )
+                            :
+                            "N/A",
+
+                    status:
+                        attendanceRecord
+                            ?
+                            (
+                                attendanceRecord.status ||
+                                "Unknown"
+                            )
+                            :
+                            "Not Checked In"
+
+                };
+
+            }
+        );
+
+
+    openDashboardStatModal(
+        department,
+        departmentRecords
+    );
 
 }
 

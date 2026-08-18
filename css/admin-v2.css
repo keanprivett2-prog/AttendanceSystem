@@ -5738,10 +5738,10 @@ strong {
 .dashboard-stat-employee-item {
     display: grid;
     grid-template-columns:
-        minmax(150px, 1.4fr)
-        minmax(90px, 0.7fr)
-        minmax(120px, 1fr)
-        minmax(100px, 0.8fr);
+    minmax(160px, 1.4fr)
+    minmax(130px, 1fr)
+    minmax(110px, 0.8fr)
+    minmax(110px, 0.8fr);
 
     gap: 12px;
 
@@ -5758,4 +5758,12 @@ strong {
 
 .dashboard-stat-employee-item span {
     color: #64748b;
+}
+
+/* =====================================================
+   Clickable Department Summary
+===================================================== */
+
+.clickable-department-item {
+    cursor: pointer;
 }
