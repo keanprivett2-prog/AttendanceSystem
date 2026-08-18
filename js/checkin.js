@@ -2837,6 +2837,56 @@ function handleEarlyExitReasonChange() {
 
 }
 
+// =====================================================
+// Authorised Early Departure
+// =====================================================
+
+function getAuthorisedDepartureStatus(
+    reason
+) {
+
+    switch (
+        reason
+    ) {
+
+        case "Sick":
+
+            return "Sick Leave";
+
+
+        case "Approved Half Day":
+
+            return "Half Day";
+
+
+        case "Annual Leave":
+
+            return "Annual Leave";
+
+
+        case "Family Responsibility":
+
+            return "Family Responsibility Leave";
+
+
+        case "Medical Appointment":
+
+            return "Medical Appointment";
+
+
+        case "Manager Approved":
+
+            return "Manager Approved";
+
+
+        default:
+
+            return null;
+
+    }
+
+}
+
 
 // =====================================================
 // Submit Early Exit
@@ -2925,14 +2975,115 @@ async function submitEarlyExit() {
         } =
             pendingEarlyCheckOut;
 
-        await saveCheckOut(
-            employee,
-            attendanceRecord,
-            checkOutTime,
+        const authorisedStatus =
+    getAuthorisedDepartureStatus(
+        selectedReason
+    );
+
+const isAuthorisedDeparture =
+    Boolean(
+        authorisedStatus
+    );
+
+
+if (
+    isAuthorisedDeparture
+) {
+
+    const attendanceUpdate = {
+
+        status:
+            authorisedStatus,
+
+        earlyExit:
+            false,
+
+        earlyExitReason:
+            "",
+
+        earlyExitNote:
+            "",
+
+        authorisedDeparture:
             true,
+
+        authorisedDepartureReason:
             selectedReason,
-            note
-        );
+
+        authorisedDepartureNote:
+            note,
+
+        updatedAt:
+            serverTimestamp()
+
+    };
+
+
+    // Approved Half Day is explicitly
+    // recorded as a half-day absence.
+
+    if (
+        selectedReason ===
+        "Approved Half Day"
+    ) {
+
+        attendanceUpdate.leaveDuration =
+            "half-day";
+
+    }
+
+
+    await updateDoc(
+        attendanceRecord.reference,
+        attendanceUpdate
+    );
+
+
+    await saveCheckOut(
+        employee,
+        attendanceRecord,
+        checkOutTime,
+        false,
+        "",
+        ""
+    );
+
+    message.style.color =
+    "green";
+
+message.innerHTML =
+    "✅ Approved departure recorded."
+    +
+    "<br>"
+    +
+    "Status: "
+    +
+    escapeHtml(
+        authorisedStatus
+    )
+    +
+    "<br>"
+    +
+    "Check-Out Time: "
+    +
+    escapeHtml(
+        checkOutTime.toLocaleTimeString(
+            "en-ZA"
+        )
+    );
+
+} else {
+
+    await saveCheckOut(
+        employee,
+        attendanceRecord,
+        checkOutTime,
+        true,
+        selectedReason,
+        note
+    );
+
+}
 
         pendingEarlyCheckOut =
             null;

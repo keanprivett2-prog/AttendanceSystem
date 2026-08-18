@@ -1274,6 +1274,22 @@ async function loadAttendanceHistory() {
                         ""
                     ).trim();
 
+                    const authorisedDeparture =
+    attendance.authorisedDeparture ===
+    true;
+
+const authorisedDepartureReason =
+    String(
+        attendance.authorisedDepartureReason ??
+        ""
+    ).trim();
+
+const authorisedDepartureNote =
+    String(
+        attendance.authorisedDepartureNote ??
+        ""
+    ).trim();
+
                 const storedLeaveDuration =
                     String(
                         attendance.leaveDuration ??
@@ -1579,6 +1595,72 @@ async function loadAttendanceHistory() {
                                 :
                                 ""
                         }
+
+                        ${
+    authorisedDeparture
+        ?
+        `
+
+        <div class="history-clean-row">
+
+            <span class="history-clean-label">
+                Approved Departure
+            </span>
+
+            <span class="history-clean-value">
+                Yes
+            </span>
+
+        </div>
+
+        <div class="history-clean-row">
+
+            <span class="history-clean-label">
+                Departure Reason
+            </span>
+
+            <span class="history-clean-value">
+                ${
+                    authorisedDepartureReason
+                        ?
+                        escapeHtml(
+                            authorisedDepartureReason
+                        )
+                        :
+                        "Approved"
+                }
+            </span>
+
+        </div>
+
+        ${
+            authorisedDepartureNote
+                ?
+                `
+
+                <div class="history-clean-row">
+
+                    <span class="history-clean-label">
+                        Departure Details
+                    </span>
+
+                    <span class="history-clean-value">
+                        ${escapeHtml(
+                            authorisedDepartureNote
+                        )}
+                    </span>
+
+                </div>
+
+                `
+                :
+                ""
+        }
+
+        `
+        :
+        ""
+}
 
                         <div class="history-clean-row history-notes-row">
 
