@@ -2676,15 +2676,83 @@ async function saveAttendance(
                         +
                         effectiveCheckOutDate.getMinutes();
 
-                    attendanceData.earlyExit =
-                        effectiveCheckoutMinutes <
-                        scheduledEndMinutes;
+                    const isApprovedLeave =
+    LEAVE_STATUSES.includes(
+        selectedStatus
+    );
+
+if (
+    isApprovedLeave
+) {
+
+    // Approved leave is not an
+    // unauthorised early exit.
+    attendanceData.earlyExit =
+        false;
+
+    attendanceData.earlyExitReason =
+        "";
+
+    attendanceData.earlyExitNote =
+        "";
+
+} else {
+
+    const isApprovedLeave =
+    LEAVE_STATUSES.includes(
+        selectedStatus
+    );
+
+if (
+    isApprovedLeave
+) {
+
+    attendanceData.earlyExit =
+        false;
+
+    attendanceData.earlyExitReason =
+        "";
+
+    attendanceData.earlyExitNote =
+        "";
+
+} else {
+
+    attendanceData.earlyExit =
+        effectiveCheckoutMinutes <
+        scheduledEndMinutes;
+
+}
+
+}
 
                 }
 
             }
 
         }
+
+        // =====================================
+// Approved Leave Must Not Count
+// As An Early Exit
+// =====================================
+
+if (
+    LEAVE_STATUSES.includes(
+        selectedStatus
+    )
+) {
+
+    attendanceData.earlyExit =
+        false;
+
+    attendanceData.earlyExitReason =
+        "";
+
+    attendanceData.earlyExitNote =
+        "";
+
+}
 
         await setDoc(
             attendanceReference,
@@ -2894,27 +2962,18 @@ async function buildCalendar() {
             );
 
         const attendanceQuery =
-            query(
-                collection(
-                    db,
-                    "attendance"
-                ),
-                where(
-                    "employeeNumber",
-                    "==",
-                    selectedEmployeeNumber
-                ),
-                where(
-                    "date",
-                    ">=",
-                    monthStartKey
-                ),
-                where(
-                    "date",
-                    "<=",
-                    monthEndKey
-                )
-            );
+    query(
+        collection(
+            db,
+            "attendance"
+        ),
+
+        where(
+            "employeeNumber",
+            "==",
+            selectedEmployeeNumber
+        )
+    );
 
         const attendanceSnapshot =
             await getDocs(
@@ -2933,19 +2992,23 @@ async function buildCalendar() {
                     attendanceDocument.data();
 
                 const recordDate =
-                    record.date ??
-                    record.dateKey;
+    String(
+        record.dateKey ??
+        ""
+    ).trim();
 
-                if (
-                    recordDate
-                ) {
+if (
+    recordDate &&
+    recordDate >= monthStartKey &&
+    recordDate <= monthEndKey
+) {
 
-                    attendanceByDate[
-                        recordDate
-                    ] =
-                        record;
+    attendanceByDate[
+        recordDate
+    ] =
+        record;
 
-                }
+}
 
             }
         );

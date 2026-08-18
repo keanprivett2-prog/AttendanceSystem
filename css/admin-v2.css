@@ -4863,3 +4863,759 @@ line-height: 1.5;
 #attendanceCalendarGrid .calendar-day strong {
     font-size: 12px;
 }
+
+/* =====================================================
+   Calendar - On Time Days
+===================================================== */
+
+#attendanceCalendarGrid .calendar-day.calendar-on-time {
+    background: #dcfce7 !important;
+    color: #166534 !important;
+    border-color: #86d7a5 !important;
+}
+
+#attendanceCalendarGrid .calendar-day.calendar-on-time strong,
+#attendanceCalendarGrid .calendar-day.calendar-on-time .calendar-day-status {
+    color: #166534 !important;
+}
+
+/* =====================================================
+   Attendance History - Compact Cards
+===================================================== */
+
+#attendanceHistory {
+    margin-top: 10px;
+}
+
+.attendance-history-card {
+    margin-bottom: 6px;
+
+    border: 1px solid #e4eaf1;
+    border-radius: 12px;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 3px 10px rgba(15, 23, 42, 0.05);
+
+    overflow: hidden;
+}
+
+.history-summary {
+    min-height: 54px;
+
+    padding: 10px 16px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 18px;
+}
+
+.history-summary-main {
+    display: flex;
+    align-items: center;
+
+    gap: 16px;
+}
+
+.history-summary-date strong {
+    display: block;
+
+    color: #0f3154;
+
+    font-size: 15px;
+}
+
+.history-summary-date span {
+    display: block;
+
+    margin-top: 3px;
+
+    color: #64748b;
+
+    font-size: 12px;
+}
+
+.history-summary-method {
+    margin-left: auto;
+
+    color: #64748b;
+
+    font-size: 12px;
+}
+
+.history-expanded-clean {
+    padding: 18px;
+
+    background: #f8fafc;
+
+    border-top: 1px solid #e7edf3;
+}
+
+.history-time-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+    gap: 10px;
+
+    margin-bottom: 14px;
+}
+
+.history-time-item {
+    padding: 12px;
+
+    background: #ffffff;
+
+    border: 1px solid #e3e9f0;
+    border-radius: 9px;
+}
+
+.history-time-label {
+    display: block;
+
+    margin-bottom: 5px;
+
+    color: #64748b;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    text-transform: uppercase;
+}
+
+.history-time-item strong {
+    color: #0f3154;
+
+    font-size: 14px;
+}
+
+.history-clean-row {
+    display: flex;
+
+    justify-content: space-between;
+    align-items: flex-start;
+
+    gap: 20px;
+
+    padding: 10px 0;
+
+    border-bottom: 1px solid #e8edf2;
+}
+
+.history-clean-row:last-child {
+    border-bottom: none;
+}
+
+.history-clean-label {
+    color: #64748b;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.history-clean-value {
+    color: #1f2937;
+
+    font-size: 13px;
+
+    text-align: right;
+}
+
+@media (max-width: 700px) {
+
+    .history-time-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .history-summary {
+        align-items: flex-start;
+    }
+
+    .history-clean-row {
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .history-clean-value {
+        text-align: left;
+    }
+}
+
+/* =====================================================
+   Attendance History - Tight Final Spacing
+===================================================== */
+
+#attendanceHistory {
+    margin-top: 8px !important;
+}
+
+#attendanceHistory .attendance-history-card {
+    margin: 0 0 5px 0 !important;
+    padding: 0 !important;
+}
+
+#attendanceHistory .history-summary {
+    min-height: 48px !important;
+    padding: 8px 14px !important;
+}
+
+#attendanceHistory .history-summary-main {
+    gap: 10px !important;
+}
+
+#attendanceHistory .history-summary-date span {
+    margin-top: 1px !important;
+}
+
+/* =====================================================
+   Record Attendance Status - Compact Spacing
+===================================================== */
+
+.attendance-management-card:first-child .form-grid {
+    gap: 10px !important;
+}
+
+.attendance-management-card:first-child .form-group {
+    margin-bottom: 8px !important;
+}
+
+.attendance-management-card:first-child label {
+    margin-top: 8px !important;
+    margin-bottom: 5px !important;
+}
+
+.attendance-management-card:first-child input,
+.attendance-management-card:first-child select,
+.attendance-management-card:first-child textarea {
+    min-height: 42px !important;
+}
+
+.attendance-management-card:first-child textarea {
+    min-height: 80px !important;
+}
+
+.attendance-management-card:first-child .form-actions {
+    margin-top: 14px !important;
+}
+
+/* =====================================================
+   Attendance Summary - Status Styling
+===================================================== */
+
+.attendance-summary {
+    padding: 16px !important;
+}
+
+.attendance-summary h3 {
+    margin-bottom: 12px !important;
+    font-size: 16px !important;
+}
+
+.attendance-summary .summary-grid {
+    gap: 8px !important;
+}
+
+.attendance-summary .summary-item {
+    min-height: 58px;
+
+    padding: 10px 12px !important;
+
+    border-radius: 9px;
+
+    border: 1px solid #e5eaf0;
+
+    box-shadow: none;
+
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.attendance-summary .summary-item:hover {
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 3px 8px rgba(15, 23, 42, 0.06);
+}
+
+
+/* On Time */
+
+.attendance-summary .summary-item:nth-child(1) {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+}
+
+.attendance-summary .summary-item:nth-child(1) strong {
+    color: #15803d;
+}
+
+
+/* Late */
+
+.attendance-summary .summary-item:nth-child(2) {
+    background: #fff7ed;
+    border-color: #fed7aa;
+}
+
+.attendance-summary .summary-item:nth-child(2) strong {
+    color: #c2410c;
+}
+
+
+/* Absent */
+
+.attendance-summary .summary-item:nth-child(3) {
+    background: #fef2f2;
+    border-color: #fecaca;
+}
+
+.attendance-summary .summary-item:nth-child(3) strong {
+    color: #b91c1c;
+}
+
+
+/* Leave */
+
+.attendance-summary .summary-item:nth-child(4) {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+}
+
+.attendance-summary .summary-item:nth-child(4) strong {
+    color: #1d4ed8;
+}
+
+
+/* Labels */
+
+.attendance-summary .summary-item span {
+    font-size: 12px !important;
+    font-weight: 700;
+
+    color: #64748b;
+}
+
+.attendance-summary .summary-item strong {
+    font-size: 20px !important;
+    font-weight: 800;
+}
+
+/* =====================================================
+   Attendance Management - Section Heading Polish
+===================================================== */
+
+.attendance-management-card .section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+
+    gap: 16px;
+
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+
+    border-bottom: 1px solid #e8edf3;
+}
+
+.attendance-management-card .section-heading h2 {
+    margin: 0 0 4px;
+
+    color: #12395b;
+
+    font-size: 20px;
+    font-weight: 750;
+}
+
+.attendance-management-card .section-heading p {
+    margin: 0;
+
+    max-width: 640px;
+
+    color: #64748b;
+
+    font-size: 13px;
+    line-height: 1.5;
+
+    text-align: left;
+}
+
+
+/* Left card gets a blue accent */
+
+.attendance-management-card:first-child .section-heading {
+    border-left: 4px solid #2563eb;
+    padding-left: 12px;
+}
+
+
+/* Right card gets a softer accent */
+
+.attendance-management-card:nth-child(2) .section-heading {
+    border-left: 4px solid #64748b;
+    padding-left: 12px;
+}
+
+/* =====================================================
+   Attendance Calendar - Navigation Polish
+===================================================== */
+
+.attendance-calendar .calendar-header {
+    display: grid;
+
+    grid-template-columns:
+        110px minmax(0, 1fr) 110px;
+
+    align-items: center;
+
+    gap: 12px;
+
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+
+    border-bottom: 1px solid #e8edf3;
+}
+
+
+/* Month / Year */
+
+.attendance-calendar .calendar-header h3 {
+    margin: 0;
+
+    text-align: center;
+
+    color: #12395b;
+
+    font-size: 17px;
+    font-weight: 800;
+}
+
+
+/* Navigation Buttons */
+
+.attendance-calendar .calendar-navigation-button {
+    width: 100%;
+
+    margin: 0;
+
+    padding: 8px 12px;
+
+    background: #f8fafc;
+
+    color: #334155;
+
+    border: 1px solid #dbe3ec;
+    border-radius: 8px;
+
+    box-shadow: none;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease;
+}
+
+.attendance-calendar .calendar-navigation-button:hover {
+    background: #eff6ff;
+
+    color: #1d4ed8;
+
+    border-color: #bfdbfe;
+
+    box-shadow: none;
+
+    transform: none;
+}
+
+
+/* Calendar Container */
+
+.attendance-calendar {
+    padding: 16px 18px !important;
+
+    border-radius: 12px;
+}
+
+
+/* Mobile */
+
+@media (max-width: 650px) {
+
+    .attendance-calendar .calendar-header {
+        grid-template-columns:
+            82px minmax(0, 1fr) 82px;
+    }
+
+    .attendance-calendar .calendar-navigation-button {
+        padding:
+            8px 6px;
+
+        font-size:
+            11px;
+    }
+
+}
+
+/* =====================================================
+   Attendance Calendar - Day Cell Polish
+===================================================== */
+
+#attendanceCalendarGrid {
+    gap: 6px !important;
+}
+
+
+/* Normal calendar days */
+
+#attendanceCalendarGrid .calendar-day {
+    min-height: 52px !important;
+
+    padding: 6px 4px !important;
+
+    border-radius: 8px !important;
+
+    border-width: 1px;
+
+    box-sizing: border-box;
+
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease,
+        border-color 0.15s ease;
+}
+
+
+/* Day Number */
+
+#attendanceCalendarGrid .calendar-day strong {
+    font-size: 12px !important;
+    font-weight: 800;
+
+    line-height: 1;
+}
+
+
+/* Status underneath the number */
+
+#attendanceCalendarGrid .calendar-day-status {
+    margin-top: 3px;
+
+    font-size: 9px !important;
+    font-weight: 700;
+
+    line-height: 1.1;
+
+    text-align: center;
+}
+
+
+/* Subtle hover */
+
+#attendanceCalendarGrid .calendar-day:hover {
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 3px 8px rgba(15, 23, 42, 0.08);
+}
+
+
+/* Empty calendar spaces */
+
+#attendanceCalendarGrid .calendar-empty {
+    min-height: 52px;
+}
+
+
+/* Day headings */
+
+#attendanceCalendarGrid .calendar-day-header {
+    padding: 5px 2px 8px;
+
+    color: #64748b;
+
+    font-size: 10px;
+    font-weight: 800;
+
+    text-align: center;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.35px;
+}
+
+/* =====================================================
+   Attendance History - Timeline Polish
+===================================================== */
+
+#attendanceHistory {
+    margin-top: 14px !important;
+}
+
+#attendanceHistory .attendance-history-card {
+    position: relative;
+
+    margin-bottom: 8px !important;
+
+    border: 1px solid #e3e9f0;
+    border-radius: 10px;
+
+    background: #ffffff;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 2px 7px rgba(15, 23, 42, 0.04);
+
+    transition:
+        box-shadow 0.15s ease,
+        transform 0.15s ease;
+}
+
+#attendanceHistory .attendance-history-card:hover {
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 4px 10px rgba(15, 23, 42, 0.07);
+}
+
+
+/* Collapsed Row */
+
+#attendanceHistory .history-summary {
+    min-height: 52px !important;
+
+    padding: 9px 14px !important;
+
+    gap: 12px;
+}
+
+
+/* Left side */
+
+#attendanceHistory .history-summary-main {
+    gap: 12px !important;
+}
+
+
+/* Status badge */
+
+#attendanceHistory .status-badge {
+    min-width: 76px;
+
+    padding: 5px 9px;
+
+    border-radius: 999px;
+
+    text-align: center;
+
+    font-size: 11px;
+    font-weight: 800;
+}
+
+
+/* Date and Time */
+
+#attendanceHistory .history-summary-date strong {
+    font-size: 13px;
+
+    color: #0f3154;
+}
+
+#attendanceHistory .history-summary-date span {
+    margin-top: 1px !important;
+
+    font-size: 11px;
+
+    color: #64748b;
+}
+
+
+/* Check-in method */
+
+#attendanceHistory .history-summary-method {
+    margin-left: auto;
+
+    font-size: 11px;
+
+    color: #64748b;
+}
+
+
+/* Arrow */
+
+#attendanceHistory .history-summary::after {
+    margin-left: 8px;
+
+    font-size: 10px;
+
+    color: #64748b;
+}
+
+
+/* Expanded Details */
+
+#attendanceHistory .history-expanded-clean {
+    padding: 14px !important;
+
+    background: #f8fafc;
+}
+
+
+/* Time boxes */
+
+#attendanceHistory .history-time-grid {
+    gap: 8px !important;
+
+    margin-bottom: 10px !important;
+}
+
+#attendanceHistory .history-time-item {
+    padding: 9px 10px !important;
+
+    border-radius: 8px;
+}
+
+#attendanceHistory .history-time-label {
+    font-size: 10px;
+}
+
+#attendanceHistory .history-time-item strong {
+    font-size: 13px;
+}
+
+
+/* Detail rows */
+
+#attendanceHistory .history-clean-row {
+    padding: 8px 0 !important;
+}
+
+#attendanceHistory .history-clean-label {
+    font-size: 11px;
+}
+
+#attendanceHistory .history-clean-value {
+    font-size: 12px;
+}
+
+
+/* Mobile */
+
+@media (max-width: 700px) {
+
+    #attendanceHistory .history-summary-method {
+        display: none;
+    }
+
+    #attendanceHistory .status-badge {
+        min-width: 66px;
+    }
+
+}
