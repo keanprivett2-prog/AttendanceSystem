@@ -3215,11 +3215,38 @@ title +=
 
     }
 
-    dayCell.innerHTML = `
-        <strong>
-            ${day}
-        </strong>
-    `;
+    let calendarStatusText =
+    "";
+
+if (
+    attendanceRecord
+) {
+
+    calendarStatusText =
+        String(
+            attendanceRecord.status ??
+            ""
+        ).trim();
+
+}
+
+dayCell.innerHTML = `
+    <strong>
+        ${day}
+    </strong>
+
+    ${
+        calendarStatusText
+            ?
+            `
+                <span class="calendar-day-status">
+                    ${escapeHtml(calendarStatusText)}
+                </span>
+            `
+            :
+            ""
+    }
+`;
 
     dayCell.style.cursor =
         "pointer";
@@ -3394,3 +3421,4 @@ async function logoutAdministrator() {
     }
 
 }
+

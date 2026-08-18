@@ -4825,3 +4825,41 @@ line-height: 1.5;
     outline: 2px solid #2563eb !important;
     outline-offset: 2px;
 }
+
+/* =====================================================
+   Calendar Day Status Labels
+===================================================== */
+
+#attendanceCalendarGrid .calendar-day {
+    min-height: 54px;
+    height: auto;
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 3px;
+}
+
+#attendanceCalendarGrid .calendar-day-status {
+    display: block;
+
+    max-width: 100%;
+
+    font-size: 9px;
+    font-weight: 700;
+
+    line-height: 1.1;
+
+    text-align: center;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#attendanceCalendarGrid .calendar-day strong {
+    font-size: 12px;
+}
