@@ -3319,6 +3319,210 @@ if (
         }
     );
 
+    const attendanceChanges =
+    [];
+
+function addAttendanceChange(
+    label,
+    previousValue,
+    newValue
+) {
+
+    const previous =
+        String(
+            previousValue ?? ""
+        ).trim();
+
+    const updated =
+        String(
+            newValue ?? ""
+        ).trim();
+
+    if (
+        previous ===
+        updated
+    ) {
+        return;
+    }
+
+    if (
+        recordAlreadyExists
+    ) {
+
+        attendanceChanges.push(
+            `${label}: ${previous || "-"} → ${updated || "-"}`
+        );
+
+    } else {
+
+        if (
+            updated
+        ) {
+
+            attendanceChanges.push(
+                `${label}: ${updated}`
+            );
+
+        }
+
+    }
+
+}
+
+
+addAttendanceChange(
+    "Status",
+    previousAttendanceValues.status,
+    selectedStatus
+);
+
+addAttendanceChange(
+    "Work Location",
+    previousAttendanceValues.workLocation,
+    selectedWorkLocation
+);
+
+addAttendanceChange(
+    "Leave Duration",
+    previousAttendanceValues.leaveDuration,
+    LEAVE_STATUSES.includes(
+        selectedStatus
+    )
+        ?
+        selectedLeaveDuration
+        :
+        ""
+);
+
+addAttendanceChange(
+    "Leave Time",
+    previousAttendanceValues.leaveTime,
+    LEAVE_STATUSES.includes(
+        selectedStatus
+    )
+    &&
+    selectedLeaveDuration ===
+    "custom"
+        ?
+        selectedLeaveTime
+        :
+        ""
+);
+
+addAttendanceChange(
+    "Notes",
+    previousAttendanceValues.notes,
+    notes
+);
+
+    await writeAuditLog({
+    category:
+        "Attendance",
+
+    action:
+        recordAlreadyExists
+            ?
+            "Manual Attendance Updated"
+            :
+            "Manual Attendance Created",
+
+    description:
+        recordAlreadyExists
+            ?
+            `${administratorName} manually updated attendance for ${employee.name ?? employee.employeeNumber} on ${dateToSave}.`
+            :
+            `${administratorName} manually created attendance for ${employee.name ?? employee.employeeNumber} on ${dateToSave}.`,
+
+    actorType:
+        "Administrator",
+
+    actorName:
+        administratorName,
+
+    actorId:
+        administratorId,
+
+    targetType:
+        "Employee",
+
+    targetName:
+        employee.name ??
+        employee.employeeNumber ??
+        "Unknown Employee",
+
+    targetId:
+        employee.employeeNumber ??
+        "",
+
+    source:
+        "Attendance Management",
+
+    metadata: {
+
+        date:
+            dateToSave,
+
+        employeeNumber:
+            employee.employeeNumber ??
+            "",
+
+        department:
+            employee.department ??
+            "",
+
+        previous:
+            previousAttendanceValues,
+
+        updated: {
+
+            status:
+                selectedStatus,
+
+            workLocation:
+                selectedWorkLocation,
+
+            leaveDuration:
+                LEAVE_STATUSES.includes(
+                    selectedStatus
+                )
+                    ?
+                    selectedLeaveDuration
+                    :
+                    "",
+
+            leaveTime:
+                LEAVE_STATUSES.includes(
+                    selectedStatus
+                )
+                &&
+                selectedLeaveDuration ===
+                "custom"
+                    ?
+                    selectedLeaveTime
+                    :
+                    "",
+
+            notes:
+                notes,
+
+            checkInTime:
+                attendanceData.time ??
+                previousAttendanceValues.checkInTime,
+
+            checkOutTime:
+                attendanceData.checkOutTime ??
+                previousAttendanceValues.checkOutTime
+        },
+
+        recordType:
+            recordAlreadyExists
+                ?
+                "Updated"
+                :
+                "Created"
+    }
+});
+
 
     if (
         recordAlreadyExists
