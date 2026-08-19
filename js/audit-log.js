@@ -22,14 +22,19 @@ import {
     orderBy
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-import {
-    signOut
-} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 import {
     applySidebarPermissions,
     protectPage
 } from "./role-permissions.js";
+
+import {
+    writeAuditLog
+} from "./audit-logger.js";
+
+import {
+    logoutAdministrator
+} from "./admin-logout.js";
 
 
 // =====================================
@@ -65,14 +70,23 @@ function initializeAuditLogPage() {
 
     applySidebarPermissions();
 
-    if (logoutButton) {
+    if (
+    logoutButton
+) {
 
-        logoutButton.addEventListener(
-            "click",
-            logoutAdministrator
-        );
+    logoutButton.addEventListener(
+        "click",
+        function () {
 
-    }
+            logoutAdministrator(
+                "Audit Log",
+                logoutButton
+            );
+
+        }
+    );
+
+}
 
     loadAuditLog();
 
@@ -397,53 +411,3 @@ function escapeHtml(value) {
 }
 
 
-// =====================================
-// Administrator Logout
-// =====================================
-
-async function logoutAdministrator() {
-
-    try {
-
-        if (logoutButton) {
-
-            logoutButton.disabled =
-                true;
-
-            logoutButton.textContent =
-                "Logging out...";
-
-        }
-
-        await signOut(auth);
-
-        sessionStorage.clear();
-
-        window.location.replace(
-            "admin-login.html"
-        );
-
-    } catch (error) {
-
-        console.error(
-            "Logout error:",
-            error
-        );
-
-        if (logoutButton) {
-
-            logoutButton.disabled =
-                false;
-
-            logoutButton.textContent =
-                "Logout";
-
-        }
-
-        alert(
-            "Unable to log out. Please try again."
-        );
-
-    }
-
-}

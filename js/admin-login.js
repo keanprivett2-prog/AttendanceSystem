@@ -28,6 +28,10 @@ import {
     sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
+import {
+    writeAuditLog
+} from "./audit-logger.js";
+
 
 // =====================================
 // Page Elements
@@ -379,6 +383,42 @@ async function adminLogin() {
             Date.now().toString()
         );
 
+        await writeAuditLog({
+    category:
+        "Authentication",
+
+    action:
+        "Administrator Login",
+
+    description:
+        `${administrator.fullName ?? user.email ?? email} signed in to the administrator portal.`,
+
+    actorType:
+        "Administrator",
+
+    actorName:
+        administrator.fullName ??
+        user.email ??
+        email,
+
+    actorId:
+        user.uid,
+
+    targetType:
+        "Administrator",
+
+    targetName:
+        administrator.fullName ??
+        user.email ??
+        email,
+
+    targetId:
+        user.uid,
+
+    source:
+        "Admin Login"
+});
+
 
         // =====================================
         // Force Password Change
@@ -408,18 +448,56 @@ async function adminLogin() {
 
     } catch (error) {
 
-        console.error(
-            "Admin login error:",
-            error
-        );
+    console.error(
+        "Admin login error:",
+        error
+    );
 
-        showLoginError(
-            error
-        );
+    await writeAuditLog({
+        category:
+            "Authentication",
 
-        resetLoginButton();
+        action:
+            "Administrator Login Failed",
 
-    }
+        description:
+            `Failed administrator login attempt for ${email}.`,
+
+        actorType:
+            "Unknown",
+
+        actorName:
+            email,
+
+        actorId:
+            "",
+
+        targetType:
+            "Administrator",
+
+        targetName:
+            email,
+
+        targetId:
+            "",
+
+        source:
+            "Admin Login",
+
+        metadata: {
+            errorCode:
+                error.code ??
+                "unknown"
+        }
+    });
+
+    showLoginError(
+        error
+    );
+
+    resetLoginButton();
+
+}
 
 }
 

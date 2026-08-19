@@ -34,6 +34,14 @@ import {
     protectPage
 } from "./role-permissions.js";
 
+import {
+    writeAuditLog
+} from "./audit-logger.js";
+
+import {
+    logoutAdministrator
+} from "./admin-logout.js";
+
 
 // =====================================
 // Page Elements
@@ -2034,53 +2042,4 @@ function escapeHtml(value) {
 }
 
 
-// =====================================
-// Administrator Logout
-// =====================================
 
-async function logoutAdministrator() {
-
-    try {
-
-        if (logoutButton) {
-
-            logoutButton.disabled =
-                true;
-
-            logoutButton.textContent =
-                "Logging out...";
-
-        }
-
-        await signOut(auth);
-
-        sessionStorage.clear();
-
-        window.location.replace(
-            "admin-login.html"
-        );
-
-    } catch (error) {
-
-        console.error(
-            "Logout error:",
-            error
-        );
-
-        if (logoutButton) {
-
-            logoutButton.disabled =
-                false;
-
-            logoutButton.textContent =
-                "Logout";
-
-        }
-
-        alert(
-            "Unable to log out. Please try again."
-        );
-
-    }
-
-}

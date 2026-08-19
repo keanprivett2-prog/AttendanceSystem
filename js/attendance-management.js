@@ -39,6 +39,10 @@ import {
     protectPage
 } from "./role-permissions.js";
 
+import {
+    writeAuditLog
+} from "./audit-logger.js";
+
 
 // =====================================
 // Page Elements
@@ -2618,6 +2622,24 @@ async function saveAttendance(
             :
             "";
 
+            const administratorName =
+    sessionStorage.getItem(
+        "adminName"
+    )
+    ||
+    sessionStorage.getItem(
+        "adminEmail"
+    )
+    ||
+    "Administrator";
+
+const administratorId =
+    sessionStorage.getItem(
+        "adminUID"
+    )
+    ||
+    "";
+
 
     // =====================================
     // Validation
@@ -2901,6 +2923,38 @@ for (
             existingSnapshot.data()
             :
             null;
+
+            const previousAttendanceValues = {
+
+    status:
+        existingAttendance?.status ??
+        "",
+
+    workLocation:
+        existingAttendance?.workLocation ??
+        "",
+
+    leaveDuration:
+        existingAttendance?.leaveDuration ??
+        "",
+
+    leaveTime:
+        existingAttendance?.leaveTime ??
+        "",
+
+    notes:
+        existingAttendance?.notes ??
+        "",
+
+    checkInTime:
+        existingAttendance?.time ??
+        "",
+
+    checkOutTime:
+        existingAttendance?.checkOutTime ??
+        ""
+
+};
 
 
     // =====================================

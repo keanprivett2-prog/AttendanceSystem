@@ -32,6 +32,10 @@ import {
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
+import {
+    writeAuditLog
+} from "./audit-logger.js";
+
 // =====================================================
 // Employee Attendance Authentication
 // =====================================================
@@ -1532,6 +1536,52 @@ async function authenticateEmployee() {
             message.innerHTML =
                 "❌ Invalid Employee Number or PIN.";
 
+                await writeAuditLog({
+    category:
+        "Security",
+
+    action:
+        "Employee Authentication Failed",
+
+    description:
+        `Failed employee authentication attempt for employee number ${employeeNumber}.`,
+
+    actorType:
+        "Unknown",
+
+    actorName:
+        employeeNumber,
+
+    actorId:
+        "",
+
+    targetType:
+        "Employee",
+
+    targetName:
+        employeeNumber,
+
+    targetId:
+        employeeNumber,
+
+    source:
+        "Employee Attendance",
+
+    metadata: {
+        employeeNumber:
+            employeeNumber,
+
+        reason:
+            "Employee number not found",
+
+        deviceId:
+            getDeviceId(),
+
+        fingerprint:
+            getFingerprint()
+    }
+});
+
             return null;
         }
 
@@ -1560,6 +1610,63 @@ async function authenticateEmployee() {
 
             message.innerHTML =
                 "❌ This employee account is inactive.";
+
+                await writeAuditLog({
+    category:
+        "Security",
+
+    action:
+        "Inactive Employee Attendance Attempt",
+
+    description:
+        `${employee.name ?? employee.employeeNumber} attempted to use the attendance portal while the employee account was inactive.`,
+
+    actorType:
+        "Employee",
+
+    actorName:
+        employee.name ??
+        employee.employeeNumber ??
+        "Unknown Employee",
+
+    actorId:
+        employee.employeeNumber ??
+        "",
+
+    targetType:
+        "Employee",
+
+    targetName:
+        employee.name ??
+        employee.employeeNumber ??
+        "Unknown Employee",
+
+    targetId:
+        employee.employeeNumber ??
+        "",
+
+    source:
+        "Employee Attendance",
+
+    metadata: {
+        employeeNumber:
+            employee.employeeNumber ??
+            "",
+
+        department:
+            employee.department ??
+            "",
+
+        reason:
+            "Employee account inactive",
+
+        deviceId:
+            getDeviceId(),
+
+        fingerprint:
+            getFingerprint()
+    }
+});
 
             return null;
         }
@@ -1648,6 +1755,70 @@ async function authenticateEmployee() {
 
         message.style.color =
             "red";
+
+         await writeAuditLog({
+    category:
+        "Security",
+
+    action:
+        "Employee Authentication Failed",
+
+    description:
+        `Failed employee authentication attempt for employee number ${employeeNumber}.`,
+
+    actorType:
+        "Unknown",
+
+    actorName:
+        employeeNumber,
+
+    actorId:
+        "",
+
+    targetType:
+        "Employee",
+
+    targetName:
+        employeeNumber,
+
+    targetId:
+        employeeNumber,
+
+    source:
+        "Employee Attendance",
+
+    metadata: {
+        employeeNumber:
+            employeeNumber,
+
+        reason:
+            error.code ===
+            "auth/invalid-credential" ||
+            error.code ===
+            "auth/wrong-password"
+                ?
+                "Incorrect PIN or invalid credentials"
+                :
+                (
+                    error.code ===
+                    "auth/user-not-found"
+                        ?
+                        "Authentication account not found"
+                        :
+                        "Employee authentication failed"
+                ),
+
+        errorCode:
+            error.code ??
+            "unknown",
+
+        deviceId:
+            getDeviceId(),
+
+        fingerprint:
+            getFingerprint()
+    }
+});   
 
         if (
             error.code ===
@@ -1753,6 +1924,59 @@ async function checkIn() {
 
                 checkInButton.disabled =
                     false;
+
+                    await writeAuditLog({
+    category:
+        "Security",
+
+    action:
+        "Device Registration Blocked",
+
+    description:
+        `${employee.name ?? employee.employeeNumber} attempted attendance registration from another device while an active registered device already existed.`,
+
+    actorType:
+        "Employee",
+
+    actorName:
+        employee.name ??
+        employee.employeeNumber ??
+        "Unknown Employee",
+
+    actorId:
+        employee.employeeNumber ??
+        "",
+
+    targetType:
+        "Employee",
+
+    targetName:
+        employee.name ??
+        employee.employeeNumber ??
+        "Unknown Employee",
+
+    targetId:
+        employee.employeeNumber ??
+        "",
+
+    source:
+        "Employee Attendance",
+
+    metadata: {
+        employeeNumber:
+            employee.employeeNumber ??
+            "",
+
+        reason:
+            "Active registered device already exists",
+
+        attemptedDeviceId:
+            getDeviceId(),
+
+        attemptedFingerprint:
+            getFingerprint()
+    }
+});
 
                 return;
 
@@ -2067,6 +2291,90 @@ async function checkIn() {
                 locationStatus
             );
 
+            await writeAuditLog({
+    category:
+        "Security",
+
+    action:
+        "Attendance Location Denied",
+
+    description:
+        locationStatus ===
+        "Location Uncertain"
+            ?
+            `${employee.name ?? employee.employeeNumber} was denied check-in because the GPS location accuracy was insufficient.`
+            :
+            `${employee.name ?? employee.employeeNumber} was denied check-in because the device was outside the office boundary.`,
+
+    actorType:
+        "Employee",
+
+    actorName:
+        employee.name ??
+        employee.employeeNumber ??
+        "Unknown Employee",
+
+    actorId:
+        employee.employeeNumber ??
+        "",
+
+    targetType:
+        "Employee",
+
+    targetName:
+        employee.name ??
+        employee.employeeNumber ??
+        "Unknown Employee",
+
+    targetId:
+        employee.employeeNumber ??
+        "",
+
+    source:
+        "Employee Attendance",
+
+    metadata: {
+        employeeNumber:
+            employee.employeeNumber ??
+            "",
+
+        department:
+            employee.department ??
+            "",
+
+        reason:
+            locationStatus ===
+            "Location Uncertain"
+                ?
+                "GPS location was not accurate enough"
+                :
+                "Outside office boundary",
+
+        locationStatus:
+            locationStatus,
+
+        distanceFromOfficeMetres:
+            Math.round(
+                distanceMetres
+            ),
+
+        locationAccuracyMetres:
+            location
+                ?
+                Math.round(
+                    location.accuracy
+                )
+                :
+                null,
+
+        deviceId:
+            getDeviceId(),
+
+        fingerprint:
+            getFingerprint()
+    }
+});
+
             checkInButton.disabled =
                 false;
 
@@ -2187,10 +2495,175 @@ async function checkIn() {
             error
         );
 
+        const securityFailureMessages = {
+    EMPLOYEE_ALREADY_CHECKED_IN:
+        "Employee already checked in today",
+
+    DEVICE_ALREADY_USED:
+        "Device already used for attendance today",
+
+    FINGERPRINT_ALREADY_USED:
+        "Browser fingerprint already used for attendance today"
+};
+
+const securityFailureReason =
+    securityFailureMessages[
+        error.message
+    ];
+
+
+if (
+    securityFailureReason
+) {
+
+    const attemptedEmployeeNumber =
+        employeeNumberInput.value.trim()
+        ||
+        getRegisteredEmployeeNumber()
+        ||
+        "";
+
+    await writeAuditLog({
+        category:
+            "Security",
+
+        action:
+            "Attendance Security Blocked",
+
+        description:
+            `Attendance attempt for employee number ${attemptedEmployeeNumber || "Unknown"} was blocked: ${securityFailureReason}.`,
+
+        actorType:
+            "Employee",
+
+        actorName:
+            attemptedEmployeeNumber ||
+            "Unknown Employee",
+
+        actorId:
+            attemptedEmployeeNumber,
+
+        targetType:
+            "Employee",
+
+        targetName:
+            attemptedEmployeeNumber ||
+            "Unknown Employee",
+
+        targetId:
+            attemptedEmployeeNumber,
+
+        source:
+            "Employee Attendance",
+
+        metadata: {
+            employeeNumber:
+                attemptedEmployeeNumber,
+
+            reason:
+                securityFailureReason,
+
+            errorCode:
+                error.message,
+
+            deviceId:
+                getDeviceId(),
+
+            fingerprint:
+                getFingerprint()
+        }
+    });
+
+}
+
         handleAttendanceSaveError(
             error,
             message
         );
+
+        await writeAuditLog({
+    category:
+        "Security",
+
+    action:
+        "Check-Out Location Denied",
+
+    description:
+        locationStatus ===
+        "Location Uncertain"
+            ?
+            `${employee.name ?? employee.employeeNumber} was denied check-out because the GPS location accuracy was insufficient.`
+            :
+            `${employee.name ?? employee.employeeNumber} was denied check-out because the device was outside the office boundary.`,
+
+    actorType:
+        "Employee",
+
+    actorName:
+        employee.name ??
+        employee.employeeNumber ??
+        "Unknown Employee",
+
+    actorId:
+        employee.employeeNumber ??
+        "",
+
+    targetType:
+        "Employee",
+
+    targetName:
+        employee.name ??
+        employee.employeeNumber ??
+        "Unknown Employee",
+
+    targetId:
+        employee.employeeNumber ??
+        "",
+
+    source:
+        "Employee Attendance",
+
+    metadata: {
+        employeeNumber:
+            employee.employeeNumber ??
+            "",
+
+        department:
+            employee.department ??
+            "",
+
+        reason:
+            locationStatus ===
+            "Location Uncertain"
+                ?
+                "GPS location was not accurate enough"
+                :
+                "Outside office boundary",
+
+        locationStatus:
+            locationStatus,
+
+        distanceFromOfficeMetres:
+            Math.round(
+                distanceMetres
+            ),
+
+        locationAccuracyMetres:
+            location
+                ?
+                Math.round(
+                    location.accuracy
+                )
+                :
+                null,
+
+        deviceId:
+            getDeviceId(),
+
+        fingerprint:
+            getFingerprint()
+    }
+});
 
         checkInButton.disabled =
             false;
@@ -4060,6 +4533,87 @@ locationStatus:
         }
     );
 
+        await writeAuditLog({
+        category:
+            "Attendance",
+
+        action:
+            attendanceStatus ===
+            "Late"
+                ?
+                "Employee Late Check-In"
+                :
+                "Employee Check-In",
+
+        description:
+            attendanceStatus ===
+            "Late"
+                ?
+                `${employee.name ?? employee.employeeNumber} checked in late at ${scanTime.toLocaleTimeString("en-ZA")}.`
+                :
+                `${employee.name ?? employee.employeeNumber} checked in at ${scanTime.toLocaleTimeString("en-ZA")}.`,
+
+        actorType:
+            "Employee",
+
+        actorName:
+            employee.name ??
+            employee.employeeNumber ??
+            "Unknown Employee",
+
+        actorId:
+            employee.employeeNumber ??
+            "",
+
+        targetType:
+            "Employee",
+
+        targetName:
+            employee.name ??
+            employee.employeeNumber ??
+            "Unknown Employee",
+
+        targetId:
+            employee.employeeNumber ??
+            "",
+
+        source:
+            "Employee Attendance",
+
+        metadata: {
+
+            employeeNumber:
+                employee.employeeNumber ??
+                "",
+
+            department:
+                employee.department ??
+                "",
+
+            status:
+                attendanceStatus,
+
+            checkInTime:
+                scanTime.toLocaleTimeString(
+                    "en-ZA"
+                ),
+
+            workLocation:
+                selectedWorkLocation,
+
+            locationStatus:
+                locationStatus,
+
+            lateReason:
+                attendanceStatus ===
+                "Late"
+                    ?
+                    lateReason
+                    :
+                    ""
+        }
+    });
+
 }
 
 
@@ -4282,6 +4836,108 @@ earlyExitMessage.textContent =
 
 earlyExitOtherSection.hidden =
     true;
+
+    await writeAuditLog({
+    category:
+        "Attendance",
+
+    action:
+        earlyExit
+            ?
+            "Employee Early Check-Out"
+            :
+            lateCheckout
+                ?
+                "Employee Late Check-Out"
+                :
+                "Employee Check-Out",
+
+    description:
+        earlyExit
+            ?
+            `${employee.name ?? employee.employeeNumber} checked out early at ${checkOutTimeText}.`
+            :
+            lateCheckout
+                ?
+                `${employee.name ?? employee.employeeNumber} checked out late at ${checkOutTimeText}.`
+                :
+                `${employee.name ?? employee.employeeNumber} checked out at ${checkOutTimeText}.`,
+
+    actorType:
+        "Employee",
+
+    actorName:
+        employee.name ??
+        employee.employeeNumber ??
+        "Unknown Employee",
+
+    actorId:
+        employee.employeeNumber ??
+        "",
+
+    targetType:
+        "Employee",
+
+    targetName:
+        employee.name ??
+        employee.employeeNumber ??
+        "Unknown Employee",
+
+    targetId:
+        employee.employeeNumber ??
+        "",
+
+    source:
+        "Employee Attendance",
+
+    metadata: {
+
+        employeeNumber:
+            employee.employeeNumber ??
+            "",
+
+        department:
+            employee.department ??
+            "",
+
+        checkOutTime:
+            checkOutTimeText,
+
+        earlyExit:
+            earlyExit,
+
+        earlyExitReason:
+            earlyExit
+                ?
+                earlyExitReasonValue
+                :
+                "",
+
+        earlyExitNote:
+            earlyExit
+                ?
+                earlyExitNoteValue
+                :
+                "",
+
+        lateCheckout:
+            lateCheckout,
+
+        lateCheckoutReason:
+            lateCheckout
+                ?
+                lateCheckoutReasonValue
+                :
+                "",
+
+        lateCheckoutMinutes:
+            lateCheckout
+                ?
+                lateCheckoutMinutes
+                :
+                0
+    }
+});
 
 earlyExitSection.hidden =
     true;
