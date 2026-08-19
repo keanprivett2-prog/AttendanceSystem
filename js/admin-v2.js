@@ -199,14 +199,23 @@ function initializeDashboard() {
 
     applySidebarPermissions();
 
-    if (logoutButton) {
+    if (
+    logoutButton
+) {
 
-        logoutButton.addEventListener(
-            "click",
-            logoutAdministrator
-        );
+    logoutButton.addEventListener(
+        "click",
+        function () {
 
-    }
+            logoutAdministrator(
+                "Dashboard",
+                logoutButton
+            );
+
+        }
+    );
+
+}
 
        if (
         lateTodayCard

@@ -141,6 +141,52 @@
 
                 <div class="topbar-right">
 
+                    <div
+    class="notification-wrapper"
+    id="notificationWrapper"
+>
+
+    <button
+        type="button"
+        class="notification-bell-button"
+        id="notificationBellButton"
+        aria-label="Notifications"
+    >
+        🔔
+
+        <span
+            class="notification-badge"
+            id="notificationBadge"
+            hidden
+        >
+            0
+        </span>
+    </button>
+
+    <div
+        class="notification-panel"
+        id="notificationPanel"
+        hidden
+    >
+
+        <div class="notification-panel-header">
+            <strong>
+                Notifications
+            </strong>
+        </div>
+
+        <div id="notificationList">
+
+            <p class="empty-state">
+                No notifications.
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
                     <button
                         type="button"
                         class="logout-btn"
@@ -365,6 +411,23 @@
                                 </select>
 
                             </div>
+
+                            <div
+    class="form-group"
+    id="manualCheckInTimeGroup"
+    style="display: none;"
+>
+
+    <label for="manualCheckInTime">
+        Check-In Time
+    </label>
+
+    <input
+        type="time"
+        id="manualCheckInTime"
+    >
+
+</div>
 
 
                             <!-- =====================================
@@ -619,6 +682,87 @@
         </main>
 
     </div>
+
+    <!-- =====================================
+     Resolve Missing Check-Out Modal
+===================================== -->
+
+<div
+    class="modal"
+    id="missingCheckOutModal"
+    hidden
+>
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <h2>
+                Resolve Missing Check-Out
+            </h2>
+
+            <button
+                type="button"
+                id="closeMissingCheckOutModal"
+                class="modal-close-button"
+            >
+                ×
+            </button>
+
+        </div>
+
+        <div class="form-group">
+
+            <label for="missingCheckOutTime">
+                Actual Check-Out Time
+            </label>
+
+            <input
+                type="time"
+                id="missingCheckOutTime"
+                required
+            >
+
+        </div>
+
+        <div class="form-group">
+
+            <label for="missingCheckOutReason">
+                Reason
+            </label>
+
+            <textarea
+                id="missingCheckOutReason"
+                rows="4"
+                maxlength="300"
+                placeholder="Example: Employee forgot to scan the QR code."
+                required
+            ></textarea>
+
+        </div>
+
+        <div class="form-actions">
+
+            <button
+                type="button"
+                id="cancelMissingCheckOutButton"
+            >
+                Cancel
+            </button>
+
+            <button
+                type="button"
+                class="primary-button"
+                id="saveMissingCheckOutButton"
+            >
+                Save Correction
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
 
 
     <script

@@ -55,6 +55,56 @@ const employeeSelect =
         "employeeSelect"
     );
 
+    const notificationBellButton =
+    document.getElementById(
+        "notificationBellButton"
+    );
+
+const notificationBadge =
+    document.getElementById(
+        "notificationBadge"
+    );
+
+const notificationPanel =
+    document.getElementById(
+        "notificationPanel"
+    );
+
+const notificationList =
+    document.getElementById(
+        "notificationList"
+    );
+
+    const missingCheckOutModal =
+    document.getElementById(
+        "missingCheckOutModal"
+    );
+
+const closeMissingCheckOutModalButton =
+    document.getElementById(
+        "closeMissingCheckOutModal"
+    );
+
+const cancelMissingCheckOutButton =
+    document.getElementById(
+        "cancelMissingCheckOutButton"
+    );
+
+const saveMissingCheckOutButton =
+    document.getElementById(
+        "saveMissingCheckOutButton"
+    );
+
+const missingCheckOutTime =
+    document.getElementById(
+        "missingCheckOutTime"
+    );
+
+const missingCheckOutReason =
+    document.getElementById(
+        "missingCheckOutReason"
+    );
+
 const attendanceManagementForm =
     document.getElementById(
         "attendanceManagementForm"
@@ -78,6 +128,16 @@ const attendanceDate =
 const attendanceStatus =
     document.getElementById(
         "attendanceStatus"
+    );
+
+    const manualCheckInTimeGroup =
+    document.getElementById(
+        "manualCheckInTimeGroup"
+    );
+
+const manualCheckInTime =
+    document.getElementById(
+        "manualCheckInTime"
     );
 
     const attendanceWorkLocation =
@@ -171,6 +231,7 @@ const logoutButton =
     );
 
 
+
 // =====================================
 // Leave Statuses
 // =====================================
@@ -197,8 +258,12 @@ const CHECKOUT_STATUSES = [
 let standardWorkStartTime =
     "08:00";
 
+    let standardWorkEndTime =
+    "16:30";
+
 let unpaidBreakMinutes =
     30;
+    
 
 
 // =====================================
@@ -210,6 +275,12 @@ let calendarMonth =
 
 let calendarYear =
     new Date().getFullYear();
+
+    let currentAdministrator =
+    null;
+
+    let activeMissingCheckOutNotificationId =
+    null;
 
 
 // =====================================
@@ -231,6 +302,46 @@ async function initializeAttendanceManagementPage() {
     }
 
     applySidebarPermissions();
+
+    const administratorUid =
+    sessionStorage.getItem(
+        "adminUID"
+    )
+    ||
+    auth.currentUser?.uid
+    ||
+    "";
+
+if (
+    administratorUid
+) {
+
+    const administratorReference =
+        doc(
+            db,
+            "administrators",
+            administratorUid
+        );
+
+    const administratorSnapshot =
+        await getDoc(
+            administratorReference
+        );
+
+    if (
+        administratorSnapshot.exists()
+    ) {
+
+        currentAdministrator = {
+            id:
+                administratorSnapshot.id,
+
+            ...administratorSnapshot.data()
+        };
+
+    }
+
+}
 
     if (
     attendanceDate
@@ -374,6 +485,139 @@ if (
     }
 
     if (
+    notificationBellButton &&
+    notificationPanel
+) {
+
+    notificationBellButton.addEventListener(
+        "click",
+        function () {
+
+            notificationPanel.hidden =
+                !notificationPanel.hidden;
+
+        }
+    );
+
+}
+
+if (
+    notificationList
+) {
+
+    notificationList.addEventListener(
+        "click",
+        function (
+            event
+        ) {
+
+            
+            const actionButton =
+                event.target.closest(
+                    ".notification-action-button"
+                );
+
+            if (
+                !actionButton
+            ) {
+
+                return;
+
+            }
+
+            const notificationId =
+                actionButton.dataset.notificationId;
+
+            activeMissingCheckOutNotificationId =
+                notificationId;
+
+            if (
+                missingCheckOutTime
+            ) {
+
+                missingCheckOutTime.value =
+                    "";
+
+            }
+
+            if (
+                missingCheckOutReason
+            ) {
+
+                missingCheckOutReason.value =
+                    "";
+
+            }
+
+            if (
+                missingCheckOutModal
+            ) {
+
+                missingCheckOutModal.hidden =
+                    false;
+
+                missingCheckOutModal.classList.add(
+                    "modal-open"
+                );
+
+            }
+
+        }
+    );
+
+    // =====================================
+// Missing Check-Out Modal Close Events
+// =====================================
+
+if (
+    closeMissingCheckOutModalButton
+) {
+
+    closeMissingCheckOutModalButton.addEventListener(
+        "click",
+        closeMissingCheckOutModal
+    );
+
+}
+
+if (
+    cancelMissingCheckOutButton
+) {
+
+    cancelMissingCheckOutButton.addEventListener(
+        "click",
+        closeMissingCheckOutModal
+    );
+
+}
+
+if (
+    missingCheckOutModal
+) {
+
+    missingCheckOutModal.addEventListener(
+        "click",
+        function (
+            event
+        ) {
+
+            if (
+                event.target ===
+                missingCheckOutModal
+            ) {
+
+                closeMissingCheckOutModal();
+
+            }
+
+        }
+    );
+
+}
+
+}
+
+    if (
         logoutButton
     ) {
 
@@ -390,9 +634,121 @@ if (
 
     await loadAttendanceSettings();
 
-    await loadEmployees();
+await loadEmployees();
 
-    await buildCalendar();
+await buildCalendar();
+
+console.log(
+    "Reached notification loading"
+);
+
+const visibleNotifications =
+    await loadVisibleNotifications();
+
+console.log(
+    "Visible notifications:",
+    visibleNotifications
+);
+
+if (
+    notificationBadge
+) {
+
+    notificationBadge.textContent =
+        String(
+            visibleNotifications.length
+        );
+
+    notificationBadge.hidden =
+        visibleNotifications.length ===
+        0;
+
+}
+
+if (
+    notificationList
+) {
+
+    if (
+        visibleNotifications.length ===
+        0
+    ) {
+
+        notificationList.innerHTML = `
+            <p class="empty-state">
+                No notifications.
+            </p>
+        `;
+
+    } else {
+
+        notificationList.innerHTML =
+            "";
+
+        visibleNotifications.forEach(
+            function (
+                notification
+            ) {
+
+                const item =
+                    document.createElement(
+                        "div"
+                    );
+
+                item.className =
+                    "notification-item";
+
+                item.innerHTML = `
+    <div class="notification-item-title">
+        ${escapeHtml(
+            notification.type ??
+            "Notification"
+        )}
+    </div>
+
+    <div class="notification-item-message">
+        ${escapeHtml(
+            notification.message ??
+            ""
+        )}
+    </div>
+
+    <div class="notification-item-meta">
+    Department:
+    ${escapeHtml(
+        notification.department ??
+        ""
+    )}
+    <br>
+
+    Expected End:
+    ${escapeHtml(
+        notification.scheduledEndTime ??
+        "-"
+    )}
+</div>
+
+    <button
+        type="button"
+        class="notification-action-button"
+        data-notification-id="${escapeHtml(
+            notification.id
+        )}"
+    >
+        Address Issue
+    </button>
+`;
+
+                notificationList.appendChild(
+                    item
+                );
+
+            }
+        );
+
+    }
+
+}
 
 }
 
@@ -415,6 +771,49 @@ function handleAttendanceStatusChange() {
 
     const selectedStatus =
         attendanceStatus.value;
+
+        const isHalfDay =
+    selectedStatus ===
+    "Half Day";
+
+        const manualCheckInStatuses = [
+    "On Time",
+    "Late",
+    "Work From Home",
+    "Business Trip",
+    "Training"
+];
+
+if (
+    manualCheckInTimeGroup &&
+    manualCheckInTime
+) {
+
+    const requiresManualCheckInTime =
+        manualCheckInStatuses.includes(
+            selectedStatus
+        );
+
+    manualCheckInTimeGroup.style.display =
+        requiresManualCheckInTime
+            ?
+            ""
+            :
+            "none";
+
+    manualCheckInTime.required =
+        requiresManualCheckInTime;
+
+    if (
+        !requiresManualCheckInTime
+    ) {
+
+        manualCheckInTime.value =
+            "";
+
+    }
+
+}
 
         const isMaternityLeave =
     selectedStatus ===
@@ -501,12 +900,18 @@ function handleLeaveDurationChange() {
     }
 
     const isCustomTime =
-        leaveDuration.value ===
-        "custom";
+    leaveDuration.value ===
+    "custom";
+
+const isHalfDay =
+    attendanceStatus &&
+    attendanceStatus.value ===
+    "Half Day";
 
     if (
-        isCustomTime
-    ) {
+    isCustomTime ||
+    isHalfDay
+) {
 
         leaveTimeGroup.style.display =
             "";
@@ -697,7 +1102,235 @@ async function handleEmployeeSelection() {
 }
 
    
+// =====================================
+// Create Missing Check-Out Notification
+// =====================================
 
+async function createMissingCheckOutNotification(
+    employee,
+    attendance
+) {
+
+    const dateKey =
+        String(
+            attendance.dateKey ??
+            attendance.date ??
+            ""
+        ).trim();
+
+    if (
+        !employee ||
+        !dateKey
+    ) {
+
+        return;
+
+    }
+
+    const notificationId =
+        `missing-checkout_${employee.employeeNumber}_${dateKey}`;
+
+    const notificationReference =
+        doc(
+            db,
+            "notifications",
+            notificationId
+        );
+
+    await setDoc(
+        notificationReference,
+        {
+            type:
+                "Missing Check-Out",
+
+            status:
+                "Open",
+
+            employeeNumber:
+                employee.employeeNumber ??
+                "",
+
+            employeeName:
+                employee.name ??
+                "Unknown Employee",
+
+            department:
+                employee.department ??
+                "Unassigned",
+
+            attendanceDate:
+                dateKey,
+
+            scheduledEndTime:
+                employee.endTime ??
+                standardWorkEndTime,
+
+            message:
+                `${employee.name ?? employee.employeeNumber} did not check out on ${dateKey}.`,
+
+            updatedAt:
+                serverTimestamp()
+        },
+        {
+            merge:
+                true
+        }
+    );
+
+    console.log(
+    "Missing checkout notification saved:",
+    notificationId
+);
+
+}
+
+// =====================================
+// Notification Visibility
+// =====================================
+
+function canCurrentAdministratorSeeNotification(
+    notification
+) {
+
+    if (
+        !currentAdministrator
+    ) {
+
+        return false;
+
+    }
+
+    const role =
+        String(
+            currentAdministrator.role ??
+            ""
+        ).trim();
+
+    const administratorDepartment =
+        String(
+            currentAdministrator.department ??
+            ""
+        ).trim();
+
+    const notificationDepartment =
+        String(
+            notification.department ??
+            ""
+        ).trim();
+
+
+    // Super Administrators and Administrators
+    // can see notifications from all departments.
+
+    if (
+        role ===
+        "superAdministrator"
+        ||
+        role ===
+        "administrator"
+    ) {
+
+        return true;
+
+    }
+
+
+    // Managers can only see notifications
+    // from their own department.
+
+    if (
+        role ===
+        "manager"
+    ) {
+
+        return (
+            administratorDepartment !==
+            ""
+            &&
+            administratorDepartment ===
+            notificationDepartment
+        );
+
+    }
+
+
+    // Read-only users do not receive
+    // operational notifications.
+
+    return false;
+
+}
+
+// =====================================
+// Load Visible Notifications
+// =====================================
+
+async function loadVisibleNotifications() {
+
+    try {
+
+        const notificationQuery =
+            query(
+                collection(
+                    db,
+                    "notifications"
+                ),
+                where(
+                    "status",
+                    "==",
+                    "Open"
+                )
+            );
+
+        const notificationSnapshot =
+            await getDocs(
+                notificationQuery
+            );
+
+        const visibleNotifications =
+            notificationSnapshot.docs
+                .map(
+                    function (
+                        notificationDocument
+                    ) {
+
+                        return {
+                            id:
+                                notificationDocument.id,
+
+                            ...notificationDocument.data()
+                        };
+
+                    }
+                )
+                .filter(
+                    function (
+                        notification
+                    ) {
+
+                        return canCurrentAdministratorSeeNotification(
+                            notification
+                        );
+
+                    }
+                );
+
+        return visibleNotifications;
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Unable to load notifications:",
+            error
+        );
+
+        return [];
+
+    }
+
+}
 
 // =====================================
 // Message Helper
@@ -1072,6 +1705,7 @@ async function loadExistingAttendance() {
 
         }
 
+        
         const attendanceDocumentId =
             `${employee.employeeNumber}_${selectedDate}`;
 
@@ -1097,6 +1731,21 @@ async function loadExistingAttendance() {
             attendanceStatus.value =
                 attendance.status ??
                 "";
+
+               if (
+    manualCheckInTime
+) {
+
+    manualCheckInTime.value =
+        String(
+            attendance.time ??
+            ""
+        ).slice(
+            0,
+            5
+        );
+
+} 
 
                 if (
     attendanceWorkLocation
@@ -1261,6 +1910,12 @@ async function loadAttendanceHistory() {
 
         }
 
+        const employeeEndTime =
+    String(
+        employee.endTime ??
+        standardWorkEndTime
+    ).trim();
+
         const historyQuery =
             query(
                 collection(
@@ -1362,6 +2017,87 @@ async function loadAttendanceHistory() {
                 const checkOutTime =
                     attendance.checkOutTime ??
                     "Still at work";
+
+                    const hasCheckedIn =
+    Boolean(
+        attendance.time
+        ||
+        attendance.scanTimestamp
+        ||
+        attendance.checkInTimestamp
+    );
+
+const hasCheckedOut =
+    Boolean(
+        attendance.checkOutTime
+        ||
+        attendance.checkOutTimestamp
+    );
+
+const attendanceDateKey =
+    String(
+        attendance.dateKey ??
+        attendance.date ??
+        ""
+    ).trim();
+
+const scheduledEndDateTime =
+    buildDateTimeFromDateAndTime(
+        attendanceDateKey,
+        employeeEndTime
+    );
+
+const nowDateTime =
+    new Date();
+
+const workdayHasEnded =
+    scheduledEndDateTime
+    &&
+    nowDateTime >
+        scheduledEndDateTime;
+
+const isMissingCheckOut =
+    hasCheckedIn
+    &&
+    !hasCheckedOut
+    &&
+    workdayHasEnded
+    &&
+    attendance.status !==
+        "Absent"
+    &&
+    !LEAVE_STATUSES.includes(
+        attendance.status
+    );
+
+    if (
+    isMissingCheckOut
+) {
+
+    console.log(
+    "Creating missing checkout notification:",
+    employee.employeeNumber,
+    attendance.dateKey,
+    employee.department
+);
+
+    createMissingCheckOutNotification(
+        employee,
+        attendance
+    ).catch(
+        function (
+            error
+        ) {
+
+            console.error(
+                "Missing check-out notification error:",
+                error
+            );
+
+        }
+    );
+
+}
 
                 const hoursWorked =
                     calculateHoursWorked(
@@ -1507,10 +2243,14 @@ const authorisedDepartureNote =
                                 </span>
 
                                 <strong>
-                                    ${escapeHtml(
-                                        checkOutTime
-                                    )}
-                                </strong>
+    ${escapeHtml(
+        isMissingCheckOut
+            ?
+            "Missing Check-Out"
+            :
+            checkOutTime
+    )}
+</strong>
 
                             </div>
 
@@ -2615,6 +3355,13 @@ async function saveAttendance(
             :
             "";
 
+            const selectedManualCheckInTime =
+    manualCheckInTime
+        ?
+        manualCheckInTime.value
+        :
+        "";
+
     const notes =
         attendanceNotes
             ?
@@ -2712,6 +3459,47 @@ if (
         return;
 
     }
+
+    if (
+    selectedStatus ===
+    "Half Day"
+    &&
+    !selectedLeaveTime
+) {
+
+    showMessage(
+        "Please enter the employee's half-day departure time.",
+        "red"
+    );
+
+    return;
+
+}
+
+    const manualCheckInStatuses = [
+    "On Time",
+    "Late",
+    "Work From Home",
+    "Business Trip",
+    "Training"
+];
+
+if (
+    manualCheckInStatuses.includes(
+        selectedStatus
+    )
+    &&
+    !selectedManualCheckInTime
+) {
+
+    showMessage(
+    "Please enter the employee's check-in time.",
+    "red"
+);
+
+    return;
+
+}
 
     if (
     !selectedWorkLocation
@@ -3138,8 +3926,11 @@ updatedAt:
 
 
         if (
-            isCustomLeaveTime
-        ) {
+    isCustomLeaveTime
+    ||
+    selectedStatus ===
+    "Half Day"
+) {
 
             const customDateTime =
                 buildDateTimeFromDateAndTime(
@@ -3226,6 +4017,31 @@ const isNormalWorkingStatus =
 if (
     isNormalWorkingStatus
 ) {
+
+    // =====================================
+    // Ensure Working Day Has Check-In Time
+    // =====================================
+
+    if (
+    selectedManualCheckInTime
+) {
+
+    attendanceData.time =
+        selectedManualCheckInTime;
+
+    attendanceData.checkInMethod =
+        recordAlreadyExists
+            ?
+            "Manual Adjustment"
+            :
+            "Manual";
+
+}
+
+
+    // =====================================
+    // Clear Old Check-Out / Leave Data
+    // =====================================
 
     attendanceData.checkOutTime =
         "";
@@ -3319,14 +4135,18 @@ if (
         }
     );
 
-    const attendanceChanges =
+    // =====================================
+// Build Short Audit Change Summary
+// =====================================
+
+const attendanceChanges =
     [];
 
-function addAttendanceChange(
+const addAttendanceChange = (
     label,
     previousValue,
     newValue
-) {
+) => {
 
     const previous =
         String(
@@ -3342,7 +4162,9 @@ function addAttendanceChange(
         previous ===
         updated
     ) {
+
         return;
+
     }
 
     if (
@@ -3353,21 +4175,21 @@ function addAttendanceChange(
             `${label}: ${previous || "-"} → ${updated || "-"}`
         );
 
-    } else {
-
-        if (
-            updated
-        ) {
-
-            attendanceChanges.push(
-                `${label}: ${updated}`
-            );
-
-        }
+        return;
 
     }
 
-}
+    if (
+        updated
+    ) {
+
+        attendanceChanges.push(
+            `${label}: ${updated}`
+        );
+
+    }
+
+};
 
 
 addAttendanceChange(
@@ -3427,11 +4249,19 @@ addAttendanceChange(
             "Manual Attendance Created",
 
     description:
-        recordAlreadyExists
-            ?
-            `${administratorName} manually updated attendance for ${employee.name ?? employee.employeeNumber} on ${dateToSave}.`
-            :
-            `${administratorName} manually created attendance for ${employee.name ?? employee.employeeNumber} on ${dateToSave}.`,
+    attendanceChanges.length > 0
+        ?
+        attendanceChanges.join(
+            " | "
+        )
+        :
+        (
+            recordAlreadyExists
+                ?
+                "Attendance record updated."
+                :
+                "Attendance record created."
+        ),
 
     actorType:
         "Administrator",
@@ -3565,6 +4395,18 @@ showMessage(
         await loadAttendanceSummary();
 
         await buildCalendar();
+
+        console.log(
+    "Reached notification loading"
+);
+
+        const visibleNotifications =
+    await loadVisibleNotifications();
+
+console.log(
+    "Visible notifications:",
+    visibleNotifications
+);
 
         // =====================================
 // Reset Date Range After Successful Save
@@ -4413,4 +5255,3 @@ async function logoutAdministrator() {
     }
 
 }
-
