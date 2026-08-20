@@ -1332,6 +1332,10 @@ async function openPendingMissingCheckOutNotification() {
 
         }
 
+        sessionStorage.removeItem(
+    "activeMissingCheckOutNotificationId"
+);
+
     } catch (
         error
     ) {
