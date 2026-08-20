@@ -565,6 +565,8 @@ if (
         }
     );
 
+}
+
     // =====================================
 // Missing Check-Out Modal Close Events
 // =====================================
@@ -592,6 +594,17 @@ if (
 }
 
 if (
+    saveMissingCheckOutButton
+) {
+
+    saveMissingCheckOutButton.addEventListener(
+        "click",
+        saveMissingCheckOutCorrection
+    );
+
+}
+
+if (
     missingCheckOutModal
 ) {
 
@@ -613,7 +626,7 @@ if (
         }
     );
 
-}
+
 
 }
 
@@ -635,6 +648,8 @@ if (
     await loadAttendanceSettings();
 
 await loadEmployees();
+
+await openPendingMissingCheckOutNotification();
 
 await buildCalendar();
 
@@ -749,6 +764,584 @@ if (
     }
 
 }
+
+}
+
+// =====================================
+// Close Missing Check-Out Modal
+// =====================================
+
+function closeMissingCheckOutModal() {
+
+    if (
+        missingCheckOutModal
+    ) {
+
+        missingCheckOutModal.classList.remove(
+            "modal-open"
+        );
+
+        missingCheckOutModal.hidden =
+            true;
+
+    }
+
+    if (
+        missingCheckOutTime
+    ) {
+
+        missingCheckOutTime.value =
+            "";
+
+    }
+
+    if (
+        missingCheckOutReason
+    ) {
+
+        missingCheckOutReason.value =
+            "";
+
+    }
+
+    activeMissingCheckOutNotificationId =
+        null;
+
+}
+
+// =====================================
+// Save Missing Check-Out Correction
+// =====================================
+
+async function saveMissingCheckOutCorrection() {
+
+    if (
+        !activeMissingCheckOutNotificationId
+    ) {
+
+        showMessage(
+            "No missing check-out notification is selected.",
+            "red"
+        );
+
+        return;
+
+    }
+
+    const correctedCheckOutTime =
+        missingCheckOutTime
+            ?
+            missingCheckOutTime.value
+            :
+            "";
+
+    const correctionReason =
+        missingCheckOutReason
+            ?
+            missingCheckOutReason.value.trim()
+            :
+            "";
+
+    if (
+        !correctedCheckOutTime
+    ) {
+
+        showMessage(
+            "Please enter the employee's corrected check-out time.",
+            "red"
+        );
+
+        return;
+
+    }
+
+    try {
+
+        if (
+            saveMissingCheckOutButton
+        ) {
+
+            saveMissingCheckOutButton.disabled =
+                true;
+
+            saveMissingCheckOutButton.textContent =
+                "Saving...";
+
+        }
+
+        const notificationReference =
+            doc(
+                db,
+                "notifications",
+                activeMissingCheckOutNotificationId
+            );
+
+        const notificationSnapshot =
+            await getDoc(
+                notificationReference
+            );
+
+        if (
+            !notificationSnapshot.exists()
+        ) {
+
+            throw new Error(
+                "Notification not found."
+            );
+
+        }
+
+        const notification =
+            notificationSnapshot.data();
+
+        const employeeNumber =
+            String(
+                notification.employeeNumber ??
+                ""
+            ).trim();
+
+        const attendanceDate =
+            String(
+                notification.attendanceDate ??
+                ""
+            ).trim();
+
+        if (
+            !employeeNumber ||
+            !attendanceDate
+        ) {
+
+            throw new Error(
+                "Notification does not contain a valid employee or attendance date."
+            );
+
+        }
+
+        const attendanceDocumentId =
+            `${employeeNumber}_${attendanceDate}`;
+
+        const attendanceReference =
+            doc(
+                db,
+                "attendance",
+                attendanceDocumentId
+            );
+
+        const attendanceSnapshot =
+            await getDoc(
+                attendanceReference
+            );
+
+        if (
+            !attendanceSnapshot.exists()
+        ) {
+
+            throw new Error(
+                "Attendance record not found."
+            );
+
+        }
+
+        const correctedCheckOutDateTime =
+            buildDateTimeFromDateAndTime(
+                attendanceDate,
+                correctedCheckOutTime
+            );
+
+        if (
+            !correctedCheckOutDateTime
+        ) {
+
+            throw new Error(
+                "Invalid corrected check-out time."
+            );
+
+        }
+
+        await setDoc(
+            attendanceReference,
+            {
+                checkOutTime:
+                    correctedCheckOutTime,
+
+                checkOutTimestamp:
+                    Timestamp.fromDate(
+                        correctedCheckOutDateTime
+                    ),
+
+                checkOutMethod:
+                    "Manual Correction",
+
+                missingCheckOutCorrected:
+                    true,
+
+                missingCheckOutCorrectionReason:
+                    correctionReason,
+
+                missingCheckOutCorrectedAt:
+                    serverTimestamp(),
+
+                missingCheckOutCorrectedBy:
+                    sessionStorage.getItem(
+                        "adminName"
+                    )
+                    ||
+                    sessionStorage.getItem(
+                        "adminEmail"
+                    )
+                    ||
+                    "Administrator"
+            },
+            {
+                merge:
+                    true
+            }
+        );
+
+        await setDoc(
+            notificationReference,
+            {
+                status:
+                    "Resolved",
+
+                resolvedCheckOutTime:
+                    correctedCheckOutTime,
+
+                resolvedReason:
+                    correctionReason,
+
+                resolvedAt:
+                    serverTimestamp(),
+
+                resolvedBy:
+                    sessionStorage.getItem(
+                        "adminName"
+                    )
+                    ||
+                    sessionStorage.getItem(
+                        "adminEmail"
+                    )
+                    ||
+                    "Administrator"
+            },
+            {
+                merge:
+                    true
+            }
+        );
+
+        closeMissingCheckOutModal();
+
+        showMessage(
+            "Missing check-out corrected successfully.",
+            "green"
+        );
+
+        await loadAttendanceHistory();
+
+        await loadAttendanceSummary();
+
+        await buildCalendar();
+
+        const visibleNotifications =
+    await loadVisibleNotifications();
+
+if (
+    notificationBadge
+) {
+
+    notificationBadge.textContent =
+        String(
+            visibleNotifications.length
+        );
+
+    notificationBadge.hidden =
+        visibleNotifications.length ===
+        0;
+
+}
+
+if (
+    notificationList
+) {
+
+    if (
+        visibleNotifications.length ===
+        0
+    ) {
+
+        notificationList.innerHTML = `
+            <p class="empty-state">
+                No notifications.
+            </p>
+        `;
+
+    } else {
+
+        notificationList.innerHTML =
+            "";
+
+        visibleNotifications.forEach(
+            function (
+                notification
+            ) {
+
+                const item =
+                    document.createElement(
+                        "div"
+                    );
+
+                item.className =
+                    "notification-item";
+
+                item.innerHTML = `
+                    <div class="notification-item-title">
+                        ${escapeHtml(
+                            notification.type ??
+                            "Notification"
+                        )}
+                    </div>
+
+                    <div class="notification-item-message">
+                        ${escapeHtml(
+                            notification.message ??
+                            ""
+                        )}
+                    </div>
+
+                    <div class="notification-item-meta">
+                        Department:
+                        ${escapeHtml(
+                            notification.department ??
+                            ""
+                        )}
+                        <br>
+
+                        Expected End:
+                        ${escapeHtml(
+                            notification.scheduledEndTime ??
+                            "-"
+                        )}
+                    </div>
+
+                    <button
+                        type="button"
+                        class="notification-action-button"
+                        data-notification-id="${escapeHtml(
+                            notification.id
+                        )}"
+                    >
+                        Address Issue
+                    </button>
+                `;
+
+                notificationList.appendChild(
+                    item
+                );
+
+            }
+        );
+
+    }
+
+}
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Unable to save missing check-out correction:",
+            error
+        );
+
+        showMessage(
+            "Unable to save missing check-out correction.",
+            "red"
+        );
+
+    } finally {
+
+        if (
+            saveMissingCheckOutButton
+        ) {
+
+            saveMissingCheckOutButton.disabled =
+                false;
+
+            saveMissingCheckOutButton.textContent =
+                "Save Correction";
+
+        }
+
+    }
+
+}
+
+// =====================================
+// Open Notification From Another Page
+// =====================================
+
+async function openPendingMissingCheckOutNotification() {
+
+    const notificationId =
+        sessionStorage.getItem(
+            "activeMissingCheckOutNotificationId"
+        );
+
+    if (
+        !notificationId
+    ) {
+
+        return;
+
+    }
+
+    try {
+
+        const notificationReference =
+            doc(
+                db,
+                "notifications",
+                notificationId
+            );
+
+        const notificationSnapshot =
+            await getDoc(
+                notificationReference
+            );
+
+        if (
+            !notificationSnapshot.exists()
+        ) {
+
+            sessionStorage.removeItem(
+                "activeMissingCheckOutNotificationId"
+            );
+
+            return;
+
+        }
+
+        const notification =
+            notificationSnapshot.data();
+
+        const employeeNumber =
+            String(
+                notification.employeeNumber ??
+                ""
+            ).trim();
+
+        const notificationDate =
+            String(
+                notification.attendanceDate ??
+                ""
+            ).trim();
+
+        if (
+            !employeeNumber ||
+            !notificationDate
+        ) {
+
+            return;
+
+        }
+
+        const employeeOption =
+            Array.from(
+                employeeSelect.options
+            ).find(
+                function (
+                    option
+                ) {
+
+                    return (
+                        String(
+                            option.dataset.employeeNumber ??
+                            ""
+                        ).trim() ===
+                        employeeNumber
+                    );
+
+                }
+            );
+
+        if (
+            !employeeOption
+        ) {
+
+            console.error(
+                "Unable to find employee for notification:",
+                employeeNumber
+            );
+
+            return;
+
+        }
+
+        employeeSelect.value =
+            employeeOption.value;
+
+        attendanceDate.value =
+            notificationDate;
+
+        if (
+            attendanceEndDate
+        ) {
+
+            attendanceEndDate.value =
+                notificationDate;
+
+        }
+
+        await handleEmployeeSelection();
+
+        await loadExistingAttendance();
+
+        activeMissingCheckOutNotificationId =
+            notificationId;
+
+        if (
+            missingCheckOutTime
+        ) {
+
+            missingCheckOutTime.value =
+                "";
+
+        }
+
+        if (
+            missingCheckOutReason
+        ) {
+
+            missingCheckOutReason.value =
+                "";
+
+        }
+
+        if (
+            missingCheckOutModal
+        ) {
+
+            missingCheckOutModal.hidden =
+                false;
+
+            missingCheckOutModal.classList.add(
+                "modal-open"
+            );
+
+        }
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Unable to open missing check-out notification:",
+            error
+        );
+
+    }
 
 }
 

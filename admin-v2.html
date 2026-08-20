@@ -156,15 +156,61 @@
 
                 <div class="topbar-right">
 
-                    <button
-                        type="button"
-                        class="logout-btn"
-                        id="logoutButton"
-                    >
-                        Logout
-                    </button>
+    <div
+        class="notification-wrapper"
+        id="notificationWrapper"
+    >
 
-                </div>
+        <button
+            type="button"
+            class="notification-bell-button"
+            id="notificationBellButton"
+            aria-label="Notifications"
+        >
+            🔔
+
+            <span
+                class="notification-badge"
+                id="notificationBadge"
+                hidden
+            >
+                0
+            </span>
+        </button>
+
+        <div
+            class="notification-panel"
+            id="notificationPanel"
+            hidden
+        >
+
+            <div class="notification-panel-header">
+                <strong>
+                    Notifications
+                </strong>
+            </div>
+
+            <div id="notificationList">
+
+                <p class="empty-state">
+                    No notifications.
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <button
+        type="button"
+        class="logout-btn"
+        id="logoutButton"
+    >
+        Logout
+    </button>
+
+</div>
 
             </header>
 
@@ -411,6 +457,11 @@
     <script
     type="module"
     src="js/admin-v2.js?v=2"
+></script>
+
+<script
+    type="module"
+    src="js/admin-notifications.js"
 ></script>
 
 </body>
