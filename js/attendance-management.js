@@ -958,6 +958,33 @@ async function saveMissingCheckOutCorrection() {
 
         }
 
+        // =====================================
+// Determine Early Exit
+// =====================================
+
+const attendanceData =
+    attendanceSnapshot.data();
+
+const scheduledEndTime =
+    String(
+        notification.scheduledEndTime ??
+        attendanceData.scheduledEndTime ??
+        standardWorkEndTime
+    ).trim();
+
+const scheduledEndDateTime =
+    buildDateTimeFromDateAndTime(
+        attendanceDate,
+        scheduledEndTime
+    );
+
+const isEarlyExit =
+    Boolean(
+        scheduledEndDateTime &&
+        correctedCheckOutDateTime <
+            scheduledEndDateTime
+    );
+
         await setDoc(
             attendanceReference,
             {
@@ -970,10 +997,13 @@ async function saveMissingCheckOutCorrection() {
                     ),
 
                 checkOutMethod:
-                    "Manual Correction",
+    "Manual Correction",
 
-                missingCheckOutCorrected:
-                    true,
+earlyExit:
+    isEarlyExit,
+
+missingCheckOutCorrected:
+    true,
 
                 missingCheckOutCorrectionReason:
                     correctionReason,

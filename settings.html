@@ -533,6 +533,51 @@
 
                             </div>
 
+                            <!-- Frequent Late Days -->
+
+<div class="form-group">
+
+    <label for="frequentLateDayThreshold">
+        Frequent Late Days Threshold
+    </label>
+
+    <input
+        type="number"
+        id="frequentLateDayThreshold"
+        min="1"
+        value="3"
+        required
+    >
+
+    <small>
+        Number of late attendance days required before
+        a trend is flagged.
+    </small>
+
+</div>
+
+
+<div class="form-group">
+
+    <label for="frequentLateDayLookbackDays">
+        Frequent Late Days Review Period
+    </label>
+
+    <input
+        type="number"
+        id="frequentLateDayLookbackDays"
+        min="1"
+        value="30"
+        required
+    >
+
+    <small>
+        Number of days used when checking for
+        frequent late attendance.
+    </small>
+
+</div>
+
 
                             <!-- Frequent Early Exits -->
 
@@ -556,6 +601,27 @@
                                 </small>
 
                             </div>
+
+                            <div class="form-group">
+
+    <label for="frequentEarlyExitLookbackDays">
+        Frequent Early Check-Out Review Period
+    </label>
+
+    <input
+        type="number"
+        id="frequentEarlyExitLookbackDays"
+        min="1"
+        value="30"
+        required
+    >
+
+    <small>
+        Number of days used when checking for
+        frequent early check-outs.
+    </small>
+
+</div>
 
 
                             <!-- Weekday Pattern Minimum -->
@@ -648,14 +714,59 @@
 
                             </div>
 
+                            <!-- Frequent Sick Days -->
+
+<div class="form-group">
+
+    <label for="frequentSickDayThreshold">
+        Frequent Sick Days Threshold
+    </label>
+
+    <input
+        type="number"
+        id="frequentSickDayThreshold"
+        min="1"
+        value="3"
+        required
+    >
+
+    <small>
+        Number of sick days required before
+        a trend is flagged.
+    </small>
+
+</div>
+
+
+<div class="form-group">
+
+    <label for="frequentSickDayLookbackDays">
+        Frequent Sick Days Review Period
+    </label>
+
+    <input
+        type="number"
+        id="frequentSickDayLookbackDays"
+        min="1"
+        value="30"
+        required
+    >
+
+    <small>
+        Number of days used when checking for
+        frequent sick leave.
+    </small>
+
+</div>
+
 
                             <!-- Frequent Absence -->
 
                             <div class="form-group">
 
                                 <label for="frequentAbsenceThreshold">
-                                    Frequent Absence Threshold
-                                </label>
+    Frequent Absent Days Threshold
+</label>
 
                                 <input
                                     type="number"
@@ -671,8 +782,8 @@
                             <div class="form-group">
 
                                 <label for="frequentAbsenceLookbackDays">
-                                    Frequent Absence Period
-                                </label>
+    Frequent Absent Days Review Period
+</label>
 
                                 <input
                                     type="number"
@@ -683,9 +794,9 @@
                                 >
 
                                 <small>
-                                    Number of days used when checking for
-                                    frequent absence.
-                                </small>
+    Number of days used when checking for
+    frequent absent days.
+</small>
 
                             </div>
 

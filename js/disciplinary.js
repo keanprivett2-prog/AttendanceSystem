@@ -143,8 +143,17 @@ let currentAdministratorProfile =
 let CONSECUTIVE_LATE_THRESHOLD =
     3;
 
+    let FREQUENT_LATE_DAY_THRESHOLD =
+    3;
+
+let FREQUENT_LATE_DAY_LOOKBACK_DAYS =
+    30;
+
 let FREQUENT_EARLY_EXIT_THRESHOLD =
     3;
+
+let FREQUENT_EARLY_EXIT_LOOKBACK_DAYS =
+    30;
 
 let WEEKDAY_PATTERN_MIN_RECORDS =
     3;
@@ -162,6 +171,12 @@ let FREQUENT_ABSENCE_THRESHOLD =
     5;
 
 let FREQUENT_ABSENCE_LOOKBACK_DAYS =
+    30;
+
+let FREQUENT_SICK_DAY_THRESHOLD =
+    3;
+
+let FREQUENT_SICK_DAY_LOOKBACK_DAYS =
     30;
 
 let SHORT_WORKDAY_HOURS =
@@ -408,11 +423,29 @@ async function loadTrendSettings() {
                 3
             );
 
+            FREQUENT_LATE_DAY_THRESHOLD =
+    Number(
+        settings.frequentLateDayThreshold ??
+        3
+    );
+
+FREQUENT_LATE_DAY_LOOKBACK_DAYS =
+    Number(
+        settings.frequentLateDayLookbackDays ??
+        30
+    );
+
         FREQUENT_EARLY_EXIT_THRESHOLD =
             Number(
                 settings.frequentEarlyExitThreshold ??
                 3
             );
+
+            FREQUENT_EARLY_EXIT_LOOKBACK_DAYS =
+    Number(
+        settings.frequentEarlyExitLookbackDays ??
+        30
+    );
 
         WEEKDAY_PATTERN_MIN_RECORDS =
             Number(
@@ -449,6 +482,18 @@ async function loadTrendSettings() {
                 settings.frequentAbsenceLookbackDays ??
                 30
             );
+
+            FREQUENT_SICK_DAY_THRESHOLD =
+    Number(
+        settings.frequentSickDayThreshold ??
+        3
+    );
+
+FREQUENT_SICK_DAY_LOOKBACK_DAYS =
+    Number(
+        settings.frequentSickDayLookbackDays ??
+        30
+    );
 
         SHORT_WORKDAY_HOURS =
             Number(
@@ -946,6 +991,28 @@ async function loadAttendanceTrends() {
                         employeeRecords
                     );
 
+                    const lateRecords =
+    employeeRecords.filter(
+        function (
+            record
+        ) {
+
+            return (
+                normalizeStatus(
+                    record.status
+                ) ===
+                "late"
+            );
+
+        }
+    );
+
+const recentLateDayCount =
+    countRecordsWithinLastDays(
+        lateRecords,
+        FREQUENT_LATE_DAY_LOOKBACK_DAYS
+    );
+
 
                 // =====================================
                 // Early Exit Data
@@ -966,7 +1033,10 @@ async function loadAttendanceTrends() {
                     );
 
                 const earlyExitCount =
-                    earlyExitRecords.length;
+    countRecordsWithinLastDays(
+        earlyExitRecords,
+        FREQUENT_EARLY_EXIT_LOOKBACK_DAYS
+    );
 
                 const earlyExitDayPattern =
                     detectWeekdayPattern(
@@ -999,48 +1069,43 @@ async function loadAttendanceTrends() {
                         sickLeaveRecords
                     );
 
+                    const recentSickDayCount =
+    countRecordsWithinLastDays(
+        sickLeaveRecords,
+        FREQUENT_SICK_DAY_LOOKBACK_DAYS
+    );
 
-                // =====================================
-                // Absence Related Data
-                // =====================================
 
-                const absenceRelatedRecords =
-                    employeeRecords.filter(
-                        function (
-                            record
-                        ) {
+               // =====================================
+// Absent Day Data
+// =====================================
 
-                            const status =
-                                normalizeStatus(
-                                    record.status
-                                );
+const absentRecords =
+    employeeRecords.filter(
+        function (
+            record
+        ) {
 
-                            return (
-                                status ===
-                                    "absent" ||
-                                status ===
-                                    "sick leave" ||
-                                status ===
-                                    "unpaid leave" ||
-                                status ===
-                                    "family responsibility leave" ||
-                                status ===
-                                    "medical appointment"
-                            );
+            return (
+                normalizeStatus(
+                    record.status
+                ) ===
+                "absent"
+            );
 
-                        }
-                    );
+        }
+    );
 
-                const mondayFridayPattern =
-                    detectMondayFridayPattern(
-                        absenceRelatedRecords
-                    );
+const mondayFridayPattern =
+    detectMondayFridayPattern(
+        absentRecords
+    );
 
-                const recentAbsenceCount =
-                    countRecordsWithinLastDays(
-                        absenceRelatedRecords,
-                        FREQUENT_ABSENCE_LOOKBACK_DAYS
-                    );
+const recentAbsenceCount =
+    countRecordsWithinLastDays(
+        absentRecords,
+        FREQUENT_ABSENCE_LOOKBACK_DAYS
+    );
 
 
                 // =====================================
@@ -1083,6 +1148,38 @@ async function loadAttendanceTrends() {
 
                 }
 
+                // =====================================
+// Frequent Late Days Flag
+// =====================================
+
+if (
+    recentLateDayCount >=
+    FREQUENT_LATE_DAY_THRESHOLD
+) {
+
+    trendFlags.push({
+
+        employee:
+            employee,
+
+        type:
+            "Frequent Late Days",
+
+        detail:
+            recentLateDayCount
+            +
+            " late attendance days have been recorded "
+            +
+            "in the last "
+            +
+            FREQUENT_LATE_DAY_LOOKBACK_DAYS
+            +
+            " days."
+
+    });
+
+}
+
 
                 // =====================================
                 // Frequent Early Exit Flag
@@ -1099,12 +1196,12 @@ async function loadAttendanceTrends() {
                             employee,
 
                         type:
-                            "Frequent Early Exits",
+    "Frequent Early Check-Outs",
 
-                        detail:
-                            earlyExitCount
-                            +
-                            " early exits have been recorded."
+detail:
+    earlyExitCount
+    +
+    " early check-outs have been recorded."
 
                     });
 
@@ -1186,6 +1283,38 @@ async function loadAttendanceTrends() {
 
                 }
 
+                // =====================================
+// Frequent Sick Days Flag
+// =====================================
+
+if (
+    recentSickDayCount >=
+    FREQUENT_SICK_DAY_THRESHOLD
+) {
+
+    trendFlags.push({
+
+        employee:
+            employee,
+
+        type:
+            "Frequent Sick Days",
+
+        detail:
+            recentSickDayCount
+            +
+            " sick leave days have been recorded "
+            +
+            "in the last "
+            +
+            FREQUENT_SICK_DAY_LOOKBACK_DAYS
+            +
+            " days."
+
+    });
+
+}
+
 
                 // =====================================
                 // Monday / Friday Absence Pattern
@@ -1238,18 +1367,18 @@ async function loadAttendanceTrends() {
                             employee,
 
                         type:
-                            "Frequent Absence",
+    "Frequent Absent Days",
 
-                        detail:
-                            recentAbsenceCount
-                            +
-                            " absence-related records have been recorded "
-                            +
-                            "in the last "
-                            +
-                            FREQUENT_ABSENCE_LOOKBACK_DAYS
-                            +
-                            " days."
+detail:
+    recentAbsenceCount
+    +
+    " absent days have been recorded "
+    +
+    "in the last "
+    +
+    FREQUENT_ABSENCE_LOOKBACK_DAYS
+    +
+    " days."
 
                     });
 

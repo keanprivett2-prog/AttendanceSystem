@@ -215,9 +215,24 @@ const consecutiveLateThresholdInput =
         "consecutiveLateThreshold"
     );
 
+const frequentLateDayThresholdInput =
+    document.getElementById(
+        "frequentLateDayThreshold"
+    );
+
+const frequentLateDayLookbackDaysInput =
+    document.getElementById(
+        "frequentLateDayLookbackDays"
+    );
+
 const frequentEarlyExitThresholdInput =
     document.getElementById(
         "frequentEarlyExitThreshold"
+    );
+
+    const frequentEarlyExitLookbackDaysInput =
+    document.getElementById(
+        "frequentEarlyExitLookbackDays"
     );
 
 const weekdayPatternMinRecordsInput =
@@ -238,6 +253,16 @@ const mondayFridayMinRecordsInput =
 const mondayFridayPercentageInput =
     document.getElementById(
         "mondayFridayPercentage"
+    );
+
+    const frequentSickDayThresholdInput =
+    document.getElementById(
+        "frequentSickDayThreshold"
+    );
+
+const frequentSickDayLookbackDaysInput =
+    document.getElementById(
+        "frequentSickDayLookbackDays"
     );
 
 const frequentAbsenceThresholdInput =
@@ -753,9 +778,21 @@ lateThresholdInput.value =
             settings.consecutiveLateThreshold ??
             3;
 
+            frequentLateDayThresholdInput.value =
+    settings.frequentLateDayThreshold ??
+    3;
+
+frequentLateDayLookbackDaysInput.value =
+    settings.frequentLateDayLookbackDays ??
+    30;
+
         frequentEarlyExitThresholdInput.value =
             settings.frequentEarlyExitThreshold ??
             3;
+
+            frequentEarlyExitLookbackDaysInput.value =
+    settings.frequentEarlyExitLookbackDays ??
+    30;
 
         weekdayPatternMinRecordsInput.value =
             settings.weekdayPatternMinRecords ??
@@ -772,6 +809,14 @@ lateThresholdInput.value =
         mondayFridayPercentageInput.value =
             settings.mondayFridayPercentage ??
             60;
+
+            frequentSickDayThresholdInput.value =
+    settings.frequentSickDayThreshold ??
+    3;
+
+frequentSickDayLookbackDaysInput.value =
+    settings.frequentSickDayLookbackDays ??
+    30;
 
         frequentAbsenceThresholdInput.value =
             settings.frequentAbsenceThreshold ??
@@ -3179,10 +3224,25 @@ if (
             consecutiveLateThresholdInput.value
         );
 
+        const frequentLateDayThreshold =
+    Number(
+        frequentLateDayThresholdInput.value
+    );
+
+const frequentLateDayLookbackDays =
+    Number(
+        frequentLateDayLookbackDaysInput.value
+    );
+
     const frequentEarlyExitThreshold =
         Number(
             frequentEarlyExitThresholdInput.value
         );
+
+        const frequentEarlyExitLookbackDays =
+    Number(
+        frequentEarlyExitLookbackDaysInput.value
+    );
 
     const weekdayPatternMinRecords =
         Number(
@@ -3203,6 +3263,16 @@ if (
         Number(
             mondayFridayPercentageInput.value
         );
+
+        const frequentSickDayThreshold =
+    Number(
+        frequentSickDayThresholdInput.value
+    );
+
+const frequentSickDayLookbackDays =
+    Number(
+        frequentSickDayLookbackDaysInput.value
+    );
 
     const frequentAbsenceThreshold =
         Number(
@@ -3296,19 +3366,31 @@ if (
     // =====================================
 
     const trendValues =
-        [
-            consecutiveLateThreshold,
-            frequentEarlyExitThreshold,
-            weekdayPatternMinRecords,
-            weekdayPatternPercentage,
-            mondayFridayMinRecords,
-            mondayFridayPercentage,
-            frequentAbsenceThreshold,
-            frequentAbsenceLookbackDays,
-            shortWorkdayHours,
-            shortWorkdayThreshold,
-            shortWorkdayLookbackDays
-        ];
+    [
+        consecutiveLateThreshold,
+
+        frequentLateDayThreshold,
+        frequentLateDayLookbackDays,
+
+        frequentEarlyExitThreshold,
+        frequentEarlyExitLookbackDays,
+
+        weekdayPatternMinRecords,
+        weekdayPatternPercentage,
+
+        mondayFridayMinRecords,
+        mondayFridayPercentage,
+
+        frequentSickDayThreshold,
+        frequentSickDayLookbackDays,
+
+        frequentAbsenceThreshold,
+        frequentAbsenceLookbackDays,
+
+        shortWorkdayHours,
+        shortWorkdayThreshold,
+        shortWorkdayLookbackDays
+    ];
 
     const hasInvalidTrendValue =
         trendValues.some(
@@ -3407,8 +3489,17 @@ lateThreshold:
                 consecutiveLateThreshold:
                     consecutiveLateThreshold,
 
+                    frequentLateDayThreshold:
+    frequentLateDayThreshold,
+
+frequentLateDayLookbackDays:
+    frequentLateDayLookbackDays,
+
                 frequentEarlyExitThreshold:
                     frequentEarlyExitThreshold,
+
+                    frequentEarlyExitLookbackDays:
+    frequentEarlyExitLookbackDays,
 
                 weekdayPatternMinRecords:
                     weekdayPatternMinRecords,
@@ -3421,6 +3512,12 @@ lateThreshold:
 
                 mondayFridayPercentage:
                     mondayFridayPercentage,
+
+                    frequentSickDayThreshold:
+    frequentSickDayThreshold,
+
+frequentSickDayLookbackDays:
+    frequentSickDayLookbackDays,
 
                 frequentAbsenceThreshold:
                     frequentAbsenceThreshold,
