@@ -1505,7 +1505,25 @@ async function authenticateEmployee() {
     try {
 
         // =============================================
-        // Load Employee Record First
+        // Authenticate With Firebase FIRST
+        // =============================================
+
+        const employeeAuthEmail =
+            `${employeeNumber}@attendance.local`;
+
+        const userCredential =
+            await signInWithEmailAndPassword(
+                attendanceAuth,
+                employeeAuthEmail,
+                enteredPin
+            );
+
+        const authenticatedUser =
+            userCredential.user;
+
+
+        // =============================================
+        // Load Employee Record AFTER Authentication
         // =============================================
 
         const employeeQuery =
@@ -1526,73 +1544,37 @@ async function authenticateEmployee() {
                 employeeQuery
             );
 
+
         if (
             employeeSnapshot.empty
         ) {
+
+            await signOut(
+                attendanceAuth
+            );
 
             message.style.color =
                 "red";
 
             message.innerHTML =
-                "❌ Invalid Employee Number or PIN.";
-
-                await writeAuditLog({
-    category:
-        "Security",
-
-    action:
-        "Employee Authentication Failed",
-
-    description:
-        `Failed employee authentication attempt for employee number ${employeeNumber}.`,
-
-    actorType:
-        "Unknown",
-
-    actorName:
-        employeeNumber,
-
-    actorId:
-        "",
-
-    targetType:
-        "Employee",
-
-    targetName:
-        employeeNumber,
-
-    targetId:
-        employeeNumber,
-
-    source:
-        "Employee Attendance",
-
-    metadata: {
-        employeeNumber:
-            employeeNumber,
-
-        reason:
-            "Employee number not found",
-
-        deviceId:
-            getDeviceId(),
-
-        fingerprint:
-            getFingerprint()
-    }
-});
+                "❌ Employee account could not be found.";
 
             return null;
+
         }
+
 
         const employeeDocument =
             employeeSnapshot.docs[0];
 
+
         const employee = {
+
             id:
                 employeeDocument.id,
 
             ...employeeDocument.data()
+
         };
 
 
@@ -1605,97 +1587,19 @@ async function authenticateEmployee() {
             false
         ) {
 
+            await signOut(
+                attendanceAuth
+            );
+
             message.style.color =
                 "red";
 
             message.innerHTML =
                 "❌ This employee account is inactive.";
 
-                await writeAuditLog({
-    category:
-        "Security",
-
-    action:
-        "Inactive Employee Attendance Attempt",
-
-    description:
-        `${employee.name ?? employee.employeeNumber} attempted to use the attendance portal while the employee account was inactive.`,
-
-    actorType:
-        "Employee",
-
-    actorName:
-        employee.name ??
-        employee.employeeNumber ??
-        "Unknown Employee",
-
-    actorId:
-        employee.employeeNumber ??
-        "",
-
-    targetType:
-        "Employee",
-
-    targetName:
-        employee.name ??
-        employee.employeeNumber ??
-        "Unknown Employee",
-
-    targetId:
-        employee.employeeNumber ??
-        "",
-
-    source:
-        "Employee Attendance",
-
-    metadata: {
-        employeeNumber:
-            employee.employeeNumber ??
-            "",
-
-        department:
-            employee.department ??
-            "",
-
-        reason:
-            "Employee account inactive",
-
-        deviceId:
-            getDeviceId(),
-
-        fingerprint:
-            getFingerprint()
-    }
-});
-
             return null;
+
         }
-
-
-        // =============================================
-        // Determine Hidden Auth Email
-        // =============================================
-
-        const employeeAuthEmail =
-            String(
-                employee.authEmail ??
-                `${employeeNumber}@attendance.local`
-            ).trim();
-
-
-        // =============================================
-        // Authenticate With Firebase
-        // =============================================
-
-        const userCredential =
-            await signInWithEmailAndPassword(
-                attendanceAuth,
-                employeeAuthEmail,
-                enteredPin
-            );
-
-        const authenticatedUser =
-            userCredential.user;
 
 
         // =============================================
@@ -1719,6 +1623,7 @@ async function authenticateEmployee() {
                 "❌ Employee authentication account does not match.";
 
             return null;
+
         }
 
 
@@ -1730,7 +1635,13 @@ async function authenticateEmployee() {
             attendanceAuth
         );
 
+
+        // =============================================
+        // Return Employee
+        // =============================================
+
         return employee;
+
 
     } catch (error) {
 
@@ -1739,86 +1650,28 @@ async function authenticateEmployee() {
             error
         );
 
+
         try {
 
             await signOut(
                 attendanceAuth
             );
 
-        } catch (signOutError) {
+        } catch (
+            signOutError
+        ) {
 
             console.error(
                 "Employee Auth sign-out error:",
                 signOutError
             );
+
         }
+
 
         message.style.color =
             "red";
 
-         await writeAuditLog({
-    category:
-        "Security",
-
-    action:
-        "Employee Authentication Failed",
-
-    description:
-        `Failed employee authentication attempt for employee number ${employeeNumber}.`,
-
-    actorType:
-        "Unknown",
-
-    actorName:
-        employeeNumber,
-
-    actorId:
-        "",
-
-    targetType:
-        "Employee",
-
-    targetName:
-        employeeNumber,
-
-    targetId:
-        employeeNumber,
-
-    source:
-        "Employee Attendance",
-
-    metadata: {
-        employeeNumber:
-            employeeNumber,
-
-        reason:
-            error.code ===
-            "auth/invalid-credential" ||
-            error.code ===
-            "auth/wrong-password"
-                ?
-                "Incorrect PIN or invalid credentials"
-                :
-                (
-                    error.code ===
-                    "auth/user-not-found"
-                        ?
-                        "Authentication account not found"
-                        :
-                        "Employee authentication failed"
-                ),
-
-        errorCode:
-            error.code ??
-            "unknown",
-
-        deviceId:
-            getDeviceId(),
-
-        fingerprint:
-            getFingerprint()
-    }
-});   
 
         if (
             error.code ===
@@ -1836,10 +1689,14 @@ async function authenticateEmployee() {
 
             message.innerHTML =
                 "❌ Employee authentication failed.";
+
         }
 
+
         return null;
+
     }
+
 }
 
 
@@ -4836,109 +4693,7 @@ earlyExitMessage.textContent =
 
 earlyExitOtherSection.hidden =
     true;
-
-    await writeAuditLog({
-    category:
-        "Attendance",
-
-    action:
-        earlyExit
-            ?
-            "Employee Early Check-Out"
-            :
-            lateCheckout
-                ?
-                "Employee Late Check-Out"
-                :
-                "Employee Check-Out",
-
-    description:
-        earlyExit
-            ?
-            `${employee.name ?? employee.employeeNumber} checked out early at ${checkOutTimeText}.`
-            :
-            lateCheckout
-                ?
-                `${employee.name ?? employee.employeeNumber} checked out late at ${checkOutTimeText}.`
-                :
-                `${employee.name ?? employee.employeeNumber} checked out at ${checkOutTimeText}.`,
-
-    actorType:
-        "Employee",
-
-    actorName:
-        employee.name ??
-        employee.employeeNumber ??
-        "Unknown Employee",
-
-    actorId:
-        employee.employeeNumber ??
-        "",
-
-    targetType:
-        "Employee",
-
-    targetName:
-        employee.name ??
-        employee.employeeNumber ??
-        "Unknown Employee",
-
-    targetId:
-        employee.employeeNumber ??
-        "",
-
-    source:
-        "Employee Attendance",
-
-    metadata: {
-
-        employeeNumber:
-            employee.employeeNumber ??
-            "",
-
-        department:
-            employee.department ??
-            "",
-
-        checkOutTime:
-            checkOutTimeText,
-
-        earlyExit:
-            earlyExit,
-
-        earlyExitReason:
-            earlyExit
-                ?
-                earlyExitReasonValue
-                :
-                "",
-
-        earlyExitNote:
-            earlyExit
-                ?
-                earlyExitNoteValue
-                :
-                "",
-
-        lateCheckout:
-            lateCheckout,
-
-        lateCheckoutReason:
-            lateCheckout
-                ?
-                lateCheckoutReasonValue
-                :
-                "",
-
-        lateCheckoutMinutes:
-            lateCheckout
-                ?
-                lateCheckoutMinutes
-                :
-                0
-    }
-});
-
+    
 earlyExitSection.hidden =
     true;
 
