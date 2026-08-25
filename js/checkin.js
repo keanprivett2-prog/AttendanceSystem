@@ -5,7 +5,7 @@
 
 import {
     db,
-    firebaseConfig
+    auth
 } from "../firebase/firebase.js";
 
 import {
@@ -15,9 +15,9 @@ import {
 import {
     getAuth,
     signInWithEmailAndPassword,
-    signOut
+    signOut,
+    onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-
 import {
     collection,
     doc,
@@ -40,16 +40,7 @@ import {
 // Employee Attendance Authentication
 // =====================================================
 
-const attendanceAuthApp =
-    initializeApp(
-        firebaseConfig,
-        "attendance-employee-auth"
-    );
-
-const attendanceAuth =
-    getAuth(
-        attendanceAuthApp
-    );
+const attendanceAuth = auth;
 
 // =====================================================
 // Office Boundary
@@ -612,9 +603,85 @@ earlyExitOtherSection.hidden =
     message.innerHTML =
     "Ready for employee attendance.";
 
-updateRegisteredDeviceDisplay();
+onAuthStateChanged(
+    attendanceAuth,
+    async (user) => {
 
-startRegisteredEmployeeAttendance();
+        // =============================================
+        // No Firebase user
+        // =============================================
+
+        if (!user) {
+
+            // No authenticated employee.
+            // Always show the normal login fields.
+
+            employeeNumberInput.style.removeProperty(
+                "display"
+            );
+
+            pinInput.style.removeProperty(
+                "display"
+            );
+
+            checkInButton.style.removeProperty(
+                "display"
+            );
+
+            const employeeNumberLabel =
+                document.querySelector(
+                    'label[for="employeeNumber"]'
+                );
+
+            const pinLabel =
+                document.querySelector(
+                    'label[for="pin"]'
+                );
+
+            if (employeeNumberLabel) {
+                employeeNumberLabel.style.removeProperty(
+                    "display"
+                );
+            }
+
+            if (pinLabel) {
+                pinLabel.style.removeProperty(
+                    "display"
+                );
+            }
+
+            return;
+        }
+
+
+        // =============================================
+        // Firebase user exists
+        // =============================================
+
+        const registeredEmployeeNumber =
+            getRegisteredEmployeeNumber();
+
+        if (
+            !registeredEmployeeNumber
+        ) {
+
+            // Authenticated but no registered device.
+            // Show the normal login fields.
+
+            updateRegisteredDeviceDisplay();
+
+            return;
+        }
+
+
+        // =============================================
+        // Registered device
+        // =============================================
+
+        await startRegisteredEmployeeAttendance();
+
+    }
+);
 
 }
 
@@ -1628,12 +1695,11 @@ async function authenticateEmployee() {
 
 
         // =============================================
-        // Clear Temporary Auth Session
-        // =============================================
+// Keep Firebase Authentication Session
+// =============================================
 
-        await signOut(
-            attendanceAuth
-        );
+// The employee remains authenticated so that
+// Firestore Security Rules can verify the user.
 
 
         // =============================================
