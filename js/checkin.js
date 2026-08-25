@@ -1857,13 +1857,24 @@ const employeeQuery =
 
 async function checkIn() {
 
-    // Use the original QR/page-open time,
-    // not the time the employee clicks Submit.
-
     const scanTime =
         new Date(
             originalScanTime.getTime()
         );
+
+
+    // =================================================
+    // Shared Check-In Variables
+    // =================================================
+
+    let employee = null;
+
+    let location = null;
+
+    let distanceMetres = 0;
+
+    let locationStatus = "Remote";
+
 
     checkInButton.disabled =
         true;
@@ -1874,17 +1885,11 @@ async function checkIn() {
     message.innerHTML =
         "Starting attendance verification...";
 
-    try {
 
-        // =================================================
-        // Load Registered Employee / Authenticate
-        // =================================================
+    try {
 
         hybridWorkLocationContainer.style.display =
             "none";
-
-        let employee = null;
-
 
 // =================================================
 // Determine Authentication State
@@ -2221,15 +2226,27 @@ if (
             );
 
 
-        // =================================================
+                // =================================================
         // Location
         // =================================================
 
         message.style.color =
             "#0b5ed7";
 
-        let location =
+        // Reset location information
+        location =
             null;
+
+        distanceMetres =
+            0;
+
+        locationStatus =
+            "Remote";
+
+
+        // =================================================
+        // Get Office Location
+        // =================================================
 
         if (
             selectedWorkLocation ===
@@ -2242,18 +2259,24 @@ if (
             location =
                 await getCurrentLocation();
 
-        }
 
-        let distanceMetres =
-            0;
+            // Make sure GPS returned a valid location
+            if (
+                !location ||
+                typeof location.latitude !== "number" ||
+                typeof location.longitude !== "number"
+            ) {
 
-        let locationStatus =
-            "Remote";
+                throw new Error(
+                    "GPS_LOCATION_UNAVAILABLE"
+                );
 
-        if (
-            selectedWorkLocation ===
-            "Office"
-        ) {
+            }
+
+
+            // =================================================
+            // Calculate Distance From Office
+            // =================================================
 
             distanceMetres =
                 calculateDistanceFromOfficeBoundary(
@@ -2261,27 +2284,36 @@ if (
                     location.longitude
                 );
 
+
+            // =================================================
+            // Determine Location Status
+            // =================================================
+
             locationStatus =
                 getLocationStatus(
                     location.latitude,
                     location.longitude
                 );
 
+
+            // =================================================
+            // Apply Office Boundary Buffer
+            // =================================================
+
+            if (
+                locationStatus ===
+                    "Outside Office"
+                &&
+                distanceMetres <=
+                    OFFICE_BUFFER_METRES
+            ) {
+
+                locationStatus =
+                    "At Office";
+
+            }
+
         }
-
-
-        if (
-            locationStatus ===
-            "Outside Office" &&
-            distanceMetres <=
-            OFFICE_BUFFER_METRES
-        ) {
-
-            locationStatus =
-                "At Office";
-
-        }
-
 
         // =================================================
         // GPS Accuracy
