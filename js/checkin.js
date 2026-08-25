@@ -1640,6 +1640,10 @@ function updateRegisteredDeviceDisplay() {
 // Authenticate Employee
 // =====================================================
 
+// =====================================================
+// Authenticate Employee
+// =====================================================
+
 async function authenticateEmployee() {
 
     if (
@@ -1648,48 +1652,44 @@ async function authenticateEmployee() {
         return null;
     }
 
+
     const employeeNumber =
-        employeeNumberInput.value.trim();
+        employeeNumberInput.value
+            .trim();
 
     const enteredPin =
-        pinInput.value.trim();
+        pinInput.value
+            .trim();
+
 
     try {
 
-        // =============================================
-        // Authenticate With Firebase FIRST
-        // =============================================
+        // =================================================
+        // STEP 1
+        // Load Employee Record
+        // =================================================
+        //
+        // We MUST load the employee record BEFORE
+        // Firebase Authentication because the Firebase
+        // Auth email is stored in the employee record.
+        //
+        // The employee never sees this email.
+        //
+        // =================================================
 
-        const employeeAuthEmail =
-            `${employeeNumber}@attendance.local`;
-
-        const userCredential =
-            await signInWithEmailAndPassword(
-                attendanceAuth,
-                employeeAuthEmail,
-                enteredPin
+        const employeeQuery =
+            query(
+                collection(
+                    db,
+                    "employees"
+                ),
+                where(
+                    "employeeNumber",
+                    "==",
+                    employeeNumber
+                )
             );
 
-        const authenticatedUser =
-            userCredential.user;
-
-
-        // =============================================
-// Load Employee Record AFTER Authentication
-// =============================================
-
-const employeeQuery =
-    query(
-        collection(
-            db,
-            "employees"
-        ),
-        where(
-            "authUid",
-            "==",
-            authenticatedUser.uid
-        )
-    );
 
         const employeeSnapshot =
             await getDocs(
@@ -1701,10 +1701,6 @@ const employeeQuery =
             employeeSnapshot.empty
         ) {
 
-            await signOut(
-                attendanceAuth
-            );
-
             message.style.color =
                 "red";
 
@@ -1715,6 +1711,11 @@ const employeeQuery =
 
         }
 
+
+        // =================================================
+        // STEP 2
+        // Build Employee Object
+        // =================================================
 
         const employeeDocument =
             employeeSnapshot.docs[0];
@@ -1730,18 +1731,15 @@ const employeeQuery =
         };
 
 
-        // =============================================
-        // Active Employee Check
-        // =============================================
+        // =================================================
+        // STEP 3
+        // Check Employee Active Status
+        // =================================================
 
         if (
             employee.active ===
             false
         ) {
-
-            await signOut(
-                attendanceAuth
-            );
 
             message.style.color =
                 "red";
@@ -1754,19 +1752,139 @@ const employeeQuery =
         }
 
 
-        // =============================================
-        // Verify Auth UID
-        // =============================================
+        // =================================================
+        // STEP 4
+        // Get Stored Firebase Authentication Email
+        // =================================================
+        //
+        // IMPORTANT:
+        //
+        // DO NOT construct:
+        //
+        // employeeNumber@attendance.local
+        //
+        // The employee record contains the actual hidden
+        // Firebase Authentication email.
+        //
+        // =================================================
+
+        const employeeAuthEmail =
+            String(
+                employee.authEmail ??
+                ""
+            ).trim();
+
 
         if (
-            !employee.authUid ||
-            employee.authUid !==
-            authenticatedUser.uid
+            !employeeAuthEmail
+        ) {
+
+            console.error(
+                "Employee authentication email is missing.",
+                employee
+            );
+
+            message.style.color =
+                "red";
+
+            message.innerHTML =
+                "❌ Employee authentication account is not configured.";
+
+            return null;
+
+        }
+
+
+        // =================================================
+        // DEBUG INFORMATION
+        // =================================================
+
+        console.log(
+            "EMPLOYEE AUTHENTICATION:"
+        );
+
+        console.log({
+            employeeNumber:
+                employee.employeeNumber,
+
+            authEmail:
+                employeeAuthEmail,
+
+            storedAuthUid:
+                employee.authUid
+        });
+
+
+        // =================================================
+        // STEP 5
+        // Authenticate With Firebase
+        // =================================================
+
+        const userCredential =
+            await signInWithEmailAndPassword(
+                attendanceAuth,
+                employeeAuthEmail,
+                enteredPin
+            );
+
+
+        const authenticatedUser =
+            userCredential.user;
+
+
+        // =================================================
+        // STEP 6
+        // Verify Firebase UID
+        // =================================================
+        //
+        // This is an important security check.
+        //
+        // The Firebase Auth account MUST belong to the
+        // employee record we just loaded.
+        //
+        // =================================================
+
+        if (
+            !employee.authUid
         ) {
 
             await signOut(
                 attendanceAuth
             );
+
+
+            message.style.color =
+                "red";
+
+            message.innerHTML =
+                "❌ Employee authentication account is not linked.";
+
+            return null;
+
+        }
+
+
+        if (
+            employee.authUid !==
+            authenticatedUser.uid
+        ) {
+
+            console.error(
+                "AUTH UID MISMATCH:",
+                {
+                    employeeAuthUid:
+                        employee.authUid,
+
+                    authenticatedUid:
+                        authenticatedUser.uid
+                }
+            );
+
+
+            await signOut(
+                attendanceAuth
+            );
+
 
             message.style.color =
                 "red";
@@ -1779,28 +1897,47 @@ const employeeQuery =
         }
 
 
-        // =============================================
-// Keep Firebase Authentication Session
-// =============================================
+        // =================================================
+        // STEP 7
+        // Authentication Successful
+        // =================================================
+        //
+        // DO NOT sign out here.
+        //
+        // Firestore Security Rules require the employee
+        // Firebase Authentication session to remain active
+        // while attendance is being written.
+        //
+        // =================================================
 
-// The employee remains authenticated so that
-// Firestore Security Rules can verify the user.
+        console.log(
+            "EMPLOYEE AUTHENTICATION SUCCESSFUL:",
+            {
+                employeeNumber:
+                    employee.employeeNumber,
 
+                authUid:
+                    authenticatedUser.uid
+            }
+        );
 
-        // =============================================
-        // Return Employee
-        // =============================================
 
         return employee;
 
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
         console.error(
             "Employee authentication error:",
             error
         );
 
+
+        // =================================================
+        // Clean Up Failed Authentication
+        // =================================================
 
         try {
 
@@ -1820,6 +1957,10 @@ const employeeQuery =
         }
 
 
+        // =================================================
+        // Display Authentication Error
+        // =================================================
+
         message.style.color =
             "red";
 
@@ -1827,8 +1968,10 @@ const employeeQuery =
         if (
             error.code ===
             "auth/invalid-credential" ||
+
             error.code ===
             "auth/wrong-password" ||
+
             error.code ===
             "auth/user-not-found"
         ) {
@@ -2074,14 +2217,149 @@ if (
         // Check Existing Attendance
         // =================================================
 
-        const existingAttendance =
+                const existingAttendance =
             await getTodayAttendanceRecord(
                 employee
             );
 
+
+        // =================================================
+        // Determine Existing Attendance State
+        // =================================================
+
+        const hasExistingCheckIn =
+            Boolean(
+                existingAttendance
+                &&
+                (
+                    String(
+                        existingAttendance.time ??
+                        ""
+                    ).trim()
+                    ||
+                    existingAttendance.scanTimestamp
+                    ||
+                    existingAttendance.checkInTimestamp
+                )
+            );
+
+
+        const hasExistingCheckOut =
+            Boolean(
+                existingAttendance
+                &&
+                (
+                    String(
+                        existingAttendance.checkOutTime ??
+                        ""
+                    ).trim()
+                    ||
+                    existingAttendance.checkOutTimestamp
+                )
+            );
+
+
+        // =================================================
+        // INVALID / ORPHAN CHECK-OUT
+        // =================================================
+        //
+        // A check-out may NEVER exist without a check-in.
+        //
+        // Older broken versions of the attendance system
+        // could accidentally create:
+        //
+        // Check In:  -
+        // Check Out: 14:24
+        //
+        // If such a record is found, repair it before
+        // continuing with the employee's real check-in.
+        //
+        // =================================================
+
         if (
-            existingAttendance &&
-            !existingAttendance.checkOutTime
+            existingAttendance
+            &&
+            !hasExistingCheckIn
+            &&
+            hasExistingCheckOut
+        ) {
+
+            console.warn(
+                "ORPHAN CHECK-OUT DETECTED:",
+                {
+                    employeeNumber:
+                        employee.employeeNumber,
+
+                    attendanceId:
+                        existingAttendance.id,
+
+                    checkOutTime:
+                        existingAttendance.checkOutTime ??
+                        null
+                }
+            );
+
+
+            await updateDoc(
+                existingAttendance.reference,
+                {
+
+                    checkOutTime:
+                        "",
+
+                    checkOutTimestamp:
+                        null,
+
+                    checkOutMethod:
+                        "",
+
+                    earlyExit:
+                        false,
+
+                    earlyExitReason:
+                        "",
+
+                    earlyExitNote:
+                        "",
+
+                    lateCheckout:
+                        false,
+
+                    lateCheckoutReason:
+                        "",
+
+                    lateCheckoutMinutes:
+                        0,
+
+                    updatedAt:
+                        serverTimestamp()
+
+                }
+            );
+
+
+            // Treat repaired record as having no completed
+            // attendance state so check-in may continue.
+
+            existingAttendance.checkOutTime =
+                "";
+
+            existingAttendance.checkOutTimestamp =
+                null;
+
+        }
+
+
+        // =================================================
+        // EXISTING VALID CHECK-IN → BEGIN CHECK-OUT
+        // =================================================
+
+        if (
+            existingAttendance
+            &&
+            hasExistingCheckIn
+            &&
+            !hasExistingCheckOut
         ) {
 
             await beginCheckOut(
@@ -2094,9 +2372,16 @@ if (
         }
 
 
+        // =================================================
+        // EXISTING COMPLETE ATTENDANCE
+        // =================================================
+
         if (
-            existingAttendance &&
-            existingAttendance.checkOutTime
+            existingAttendance
+            &&
+            hasExistingCheckIn
+            &&
+            hasExistingCheckOut
         ) {
 
             message.style.color =
@@ -2119,10 +2404,84 @@ if (
                     "-"
                 );
 
+
             checkInButton.disabled =
                 false;
 
+
             return;
+
+        }
+
+
+        // =================================================
+        // NON-WORKING RECORD
+        // =================================================
+        //
+        // Full-day leave / absent records can legitimately
+        // exist without a check-in.
+        //
+        // They must not accidentally become a checkout.
+        //
+        // =================================================
+
+        if (
+            existingAttendance
+            &&
+            !hasExistingCheckIn
+        ) {
+
+            const existingStatus =
+                String(
+                    existingAttendance.status ??
+                    ""
+                ).trim();
+
+
+            const nonWorkingStatuses = [
+
+                "Absent",
+
+                "Annual Leave",
+
+                "Sick Leave",
+
+                "Family Responsibility Leave",
+
+                "Maternity Leave",
+
+                "Unpaid Leave"
+
+            ];
+
+
+            if (
+                nonWorkingStatuses.includes(
+                    existingStatus
+                )
+            ) {
+
+                message.style.color =
+                    "orange";
+
+
+                message.innerHTML =
+                    "⚠️ Attendance cannot be recorded today."
+                    +
+                    "<br>Status: "
+                    +
+                    escapeHtml(
+                        existingStatus
+                    );
+
+
+                checkInButton.disabled =
+                    false;
+
+
+                return;
+
+            }
 
         }
 
@@ -4207,6 +4566,45 @@ async function saveCheckOut(
 
         throw new Error(
             "ATTENDANCE_REFERENCE_MISSING"
+        );
+
+    }
+
+        // =====================================================
+    // SAFETY: Check-Out Requires A Real Check-In
+    // =====================================================
+
+    const hasValidCheckIn =
+        Boolean(
+            String(
+                attendanceRecord.time ??
+                ""
+            ).trim()
+            ||
+            attendanceRecord.scanTimestamp
+            ||
+            attendanceRecord.checkInTimestamp
+        );
+
+
+    if (
+        !hasValidCheckIn
+    ) {
+
+        console.error(
+            "CHECK-OUT BLOCKED - NO CHECK-IN:",
+            {
+                employeeNumber:
+                    employee.employeeNumber,
+
+                attendanceId:
+                    attendanceRecord.id
+            }
+        );
+
+
+        throw new Error(
+            "CHECKOUT_WITHOUT_CHECKIN"
         );
 
     }
