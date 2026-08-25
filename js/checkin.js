@@ -2773,28 +2773,34 @@ if (
 // Employee Work Arrangement
 // =====================================================
 
+// =====================================================
+// Employee Work Arrangement
+// =====================================================
+
 function getEmployeeWorkArrangement(
     employee
 ) {
-
     const arrangement =
         String(
-            employee.workArrangement ??
+            employee?.workArrangement ??
             "Office"
-        ).trim();
+        )
+            .trim()
+            .toLowerCase();
 
     if (
-        arrangement === "Remote"
-        ||
-        arrangement === "Hybrid"
+        arrangement === "remote"
     ) {
+        return "Remote";
+    }
 
-        return arrangement;
-
+    if (
+        arrangement === "hybrid"
+    ) {
+        return "Hybrid";
     }
 
     return "Office";
-
 }
 
 // =====================================================
@@ -2809,13 +2815,84 @@ async function beginCheckOut(
     const checkOutTime =
         new Date();
 
-        const workLocation =
-    String(
-        attendanceRecord.workLocation ??
-        getEmployeeWorkArrangement(
-            employee
+        // =====================================================
+// Determine Check-Out Work Location
+// =====================================================
+
+// The employee's current work arrangement is authoritative
+// for Remote employees.
+//
+// This prevents an old/stale attendance record containing
+// "Office" from forcing a Remote employee through GPS
+// validation.
+
+const employeeWorkArrangement =
+    getEmployeeWorkArrangement(
+        employee
+    );
+
+let workLocation =
+    employeeWorkArrangement;
+
+// Remote employees are ALWAYS treated as Remote.
+// No historical attendance workLocation can override this.
+if (
+    employeeWorkArrangement ===
+    "Remote"
+) {
+    workLocation =
+        "Remote";
+}
+
+// Office employees are ALWAYS treated as Office.
+else if (
+    employeeWorkArrangement ===
+    "Office"
+) {
+    workLocation =
+        "Office";
+}
+
+// Hybrid employees use the location recorded when
+// they checked in that day.
+else if (
+    employeeWorkArrangement ===
+    "Hybrid"
+) {
+    const recordedWorkLocation =
+        String(
+            attendanceRecord.workLocation ??
+            ""
         )
-    ).trim();
+            .trim()
+            .toLowerCase();
+
+    if (
+        recordedWorkLocation ===
+        "remote"
+    ) {
+        workLocation =
+            "Remote";
+    } else {
+        workLocation =
+            "Office";
+    }
+}
+
+console.log(
+    "CHECKOUT WORK LOCATION:",
+    {
+        employeeNumber:
+            employee.employeeNumber,
+        employeeWorkArrangement:
+            employeeWorkArrangement,
+        attendanceRecordWorkLocation:
+            attendanceRecord.workLocation ??
+            null,
+        finalWorkLocation:
+            workLocation
+    }
+);
 
 
     // =================================================
