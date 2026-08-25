@@ -1318,18 +1318,27 @@ async function loadRegisteredEmployee() {
         // Load Current Employee Record
         // =============================================
 
-        const employeeQuery =
-            query(
-                collection(
-                    db,
-                    "employees"
-                ),
-                where(
-                    "employeeNumber",
-                    "==",
-                    employeeNumber
-                )
-            );
+        const authenticatedUser =
+    attendanceAuth.currentUser;
+
+if (
+    !authenticatedUser
+) {
+    return null;
+}
+
+const employeeQuery =
+    query(
+        collection(
+            db,
+            "employees"
+        ),
+        where(
+            "authUid",
+            "==",
+            authenticatedUser.uid
+        )
+    );
 
         const employeeSnapshot =
             await getDocs(
@@ -1428,8 +1437,84 @@ async function startRegisteredEmployeeAttendance() {
     ) {
 
         return;
-
     }
+
+
+    // =============================================
+    // Validate the registered device first
+    // =============================================
+
+    const registeredEmployee =
+        await loadRegisteredEmployee();
+
+
+    // =============================================
+    // Registered device could not be validated
+    // =============================================
+
+    if (
+        !registeredEmployee
+    ) {
+
+        // Show the normal employee login fields.
+
+        employeeNumberInput.style.removeProperty(
+            "display"
+        );
+
+        pinInput.style.removeProperty(
+            "display"
+        );
+
+        checkInButton.style.removeProperty(
+            "display"
+        );
+
+
+        const employeeNumberLabel =
+            document.querySelector(
+                'label[for="employeeNumber"]'
+            );
+
+        const pinLabel =
+            document.querySelector(
+                'label[for="pin"]'
+            );
+
+
+        if (
+            employeeNumberLabel
+        ) {
+
+            employeeNumberLabel.style.removeProperty(
+                "display"
+            );
+        }
+
+
+        if (
+            pinLabel
+        ) {
+
+            pinLabel.style.removeProperty(
+                "display"
+            );
+        }
+
+
+        message.style.color =
+            "#0b5ed7";
+
+        message.innerHTML =
+            "Ready for employee attendance.";
+
+        return;
+    }
+
+
+    // =============================================
+    // Registered device confirmed
+    // =============================================
 
     message.style.color =
         "#0b5ed7";
@@ -1437,8 +1522,8 @@ async function startRegisteredEmployeeAttendance() {
     message.innerHTML =
         "Registered device detected. Starting attendance...";
 
-    await checkIn();
 
+    await checkIn();
 }
 
 // =====================================================
@@ -1590,21 +1675,21 @@ async function authenticateEmployee() {
 
 
         // =============================================
-        // Load Employee Record AFTER Authentication
-        // =============================================
+// Load Employee Record AFTER Authentication
+// =============================================
 
-        const employeeQuery =
-            query(
-                collection(
-                    db,
-                    "employees"
-                ),
-                where(
-                    "employeeNumber",
-                    "==",
-                    employeeNumber
-                )
-            );
+const employeeQuery =
+    query(
+        collection(
+            db,
+            "employees"
+        ),
+        where(
+            "authUid",
+            "==",
+            authenticatedUser.uid
+        )
+    );
 
         const employeeSnapshot =
             await getDocs(
@@ -1798,129 +1883,186 @@ async function checkIn() {
         hybridWorkLocationContainer.style.display =
             "none";
 
-        let employee =
-            await loadRegisteredEmployee();
-
-        if (
-            !employee
-        ) {
-
-            updateRegisteredDeviceDisplay();
-
-            employee =
-                await authenticateEmployee();
-
-            if (
-                !employee
-            ) {
-
-                checkInButton.disabled =
-                    false;
-
-                return;
-
-            }
+        let employee = null;
 
 
-            // =============================================
-            // Check Existing Firebase Registration
-            // =============================================
+// =================================================
+// Determine Authentication State
+// =================================================
 
-            const existingRegistration =
-                await getFirebaseDeviceRegistration(
-                    employee.employeeNumber
-                );
+const authenticatedUser =
+    attendanceAuth.currentUser;
 
-            if (
-                existingRegistration &&
-                existingRegistration.active ===
-                true
-            ) {
 
-                message.style.color =
-                    "red";
+// =================================================
+// Registered / Authenticated Device
+// =================================================
 
-                message.innerHTML =
-                    "❌ This employee already has a registered device."
-                    +
-                    "<br>Please contact an administrator to reset the device registration.";
+if (
+    authenticatedUser
+) {
 
-                checkInButton.disabled =
-                    false;
+    employee =
+        await loadRegisteredEmployee();
+}
 
-                    await writeAuditLog({
-    category:
-        "Security",
 
-    action:
-        "Device Registration Blocked",
+// =================================================
+// Manual Employee Login
+// =================================================
 
-    description:
-        `${employee.name ?? employee.employeeNumber} attempted attendance registration from another device while an active registered device already existed.`,
+if (
+    !employee
+) {
 
-    actorType:
-        "Employee",
+    updateRegisteredDeviceDisplay();
 
-    actorName:
-        employee.name ??
-        employee.employeeNumber ??
-        "Unknown Employee",
+    employee =
+        await authenticateEmployee();
 
-    actorId:
-        employee.employeeNumber ??
-        "",
+    if (
+        !employee
+    ) {
 
-    targetType:
-        "Employee",
+        checkInButton.disabled =
+            false;
 
-    targetName:
-        employee.name ??
-        employee.employeeNumber ??
-        "Unknown Employee",
+        return;
+    }
+}
 
-    targetId:
-        employee.employeeNumber ??
-        "",
 
-    source:
-        "Employee Attendance",
+// =================================================
+// Check Existing Firebase Registration
+// =================================================
 
-    metadata: {
-        employeeNumber:
+const existingRegistration =
+    await getFirebaseDeviceRegistration(
+        employee.employeeNumber
+    );
+
+
+// =================================================
+// Determine Whether This Is The Current
+// Registered Device
+// =================================================
+
+const isCurrentRegisteredDevice =
+    Boolean(
+        authenticatedUser &&
+        getRegisteredEmployeeNumber() ===
+        String(
+            employee.employeeNumber ??
+            ""
+        ).trim()
+    );
+
+
+// =================================================
+// Block A Different Device
+// =================================================
+
+if (
+    existingRegistration &&
+    existingRegistration.active === true &&
+    !isCurrentRegisteredDevice
+) {
+
+    message.style.color =
+        "red";
+
+    message.innerHTML =
+        "❌ This employee already has a registered device."
+        +
+        "<br>Please contact an administrator to reset the device registration.";
+
+    checkInButton.disabled =
+        false;
+
+
+    await writeAuditLog({
+
+        category:
+            "Security",
+
+        action:
+            "Device Registration Blocked",
+
+        description:
+            `${employee.name ?? employee.employeeNumber} attempted attendance registration from another device while an active registered device already existed.`,
+
+        actorType:
+            "Employee",
+
+        actorName:
+            employee.name ??
+            employee.employeeNumber ??
+            "Unknown Employee",
+
+        actorId:
             employee.employeeNumber ??
             "",
 
-        reason:
-            "Active registered device already exists",
+        targetType:
+            "Employee",
 
-        attemptedDeviceId:
-            getDeviceId(),
+        targetName:
+            employee.name ??
+            employee.employeeNumber ??
+            "Unknown Employee",
 
-        attemptedFingerprint:
-            getFingerprint()
-    }
-});
+        targetId:
+            employee.employeeNumber ??
+            "",
 
-                return;
+        source:
+            "Employee Attendance",
 
-            }
+        metadata: {
 
+            employeeNumber:
+                employee.employeeNumber ??
+                "",
 
-            // =============================================
-            // Create New Registration
-            // =============================================
+            reason:
+                "Active registered device already exists",
 
-            const registrationToken =
-                await createFirebaseDeviceRegistration(
-                    employee
-                );
+            attemptedDeviceId:
+                getDeviceId(),
 
-            saveLocalDeviceRegistration(
-                employee.employeeNumber,
-                registrationToken
-            );
+            attemptedFingerprint:
+                getFingerprint()
 
         }
+
+    });
+
+
+    return;
+}
+
+
+// =================================================
+// Create New Registration
+// =================================================
+
+if (
+    !existingRegistration ||
+    existingRegistration.active !== true
+) {
+
+    const registrationToken =
+        await createFirebaseDeviceRegistration(
+            employee
+        );
+
+
+    saveLocalDeviceRegistration(
+        employee.employeeNumber,
+        registrationToken
+    );
+
+}
 
 
         // =================================================
