@@ -312,32 +312,57 @@ async function initializeAttendanceManagementPage() {
     ||
     "";
 
+
+// =====================================
+// Load Current Administrator Safely
+// =====================================
+
 if (
     administratorUid
 ) {
 
-    const administratorReference =
-        doc(
-            db,
-            "administrators",
-            administratorUid
-        );
+    try {
 
-    const administratorSnapshot =
-        await getDoc(
-            administratorReference
-        );
+        const administratorReference =
+            doc(
+                db,
+                "administrators",
+                administratorUid
+            );
 
-    if (
-        administratorSnapshot.exists()
+
+        const administratorSnapshot =
+            await getDoc(
+                administratorReference
+            );
+
+
+        if (
+            administratorSnapshot.exists()
+        ) {
+
+            currentAdministrator = {
+
+                id:
+                    administratorSnapshot.id,
+
+                ...administratorSnapshot.data()
+
+            };
+
+        }
+
+    } catch (
+        error
     ) {
 
-        currentAdministrator = {
-            id:
-                administratorSnapshot.id,
+        console.warn(
+            "Administrator profile could not be loaded:",
+            error
+        );
 
-            ...administratorSnapshot.data()
-        };
+        currentAdministrator =
+            null;
 
     }
 
