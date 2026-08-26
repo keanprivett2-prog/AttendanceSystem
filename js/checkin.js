@@ -509,182 +509,6 @@ const LATE_CHECKOUT_GRACE_MINUTES =
     15;
 
 
-// =====================================================
-// Start System
-// =====================================================
-
-initializeSystem();
-
-
-// =====================================================
-// Initialize
-// =====================================================
-
-function initializeSystem() {
-
-    originalScanTime =
-        new Date();
-
-    updateClock();
-
-    setInterval(
-        updateClock,
-        1000
-    );
-
-    checkInButton.addEventListener(
-        "click",
-        checkIn
-    );
-
-    employeeNumberInput.addEventListener(
-    "input",
-    () => {
-
-        hybridWorkLocation.value =
-            "";
-
-        hybridWorkLocationContainer.style.display =
-            "none";
-
-    }
-);
-
-    submitLateReasonButton.addEventListener(
-        "click",
-        submitLateReason
-    );
-
-    cancelLateReasonButton.addEventListener(
-        "click",
-        cancelLateReason
-    );
-
-    earlyExitReason.addEventListener(
-    "change",
-    handleEarlyExitReasonChange
-);
-
-submitEarlyExitButton.addEventListener(
-    "click",
-    submitEarlyExit
-);
-
-cancelEarlyExitButton.addEventListener(
-    "click",
-    cancelEarlyExit
-);
-
-submitLateCheckOutButton.addEventListener(
-    "click",
-    submitLateCheckOut
-);
-
-cancelLateCheckOutButton.addEventListener(
-    "click",
-    cancelLateCheckOut
-);
-
-earlyExitSection.hidden =
-    true;
-
-earlyExitOtherSection.hidden =
-    true;
-
-    lateReasonSection.hidden =
-        true;
-
-        lateCheckOutSection.hidden =
-    true;
-
-    message.style.color =
-        "#0b5ed7";
-
-    message.innerHTML =
-    "Ready for employee attendance.";
-
-onAuthStateChanged(
-    attendanceAuth,
-    async (user) => {
-
-        // =============================================
-        // No Firebase user
-        // =============================================
-
-        if (!user) {
-
-            // No authenticated employee.
-            // Always show the normal login fields.
-
-            employeeNumberInput.style.removeProperty(
-                "display"
-            );
-
-            pinInput.style.removeProperty(
-                "display"
-            );
-
-            checkInButton.style.removeProperty(
-                "display"
-            );
-
-            const employeeNumberLabel =
-                document.querySelector(
-                    'label[for="employeeNumber"]'
-                );
-
-            const pinLabel =
-                document.querySelector(
-                    'label[for="pin"]'
-                );
-
-            if (employeeNumberLabel) {
-                employeeNumberLabel.style.removeProperty(
-                    "display"
-                );
-            }
-
-            if (pinLabel) {
-                pinLabel.style.removeProperty(
-                    "display"
-                );
-            }
-
-            return;
-        }
-
-
-        // =============================================
-        // Firebase user exists
-        // =============================================
-
-        const registeredEmployeeNumber =
-            getRegisteredEmployeeNumber();
-
-        if (
-            !registeredEmployeeNumber
-        ) {
-
-            // Authenticated but no registered device.
-            // Show the normal login fields.
-
-            updateRegisteredDeviceDisplay();
-
-            return;
-        }
-
-
-        // =============================================
-        // Registered device
-        // =============================================
-
-        await startRegisteredEmployeeAttendance();
-
-    }
-);
-
-}
-
 
 // =====================================================
 // Live Clock
@@ -1394,36 +1218,6 @@ const employeeQuery =
 }
 
 // =====================================================
-// Register Employee On This Device
-// =====================================================
-
-function registerEmployeeOnDevice(
-    employee
-) {
-
-    const registration = {
-
-        employeeNumber:
-            String(
-                employee.employeeNumber ??
-                ""
-            ).trim(),
-
-        registeredAt:
-            new Date().toISOString()
-
-    };
-
-    localStorage.setItem(
-        DEVICE_REGISTRATION_KEY,
-        JSON.stringify(
-            registration
-        )
-    );
-
-}
-
-// =====================================================
 // Start Registered Employee Attendance
 // =====================================================
 
@@ -1436,94 +1230,642 @@ async function startRegisteredEmployeeAttendance() {
         !registeredEmployeeNumber
     ) {
 
-        return;
+        return null;
     }
 
 
-    // =============================================
-    // Validate the registered device first
-    // =============================================
+    try {
 
-    const registeredEmployee =
-        await loadRegisteredEmployee();
+        // =================================================
+        // Validate Registered Device
+        // =================================================
+
+        const registeredEmployee =
+            await loadRegisteredEmployee();
 
 
-    // =============================================
-    // Registered device could not be validated
-    // =============================================
+        // =================================================
+        // Registered Device Could Not Be Validated
+        // =================================================
 
-    if (
-        !registeredEmployee
+        if (
+            !registeredEmployee
+        ) {
+
+            console.warn(
+                "REGISTERED DEVICE VALIDATION FAILED"
+            );
+
+
+            // Show normal login fields.
+
+            employeeNumberInput.style.removeProperty(
+                "display"
+            );
+
+            pinInput.style.removeProperty(
+                "display"
+            );
+
+            checkInButton.style.removeProperty(
+                "display"
+            );
+
+
+            const employeeNumberLabel =
+                document.querySelector(
+                    'label[for="employeeNumber"]'
+                );
+
+            const pinLabel =
+                document.querySelector(
+                    'label[for="pin"]'
+                );
+
+
+            if (
+                employeeNumberLabel
+            ) {
+
+                employeeNumberLabel.style.removeProperty(
+                    "display"
+                );
+
+            }
+
+
+            if (
+                pinLabel
+            ) {
+
+                pinLabel.style.removeProperty(
+                    "display"
+                );
+
+            }
+
+
+            message.style.color =
+                "#0b5ed7";
+
+            message.innerHTML =
+                "Ready for employee attendance.";
+
+
+            return null;
+        }
+
+
+        // =================================================
+        // Registered Device Confirmed
+        // =================================================
+
+        console.log(
+            "REGISTERED EMPLOYEE DEVICE CONFIRMED:",
+            {
+                employeeNumber:
+                    registeredEmployee.employeeNumber,
+
+                name:
+                    registeredEmployee.name ??
+                    ""
+            }
+        );
+
+
+        // =================================================
+        // IMPORTANT
+        // =================================================
+        //
+        // This function ONLY validates the registered
+        // employee/device.
+        //
+        // It MUST NOT call:
+        //
+        //     await checkIn();
+        //
+        // The automatic QR attendance action is performed
+        // separately by initializeSystem().
+        //
+        // This prevents Firebase onAuthStateChanged() from
+        // accidentally causing a second attendance action.
+        //
+        // =================================================
+
+        return registeredEmployee;
+
+
+    } catch (
+        error
     ) {
 
-        // Show the normal employee login fields.
-
-        employeeNumberInput.style.removeProperty(
-            "display"
+        console.error(
+            "Unable to validate registered employee device:",
+            error
         );
-
-        pinInput.style.removeProperty(
-            "display"
-        );
-
-        checkInButton.style.removeProperty(
-            "display"
-        );
-
-
-        const employeeNumberLabel =
-            document.querySelector(
-                'label[for="employeeNumber"]'
-            );
-
-        const pinLabel =
-            document.querySelector(
-                'label[for="pin"]'
-            );
-
-
-        if (
-            employeeNumberLabel
-        ) {
-
-            employeeNumberLabel.style.removeProperty(
-                "display"
-            );
-        }
-
-
-        if (
-            pinLabel
-        ) {
-
-            pinLabel.style.removeProperty(
-                "display"
-            );
-        }
 
 
         message.style.color =
-            "#0b5ed7";
+            "red";
 
         message.innerHTML =
-            "Ready for employee attendance.";
+            "❌ Unable to validate registered employee device.";
 
-        return;
+
+        return null;
+
     }
 
+}
 
-    // =============================================
-    // Registered device confirmed
-    // =============================================
+// =====================================================
+// QR Attendance Action Protection
+// =====================================================
+//
+// One QR page load must cause a maximum of ONE
+// automatic attendance action.
+//
+// When the employee scans the QR code again, the page
+// opens/reloads and this variable starts as false again.
+//
+// =====================================================
+
+let qrAttendanceActionStarted =
+    false;
+
+
+// =====================================================
+// Start System
+// =====================================================
+
+initializeSystem();
+
+
+// =====================================================
+// Initialize
+// =====================================================
+
+function initializeSystem() {
+
+    // =================================================
+    // Capture QR Scan Time
+    // =================================================
+
+    originalScanTime =
+        new Date();
+
+
+    // =================================================
+    // Start Live Clock
+    // =================================================
+
+    updateClock();
+
+
+    setInterval(
+        updateClock,
+        1000
+    );
+
+
+    // =================================================
+    // Manual Continue Button
+    // =================================================
+    //
+    // This is used when:
+    //
+    // 1. The employee is registering this device for
+    //    the first time.
+    //
+    // 2. The employee needs to complete another manual
+    //    step such as selecting Hybrid work location.
+    //
+    // IMPORTANT:
+    //
+    // Do NOT use qrAttendanceActionStarted here.
+    //
+    // Some attendance flows legitimately require the
+    // employee to press Continue again after selecting
+    // additional information.
+    //
+    // =================================================
+
+    checkInButton.addEventListener(
+        "click",
+        checkIn
+    );
+
+
+    // =================================================
+    // Employee Number Changed
+    // =================================================
+
+    employeeNumberInput.addEventListener(
+        "input",
+        () => {
+
+            hybridWorkLocation.value =
+                "";
+
+
+            hybridWorkLocationContainer.style.display =
+                "none";
+
+        }
+    );
+
+
+    // =================================================
+    // Late Check-In Reason
+    // =================================================
+
+    submitLateReasonButton.addEventListener(
+        "click",
+        submitLateReason
+    );
+
+
+    cancelLateReasonButton.addEventListener(
+        "click",
+        cancelLateReason
+    );
+
+
+    // =================================================
+    // Early Check-Out
+    // =================================================
+
+    earlyExitReason.addEventListener(
+        "change",
+        handleEarlyExitReasonChange
+    );
+
+
+    submitEarlyExitButton.addEventListener(
+        "click",
+        submitEarlyExit
+    );
+
+
+    cancelEarlyExitButton.addEventListener(
+        "click",
+        cancelEarlyExit
+    );
+
+
+    // =================================================
+    // Late Check-Out
+    // =================================================
+
+    submitLateCheckOutButton.addEventListener(
+        "click",
+        submitLateCheckOut
+    );
+
+
+    cancelLateCheckOutButton.addEventListener(
+        "click",
+        cancelLateCheckOut
+    );
+
+
+    // =================================================
+    // Hide Optional Sections Initially
+    // =================================================
+
+    earlyExitSection.hidden =
+        true;
+
+
+    earlyExitOtherSection.hidden =
+        true;
+
+
+    lateReasonSection.hidden =
+        true;
+
+
+    lateCheckOutSection.hidden =
+        true;
+
+
+    // =================================================
+    // Initial Message
+    // =================================================
 
     message.style.color =
         "#0b5ed7";
 
+
     message.innerHTML =
-        "Registered device detected. Starting attendance...";
+        "Ready for employee attendance.";
 
 
-    await checkIn();
+    // =================================================
+    // Firebase Authentication State
+    // =====================================================
+    //
+    // IMPORTANT DESIGN:
+    //
+    // FIRST EVER QR SCAN:
+    //
+    // No registered device
+    //      ↓
+    // Show Employee Number + PIN
+    //      ↓
+    // Employee presses Continue
+    //      ↓
+    // Authenticate
+    //      ↓
+    // Register device
+    //      ↓
+    // Record attendance
+    //
+    //
+    // FUTURE QR SCAN:
+    //
+    // Registered device + Firebase session
+    //      ↓
+    // Validate registered employee
+    //      ↓
+    // Automatically perform ONE attendance action
+    //
+    //
+    // The qrAttendanceActionStarted flag prevents the
+    // Firebase Auth listener from causing the same QR
+    // scan to execute attendance more than once.
+    //
+    // =====================================================
+
+    onAuthStateChanged(
+        attendanceAuth,
+        async (user) => {
+
+            try {
+
+                // =============================================
+                // No Firebase User
+                // =============================================
+
+                if (
+                    !user
+                ) {
+
+                    console.log(
+                        "NO ACTIVE EMPLOYEE AUTH SESSION"
+                    );
+
+
+                    // =========================================
+                    // Show Manual Login
+                    // =========================================
+
+                    employeeNumberInput.style.removeProperty(
+                        "display"
+                    );
+
+
+                    pinInput.style.removeProperty(
+                        "display"
+                    );
+
+
+                    checkInButton.style.removeProperty(
+                        "display"
+                    );
+
+
+                    const employeeNumberLabel =
+                        document.querySelector(
+                            'label[for="employeeNumber"]'
+                        );
+
+
+                    const pinLabel =
+                        document.querySelector(
+                            'label[for="pin"]'
+                        );
+
+
+                    if (
+                        employeeNumberLabel
+                    ) {
+
+                        employeeNumberLabel.style.removeProperty(
+                            "display"
+                        );
+
+                    }
+
+
+                    if (
+                        pinLabel
+                    ) {
+
+                        pinLabel.style.removeProperty(
+                            "display"
+                        );
+
+                    }
+
+
+                    message.style.color =
+                        "#0b5ed7";
+
+
+                    message.innerHTML =
+                        "Ready for employee attendance.";
+
+
+                    return;
+
+                }
+
+
+                // =============================================
+                // Firebase User Exists
+                // =============================================
+
+                console.log(
+                    "ACTIVE EMPLOYEE AUTH SESSION:",
+                    user.uid
+                );
+
+
+                // =============================================
+                // Check Local Device Registration
+                // =============================================
+
+                const registeredEmployeeNumber =
+                    getRegisteredEmployeeNumber();
+
+
+                // =============================================
+                // No Registered Device
+                // =============================================
+                //
+                // This normally means this is the employee's
+                // FIRST registration.
+                //
+                // authenticateEmployee() may have just caused
+                // Firebase Auth to fire this listener.
+                //
+                // DO NOT call checkIn() from here.
+                //
+                // The original manual checkIn() process must
+                // be allowed to continue and create the device
+                // registration itself.
+                //
+                // =============================================
+
+                if (
+                    !registeredEmployeeNumber
+                ) {
+
+                    console.log(
+                        "NO LOCAL DEVICE REGISTRATION"
+                    );
+
+
+                    updateRegisteredDeviceDisplay();
+
+
+                    return;
+
+                }
+
+
+                // =============================================
+                // Registered Device Found
+                // =============================================
+
+                updateRegisteredDeviceDisplay();
+
+
+                // =============================================
+                // Prevent Duplicate QR Attendance Action
+                // =============================================
+
+                if (
+                    qrAttendanceActionStarted
+                ) {
+
+                    console.log(
+                        "QR attendance action already started."
+                    );
+
+
+                    return;
+
+                }
+
+
+                // Lock this QR page load BEFORE any awaits.
+                //
+                // This is important because Firebase may fire
+                // another authentication-state callback while
+                // asynchronous work is taking place.
+
+                qrAttendanceActionStarted =
+                    true;
+
+
+                // =============================================
+                // Validate Registered Employee
+                // =============================================
+
+                const registeredEmployee =
+                    await startRegisteredEmployeeAttendance();
+
+
+                if (
+                    !registeredEmployee
+                ) {
+
+                    // Validation failed.
+                    //
+                    // Allow the page to fall back to manual
+                    // login rather than performing attendance.
+
+                    qrAttendanceActionStarted =
+                        false;
+
+
+                    return;
+
+                }
+
+
+                // =============================================
+                // Automatic QR Attendance Action
+                // =============================================
+                //
+                // THIS is the ONLY automatic attendance call
+                // for an already registered device.
+                //
+                // Morning scan:
+                //     No attendance → Check In
+                //
+                // End-of-shift scan:
+                //     Existing Check In → Check Out
+                //
+                // Third scan:
+                //     Attendance complete → Inform employee
+                //
+                // =============================================
+
+                console.log(
+                    "STARTING AUTOMATIC QR ATTENDANCE:",
+                    registeredEmployee.employeeNumber
+                );
+
+
+                message.style.color =
+                    "#0b5ed7";
+
+
+                message.innerHTML =
+                    "Registered device detected. Starting attendance...";
+
+
+                await checkIn();
+
+
+                       } catch (
+                error
+            ) {
+
+                console.error(
+                    "QR attendance initialization error:",
+                    error
+                );
+
+
+                // IMPORTANT:
+                // Do NOT reset qrAttendanceActionStarted here.
+                //
+                // Once an automatic QR attendance action has begun,
+                // this page load must remain locked.
+                //
+                // If attendance partially succeeded before an error,
+                // allowing another Firebase auth callback to run could
+                // accidentally cause a second attendance action.
+
+
+                message.style.color =
+                    "red";
+
+
+                message.innerHTML =
+                    "❌ Unable to complete attendance."
+                    +
+                    "<br>Please scan the QR code again.";
+
+            }
+
+        }
+    );
+
 }
 
 // =====================================================
