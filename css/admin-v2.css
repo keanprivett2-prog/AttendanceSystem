@@ -6308,3 +6308,84 @@ strong {
 
 }
 
+/* =====================================================
+   Today's Attendance Pagination
+===================================================== */
+
+.dashboard-attendance-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+
+    padding: 18px 0 2px;
+}
+
+
+.dashboard-attendance-pagination button {
+    width: auto;
+
+    margin: 0;
+
+    padding: 9px 14px;
+
+    background: #ffffff;
+
+    color: var(--primary);
+
+    border:
+        1px solid rgba(11, 94, 215, 0.2);
+
+    border-radius: 8px;
+
+    box-shadow: none;
+
+    font-size: 13px;
+
+    font-weight: 700;
+}
+
+
+.dashboard-attendance-pagination button:hover:not(:disabled) {
+    background: var(--primary-soft);
+
+    border-color:
+        rgba(11, 94, 215, 0.35);
+
+    box-shadow: none;
+}
+
+
+.dashboard-attendance-pagination button:disabled {
+    opacity: 0.45;
+
+    cursor: not-allowed;
+
+    background: #f8fafc;
+
+    color: var(--text-muted);
+}
+
+
+.dashboard-attendance-page-info {
+    min-width: 90px;
+
+    text-align: center;
+
+    color: var(--text-muted);
+
+    font-size: 13px;
+
+    font-weight: 700;
+}
+
+
+@media (max-width: 600px) {
+
+    .dashboard-attendance-pagination {
+        justify-content: center;
+
+        flex-wrap: wrap;
+    }
+
+}

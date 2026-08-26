@@ -148,6 +148,11 @@ const employeeEndTimeInput =
         "employeeWorkArrangement"
     );
 
+    const employeeAfterHoursEnabledInput =
+    document.getElementById(
+        "employeeAfterHoursEnabled"
+    );
+
 const employeePinInput =
     document.getElementById("employeePin");
 
@@ -984,6 +989,9 @@ const employeeEndTime =
 const employeeWorkArrangement =
     employeeWorkArrangementInput.value.trim();
 
+const employeeAfterHoursEnabled =
+    employeeAfterHoursEnabledInput.checked;
+
 const employeePin =
     employeePinInput.value.trim();
 
@@ -1102,7 +1110,8 @@ const employeePin =
     employeeDepartment,
     employeeStartTime,
     employeeEndTime,
-    employeeWorkArrangement
+    employeeWorkArrangement,
+    employeeAfterHoursEnabled
 );
 
 } else {
@@ -1115,6 +1124,7 @@ const employeePin =
     employeeStartTime,
     employeeEndTime,
     employeeWorkArrangement,
+    employeeAfterHoursEnabled,
     employeePin
 );
 
@@ -1162,6 +1172,7 @@ async function createNewEmployee(
     employeeStartTime,
     employeeEndTime,
     employeeWorkArrangement,
+    employeeAfterHoursEnabled,
     employeePin
 ) {
 
@@ -1222,6 +1233,9 @@ async function createNewEmployee(
 
                 workArrangement:
                     employeeWorkArrangement,
+
+                    afterHoursEnabled:
+    employeeAfterHoursEnabled,
 
                 // Firebase Auth UID links the
                 // employee record to the hidden
@@ -1337,7 +1351,8 @@ async function updateExistingEmployee(
     employeeDepartment,
     employeeStartTime,
     employeeEndTime,
-    employeeWorkArrangement
+    employeeWorkArrangement,
+    employeeAfterHoursEnabled
 ) {
 
     const employeeReference =
@@ -1405,7 +1420,10 @@ async function updateExistingEmployee(
                 employeeEndTime,
 
             workArrangement:
-                employeeWorkArrangement
+    employeeWorkArrangement,
+
+afterHoursEnabled:
+    employeeAfterHoursEnabled
         }
     );
 
@@ -4359,6 +4377,11 @@ employeeEndTimeInput.value =
 
 employeeWorkArrangementInput.value =
     employee.workArrangement ?? "Office";
+
+
+employeeAfterHoursEnabledInput.checked =
+    employee.afterHoursEnabled === true;
+
 
 employeePinInput.value = "";
 

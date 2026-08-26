@@ -1013,6 +1013,614 @@ async function getTodayAttendanceRecord(
 }
 
 // =====================================================
+// After-Hours Attendance Helpers
+// =====================================================
+
+function getAfterHoursSessions(
+    attendanceRecord
+) {
+
+    if (
+        !attendanceRecord
+        ||
+        !Array.isArray(
+            attendanceRecord.afterHoursSessions
+        )
+    ) {
+
+        return [];
+    }
+
+
+    return attendanceRecord.afterHoursSessions;
+
+}
+
+
+// =====================================================
+// Get Open After-Hours Session
+// =====================================================
+
+function getOpenAfterHoursSession(
+    attendanceRecord
+) {
+
+    const sessions =
+        getAfterHoursSessions(
+            attendanceRecord
+        );
+
+
+    for (
+        let index =
+            sessions.length - 1;
+
+        index >= 0;
+
+        index--
+    ) {
+
+        const session =
+            sessions[index];
+
+
+        const hasCheckIn =
+            Boolean(
+                String(
+                    session?.checkInTime ??
+                    ""
+                ).trim()
+                ||
+                session?.checkInTimestamp
+            );
+
+
+        const hasCheckOut =
+            Boolean(
+                String(
+                    session?.checkOutTime ??
+                    ""
+                ).trim()
+                ||
+                session?.checkOutTimestamp
+            );
+
+
+        if (
+            hasCheckIn
+            &&
+            !hasCheckOut
+        ) {
+
+            return {
+                index:
+                    index,
+
+                session:
+                    session
+            };
+
+        }
+
+    }
+
+
+    return null;
+
+}
+
+
+// =====================================================
+// Calculate After-Hours Session Minutes
+// =====================================================
+
+function calculateAfterHoursSessionMinutes(
+    checkInTime,
+    checkOutTime
+) {
+
+    if (
+        !(checkInTime instanceof Date)
+        ||
+        !(checkOutTime instanceof Date)
+    ) {
+
+        return 0;
+    }
+
+
+    const differenceMilliseconds =
+        checkOutTime.getTime()
+        -
+        checkInTime.getTime();
+
+
+    if (
+        differenceMilliseconds <=
+        0
+    ) {
+
+        return 0;
+    }
+
+
+    return Math.floor(
+        differenceMilliseconds /
+        60000
+    );
+
+}
+
+
+// =====================================================
+// Calculate Total After-Hours Minutes
+// =====================================================
+
+function calculateTotalAfterHoursMinutes(
+    sessions
+) {
+
+    if (
+        !Array.isArray(
+            sessions
+        )
+    ) {
+
+        return 0;
+    }
+
+
+    return sessions.reduce(
+        function (
+            total,
+            session
+        ) {
+
+            const workedMinutes =
+                Number(
+                    session?.workedMinutes ??
+                    0
+                );
+
+
+            if (
+                !Number.isFinite(
+                    workedMinutes
+                )
+                ||
+                workedMinutes <
+                0
+            ) {
+
+                return total;
+
+            }
+
+
+            return (
+                total +
+                workedMinutes
+            );
+
+        },
+        0
+    );
+
+}
+
+// =====================================================
+// Format Minutes As Hours And Minutes
+// =====================================================
+
+function formatMinutesAsHoursAndMinutes(
+    totalMinutes
+) {
+
+    const safeMinutes =
+        Number(
+            totalMinutes ??
+            0
+        );
+
+
+    if (
+        !Number.isFinite(
+            safeMinutes
+        )
+        ||
+        safeMinutes <=
+        0
+    ) {
+
+        return "0h 00m";
+
+    }
+
+
+    const wholeMinutes =
+        Math.floor(
+            safeMinutes
+        );
+
+
+    const hours =
+        Math.floor(
+            wholeMinutes /
+            60
+        );
+
+
+    const minutes =
+        wholeMinutes %
+        60;
+
+
+    return (
+        hours
+        +
+        "h "
+        +
+        String(
+            minutes
+        ).padStart(
+            2,
+            "0"
+        )
+        +
+        "m"
+    );
+
+}
+
+// =====================================================
+// Start After-Hours Session
+// =====================================================
+
+async function startAfterHoursSession(
+    employee,
+    attendanceRecord,
+    workLocation = "Remote"
+) {
+
+    if (
+        !employee
+        ||
+        !attendanceRecord?.reference
+    ) {
+
+        throw new Error(
+            "AFTER_HOURS_ATTENDANCE_MISSING"
+        );
+
+    }
+
+    // =========================================
+// Verify Employee After-Hours Permission
+// =========================================
+
+if (
+    employee.afterHoursEnabled !== true
+) {
+
+    throw new Error(
+        "AFTER_HOURS_NOT_ENABLED"
+    );
+
+}
+
+
+    const afterHoursCheckInTime =
+        new Date(
+            originalScanTime.getTime()
+        );
+
+
+    const attendanceReference =
+        attendanceRecord.reference;
+
+
+    let savedSessionNumber =
+        0;
+
+
+    await runTransaction(
+        db,
+        async function (
+            transaction
+        ) {
+
+            // =========================================
+            // Load Current Attendance
+            // =========================================
+
+            const attendanceSnapshot =
+                await transaction.get(
+                    attendanceReference
+                );
+
+
+            if (
+                !attendanceSnapshot.exists()
+            ) {
+
+                throw new Error(
+                    "ATTENDANCE_RECORD_NOT_FOUND"
+                );
+
+            }
+
+
+            const currentAttendance =
+                attendanceSnapshot.data();
+
+
+            // =========================================
+            // Normal Shift Must Be Complete
+            // =========================================
+
+            const hasNormalCheckIn =
+                Boolean(
+                    String(
+                        currentAttendance.time ??
+                        ""
+                    ).trim()
+                    ||
+                    currentAttendance.scanTimestamp
+                    ||
+                    currentAttendance.checkInTimestamp
+                );
+
+
+            const hasNormalCheckOut =
+                Boolean(
+                    String(
+                        currentAttendance.checkOutTime ??
+                        ""
+                    ).trim()
+                    ||
+                    currentAttendance.checkOutTimestamp
+                );
+
+
+            if (
+                !hasNormalCheckIn
+                ||
+                !hasNormalCheckOut
+            ) {
+
+                throw new Error(
+                    "NORMAL_SHIFT_NOT_COMPLETE"
+                );
+
+            }
+
+
+            // =========================================
+            // Load Existing After-Hours Sessions
+            // =========================================
+
+            const sessions =
+                Array.isArray(
+                    currentAttendance.afterHoursSessions
+                )
+                    ?
+                    [
+                        ...currentAttendance.afterHoursSessions
+                    ]
+                    :
+                    [];
+
+
+            // =========================================
+            // Prevent Two Open Sessions
+            // =========================================
+
+            const openSession =
+                getOpenAfterHoursSession({
+                    afterHoursSessions:
+                        sessions
+                });
+
+
+            if (
+                openSession
+            ) {
+
+                throw new Error(
+                    "AFTER_HOURS_SESSION_ALREADY_OPEN"
+                );
+
+            }
+
+
+            // =========================================
+            // Create New Session
+            // =========================================
+
+            const newSession = {
+
+                sessionNumber:
+                    sessions.length + 1,
+
+                checkInTime:
+                    afterHoursCheckInTime
+                        .toLocaleTimeString(
+                            "en-ZA"
+                        ),
+
+                checkInTimestamp:
+                    afterHoursCheckInTime,
+
+                checkOutTime:
+                    "",
+
+                checkOutTimestamp:
+                    null,
+
+                workedMinutes:
+                    0,
+
+                workLocation:
+                    workLocation,
+
+                checkInMethod:
+                    "QR Code",
+
+                checkOutMethod:
+                    "",
+
+                deviceId:
+                    getDeviceId(),
+
+                fingerprint:
+                    getFingerprint()
+
+            };
+
+
+            sessions.push(
+                newSession
+            );
+
+
+            savedSessionNumber =
+                newSession.sessionNumber;
+
+
+            // =========================================
+            // Update SAME Attendance Record
+            // =========================================
+
+            transaction.update(
+                attendanceReference,
+                {
+
+                    afterHoursSessions:
+                        sessions,
+
+                    afterHoursActive:
+                        true,
+
+                    afterHoursWorkedMinutes:
+                        calculateTotalAfterHoursMinutes(
+                            sessions
+                        ),
+
+                    updatedAt:
+                        serverTimestamp()
+
+                }
+            );
+
+        }
+    );
+
+
+    // =============================================
+    // Audit Log
+    // =============================================
+
+    await writeAuditLog({
+
+        category:
+            "Attendance",
+
+        action:
+            "After-Hours Check-In",
+
+        description:
+            `${employee.name ?? employee.employeeNumber} started after-hours work at ${afterHoursCheckInTime.toLocaleTimeString("en-ZA")}.`,
+
+        actorType:
+            "Employee",
+
+        actorName:
+            employee.name ??
+            employee.employeeNumber ??
+            "Unknown Employee",
+
+        actorId:
+            employee.employeeNumber ??
+            "",
+
+        targetType:
+            "Employee",
+
+        targetName:
+            employee.name ??
+            employee.employeeNumber ??
+            "Unknown Employee",
+
+        targetId:
+            employee.employeeNumber ??
+            "",
+
+        source:
+            "Employee Attendance",
+
+        metadata: {
+
+            employeeNumber:
+                employee.employeeNumber ??
+                "",
+
+            sessionNumber:
+                savedSessionNumber,
+
+            checkInTime:
+                afterHoursCheckInTime
+                    .toLocaleTimeString(
+                        "en-ZA"
+                    ),
+
+            workLocation:
+                workLocation,
+
+            deviceId:
+                getDeviceId()
+
+        }
+
+    });
+
+
+    // =============================================
+    // Employee Message
+    // =============================================
+
+    message.style.color =
+        "green";
+
+
+    message.innerHTML =
+        "✅ After-hours work started."
+        +
+        "<br><br>"
+        +
+        "Employee: "
+        +
+        escapeHtml(
+            employee.name ??
+            employee.employeeNumber
+        )
+        +
+        "<br>After-Hours Check In: "
+        +
+        escapeHtml(
+            afterHoursCheckInTime
+                .toLocaleTimeString(
+                    "en-ZA"
+                )
+        );
+
+
+    resetCheckInForm();
+
+    updateRegisteredDeviceDisplay();
+
+}
+
+// =====================================================
 // Get Registered Employee
 // =====================================================
 
@@ -2715,45 +3323,116 @@ if (
 
 
         // =================================================
-        // EXISTING COMPLETE ATTENDANCE
-        // =================================================
+// EXISTING COMPLETE ATTENDANCE
+// =================================================
+//
+// Normal attendance is complete.
+//
+// Employees with afterHoursEnabled === true
+// may start or end an after-hours session.
+//
+// Employees without permission keep the original
+// "attendance complete" behaviour.
+//
+// =================================================
 
-        if (
+if (
+    existingAttendance
+    &&
+    hasExistingCheckIn
+    &&
+    hasExistingCheckOut
+) {
+
+    // =============================================
+    // After-Hours Not Enabled
+    // =============================================
+
+    if (
+        employee.afterHoursEnabled !==
+        true
+    ) {
+
+        message.style.color =
+            "orange";
+
+
+        message.innerHTML =
+            "⚠️ Your attendance for today is already complete."
+            +
+            "<br>Check In: "
+            +
+            escapeHtml(
+                existingAttendance.time ??
+                "-"
+            )
+            +
+            "<br>Check Out: "
+            +
+            escapeHtml(
+                existingAttendance.checkOutTime ??
+                "-"
+            );
+
+
+        checkInButton.disabled =
+            false;
+
+
+        return;
+
+    }
+
+
+    // =============================================
+    // Check Existing After-Hours State
+    // =============================================
+
+    const openAfterHoursSession =
+        getOpenAfterHoursSession(
             existingAttendance
-            &&
-            hasExistingCheckIn
-            &&
-            hasExistingCheckOut
-        ) {
-
-            message.style.color =
-                "orange";
-
-            message.innerHTML =
-                "⚠️ Your attendance for today is already complete."
-                +
-                "<br>Check In: "
-                +
-                escapeHtml(
-                    existingAttendance.time ??
-                    "-"
-                )
-                +
-                "<br>Check Out: "
-                +
-                escapeHtml(
-                    existingAttendance.checkOutTime ??
-                    "-"
-                );
+        );
 
 
-            checkInButton.disabled =
-                false;
+    // =============================================
+    // Open Session → After-Hours Check-Out
+    // =============================================
+
+    if (
+        openAfterHoursSession
+    ) {
+
+        await endAfterHoursSession(
+            employee,
+            existingAttendance
+        );
 
 
-            return;
+        return;
 
-        }
+    }
+
+
+    // =============================================
+    // No Open Session → After-Hours Check-In
+    // =============================================
+
+    const afterHoursWorkLocation =
+        getEmployeeWorkArrangement(
+            employee
+        );
+
+
+    await startAfterHoursSession(
+        employee,
+        existingAttendance,
+        afterHoursWorkLocation
+    );
+
+
+    return;
+
+}
 
 
         // =================================================

@@ -178,6 +178,16 @@ let currentDashboardAttendanceRecords =
     [];
 
     // =====================================
+// Today's Attendance Pagination
+// =====================================
+
+const DASHBOARD_ATTENDANCE_PAGE_SIZE =
+    10;
+
+let currentDashboardAttendancePage =
+    1;
+
+    // =====================================
 // Attendance Settings
 // =====================================
 
@@ -1255,12 +1265,57 @@ function displayAttendanceTable(
     }
 
     const sortedRecords =
-        [...attendanceRecords].sort(
-            compareAttendanceTimesDescending
-        );
+    [...attendanceRecords].sort(
+        compareAttendanceTimesDescending
+    );
 
-    sortedRecords.forEach(
-        (record) => {
+const totalPages =
+    Math.max(
+        1,
+        Math.ceil(
+            sortedRecords.length /
+            DASHBOARD_ATTENDANCE_PAGE_SIZE
+        )
+    );
+
+if (
+    currentDashboardAttendancePage >
+    totalPages
+) {
+
+    currentDashboardAttendancePage =
+        totalPages;
+}
+
+if (
+    currentDashboardAttendancePage <
+    1
+) {
+
+    currentDashboardAttendancePage =
+        1;
+}
+
+const startIndex =
+    (
+        currentDashboardAttendancePage -
+        1
+    )
+    *
+    DASHBOARD_ATTENDANCE_PAGE_SIZE;
+
+const endIndex =
+    startIndex +
+    DASHBOARD_ATTENDANCE_PAGE_SIZE;
+
+const pageRecords =
+    sortedRecords.slice(
+        startIndex,
+        endIndex
+    );
+
+pageRecords.forEach(
+    (record) => {
 
             const row =
                 document.createElement(
@@ -1432,11 +1487,20 @@ const hoursWorked =
 
             `;
 
-            attendanceTableBody.appendChild(
+                        attendanceTableBody.appendChild(
                 row
             );
 
         }
+    );
+
+
+    // =====================================
+    // Update Attendance Pagination
+    // =====================================
+
+    updateAttendancePagination(
+        totalPages
     );
 
 }
@@ -1525,6 +1589,201 @@ const differenceMilliseconds =
     }
 
     return 0;
+
+}
+
+// =====================================
+// Today's Attendance Pagination
+// =====================================
+
+function updateAttendancePagination(
+    totalPages
+) {
+
+    const attendanceTable =
+        attendanceTableBody?.closest(
+            "table"
+        );
+
+
+    if (
+        !attendanceTable
+    ) {
+
+        return;
+    }
+
+
+    let paginationContainer =
+        document.getElementById(
+            "dashboardAttendancePagination"
+        );
+
+
+    // =====================================
+    // Create Pagination Container
+    // =====================================
+
+    if (
+        !paginationContainer
+    ) {
+
+        paginationContainer =
+            document.createElement(
+                "div"
+            );
+
+        paginationContainer.id =
+            "dashboardAttendancePagination";
+
+        paginationContainer.className =
+            "dashboard-attendance-pagination";
+
+
+        attendanceTable.insertAdjacentElement(
+            "afterend",
+            paginationContainer
+        );
+
+    }
+
+
+    // =====================================
+    // Hide Pagination When Not Needed
+    // =====================================
+
+    if (
+        totalPages <=
+        1
+    ) {
+
+        paginationContainer.innerHTML =
+            "";
+
+        paginationContainer.hidden =
+            true;
+
+        return;
+
+    }
+
+
+    paginationContainer.hidden =
+        false;
+
+
+    // =====================================
+    // Render Controls
+    // =====================================
+
+    paginationContainer.innerHTML = `
+
+        <button
+            type="button"
+            id="previousDashboardAttendancePage"
+            ${
+                currentDashboardAttendancePage <= 1
+                    ?
+                    "disabled"
+                    :
+                    ""
+            }
+        >
+            Previous
+        </button>
+
+
+        <span class="dashboard-attendance-page-info">
+            Page
+            ${currentDashboardAttendancePage}
+            of
+            ${totalPages}
+        </span>
+
+
+        <button
+            type="button"
+            id="nextDashboardAttendancePage"
+            ${
+                currentDashboardAttendancePage >= totalPages
+                    ?
+                    "disabled"
+                    :
+                    ""
+            }
+        >
+            Next
+        </button>
+
+    `;
+
+
+    // =====================================
+    // Previous Page
+    // =====================================
+
+    const previousButton =
+        document.getElementById(
+            "previousDashboardAttendancePage"
+        );
+
+
+    previousButton?.addEventListener(
+        "click",
+        function () {
+
+            if (
+                currentDashboardAttendancePage <=
+                1
+            ) {
+
+                return;
+            }
+
+
+            currentDashboardAttendancePage--;
+
+
+            displayAttendanceTable(
+                currentDashboardAttendanceRecords
+            );
+
+        }
+    );
+
+
+    // =====================================
+    // Next Page
+    // =====================================
+
+    const nextButton =
+        document.getElementById(
+            "nextDashboardAttendancePage"
+        );
+
+
+    nextButton?.addEventListener(
+        "click",
+        function () {
+
+            if (
+                currentDashboardAttendancePage >=
+                totalPages
+            ) {
+
+                return;
+            }
+
+
+            currentDashboardAttendancePage++;
+
+
+            displayAttendanceTable(
+                currentDashboardAttendanceRecords
+            );
+
+        }
+    );
 
 }
 

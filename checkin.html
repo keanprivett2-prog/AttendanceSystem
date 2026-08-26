@@ -19,6 +19,16 @@
     href="css/style.css?v=12"
 >
 
+<link
+    rel="manifest"
+    href="manifest.json"
+>
+
+<meta
+    name="theme-color"
+    content="#0b5ed7"
+>
+
 </head>
 
 <body>
@@ -424,6 +434,50 @@
         type="module"
         src="js/checkin.js?v=2"
     ></script>
+
+    <script>
+    if (
+        "serviceWorker" in navigator
+    ) {
+
+        window.addEventListener(
+            "load",
+            function () {
+
+                navigator.serviceWorker
+                    .register(
+                        "./service-worker.js"
+                    )
+                    .then(
+                        function (
+                            registration
+                        ) {
+
+                            console.log(
+                                "R-E-D Attendance service worker registered:",
+                                registration.scope
+                            );
+
+                        }
+                    )
+                    .catch(
+                        function (
+                            error
+                        ) {
+
+                            console.error(
+                                "R-E-D Attendance service worker registration failed:",
+                                error
+                            );
+
+                        }
+                    );
+
+            }
+        );
+
+    }
+</script>
 
 </body>
 
