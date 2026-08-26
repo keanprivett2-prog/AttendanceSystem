@@ -1272,21 +1272,89 @@ function displayAttendanceTable(
                     record.status
                 );
 
-            const checkInTime =
-                record.time ??
-                "-";
+            const normalizedStatus =
+    normalizeStatus(
+        record.status
+    );
 
-            const checkOutTime =
-                record.checkOutTime ??
-                "Still at work";
 
-            const hoursWorked =
-                calculateHoursWorked(
-                    record
-                );
+const nonWorkingStatuses = [
+
+    "absent",
+
+    "annual leave",
+
+    "sick leave",
+
+    "family responsibility leave",
+
+    "maternity leave",
+
+    "unpaid leave",
+
+    "public holiday"
+
+];
+
+
+const isNonWorkingRecord =
+    nonWorkingStatuses.includes(
+        normalizedStatus
+    );
+
+
+const hasValidCheckIn =
+    Boolean(
+        String(
+            record.time ??
+            ""
+        ).trim()
+        ||
+        record.scanTimestamp
+        ||
+        record.checkInTimestamp
+    );
+
+
+const checkInTime =
+    isNonWorkingRecord
+        ?
+        "N/A"
+        :
+        (
+            record.time ??
+            "-"
+        );
+
+
+const checkOutTime =
+    isNonWorkingRecord
+        ?
+        "N/A"
+        :
+        (
+            hasValidCheckIn
+                ?
+                (
+                    record.checkOutTime ??
+                    "Still at work"
+                )
+                :
+                "N/A"
+        );
+
+
+const hoursWorked =
+    isNonWorkingRecord
+        ?
+        "N/A"
+        :
+        calculateHoursWorked(
+            record
+        );
 
             let earlyExitDisplay =
-                "-";
+                "N/A";
 
             if (
                 record.checkOutTime
