@@ -185,6 +185,21 @@ const summaryOnTime =
         "summaryOnTime"
     );
 
+    const summaryNormalHours =
+    document.getElementById(
+        "summaryNormalHours"
+    );
+
+const summaryAfterHours =
+    document.getElementById(
+        "summaryAfterHours"
+    );
+
+const summaryTotalHours =
+    document.getElementById(
+        "summaryTotalHours"
+    );
+
 const summaryLate =
     document.getElementById(
         "summaryLate"
@@ -2756,6 +2771,196 @@ const isMissingCheckOut =
                         attendance
                     );
 
+                    // =====================================
+// After-Hours Attendance
+// =====================================
+
+const afterHoursSessions =
+    Array.isArray(
+        attendance.afterHoursSessions
+    )
+        ?
+        attendance.afterHoursSessions
+        :
+        [];
+
+
+const afterHoursWorkedMinutes =
+    getAfterHoursWorkedMinutes(
+        attendance
+    );
+
+
+const afterHoursWorked =
+    formatAfterHoursWorked(
+        attendance
+    );
+
+    // =====================================
+// Combined Normal + After-Hours Total
+// =====================================
+
+let normalWorkedMinutes =
+    0;
+
+
+const normalHoursMatch =
+    String(
+        hoursWorked ??
+        ""
+    ).match(
+        /(\d+)h\s+(\d+)m/
+    );
+
+
+if (
+    normalHoursMatch
+) {
+
+    normalWorkedMinutes =
+        (
+            Number(
+                normalHoursMatch[1]
+            )
+            *
+            60
+        )
+        +
+        Number(
+            normalHoursMatch[2]
+        );
+
+}
+
+
+const combinedWorkedMinutes =
+    normalWorkedMinutes
+    +
+    afterHoursWorkedMinutes;
+
+
+const combinedHoursWorked =
+    formatMinutesAsHours(
+        combinedWorkedMinutes
+    );
+
+
+const hasAfterHoursAttendance =
+    afterHoursSessions.length >
+    0
+    ||
+    afterHoursWorkedMinutes >
+    0
+    ||
+    attendance.afterHoursActive ===
+    true;
+
+
+const afterHoursSessionsHtml =
+    afterHoursSessions
+        .map(
+            function (
+                session,
+                index
+            ) {
+
+                const sessionNumber =
+                    Number(
+                        session?.sessionNumber ??
+                        index + 1
+                    );
+
+
+                const sessionCheckIn =
+                    String(
+                        session?.checkInTime ??
+                        ""
+                    ).trim()
+                    ||
+                    "N/A";
+
+
+                const sessionCheckOut =
+                    String(
+                        session?.checkOutTime ??
+                        ""
+                    ).trim()
+                    ||
+                    (
+                        attendance.afterHoursActive ===
+                        true
+                            ?
+                            "In progress"
+                            :
+                            "N/A"
+                    );
+
+
+                const sessionMinutes =
+                    Number(
+                        session?.workedMinutes ??
+                        0
+                    );
+
+
+                const sessionWorked =
+                    formatMinutesAsHours(
+                        Number.isFinite(
+                            sessionMinutes
+                        )
+                            ?
+                            Math.max(
+                                0,
+                                sessionMinutes
+                            )
+                            :
+                            0
+                    );
+
+
+                const sessionWorkLocation =
+                    String(
+                        session?.workLocation ??
+                        ""
+                    ).trim()
+                    ||
+                    "N/A";
+
+
+                return `
+                    <div class="history-clean-row">
+
+                        <span class="history-clean-label">
+    After-Hours Worked ${escapeHtml(
+        sessionNumber
+    )}
+</span>
+
+                        <span class="history-clean-value">
+                            ${escapeHtml(
+                                sessionCheckIn
+                            )}
+                            →
+                            ${escapeHtml(
+                                sessionCheckOut
+                            )}
+                            &nbsp;|&nbsp;
+                            ${escapeHtml(
+                                sessionWorked
+                            )}
+                            &nbsp;|&nbsp;
+                            ${escapeHtml(
+                                sessionWorkLocation
+                            )}
+                        </span>
+
+                    </div>
+                `;
+
+            }
+        )
+        .join("");
+
                 const earlyExit =
                     attendance.earlyExit ===
                     true;
@@ -2910,8 +3115,8 @@ const authorisedDepartureNote =
                             <div class="history-time-item">
 
                                 <span class="history-time-label">
-                                    Hours Worked
-                                </span>
+    Normal Hours Worked
+</span>
 
                                 <strong>
                                     ${escapeHtml(
@@ -2919,9 +3124,55 @@ const authorisedDepartureNote =
                                     )}
                                 </strong>
 
-                            </div>
+                                                        </div>
 
                         </div>
+
+
+                        ${
+    hasAfterHoursAttendance
+        ?
+        `
+
+        <div class="history-clean-row history-after-hours-total">
+
+            <span class="history-clean-label">
+    After-Hours Worked
+</span>
+
+            <span class="history-clean-value">
+                ${escapeHtml(
+                    afterHoursWorked
+                )}
+            </span>
+
+        </div>
+
+
+        ${afterHoursSessionsHtml}
+
+
+        <div class="history-clean-row history-grand-total">
+
+            <span class="history-clean-label">
+                Total Hours Worked
+            </span>
+
+            <span class="history-clean-value">
+                <strong>
+                    ${escapeHtml(
+                        combinedHoursWorked
+                    )}
+                </strong>
+            </span>
+
+        </div>
+
+        `
+        :
+        ""
+}
+
 
                         <div class="history-clean-row">
 
@@ -3302,6 +3553,12 @@ async function loadAttendanceSummary() {
         let leave =
             0;
 
+            let normalWorkedMinutes =
+    0;
+
+let afterHoursWorkedMinutes =
+    0;
+
         attendanceSnapshot.forEach(
             function (
                 attendanceDocument
@@ -3309,6 +3566,46 @@ async function loadAttendanceSummary() {
 
                 const attendance =
                     attendanceDocument.data();
+
+                    const normalHoursWorked =
+    calculateHoursWorked(
+        attendance
+    );
+
+
+const normalHoursMatch =
+    String(
+        normalHoursWorked ??
+        ""
+    ).match(
+        /(\d+)h\s+(\d+)m/
+    );
+
+
+if (
+    normalHoursMatch
+) {
+
+    normalWorkedMinutes +=
+        (
+            Number(
+                normalHoursMatch[1]
+            )
+            *
+            60
+        )
+        +
+        Number(
+            normalHoursMatch[2]
+        );
+
+}
+
+
+afterHoursWorkedMinutes +=
+    getAfterHoursWorkedMinutes(
+        attendance
+    );
 
                 switch (
                     attendance.status
@@ -3385,6 +3682,47 @@ async function loadAttendanceSummary() {
 
         }
 
+        const combinedWorkedMinutes =
+    normalWorkedMinutes
+    +
+    afterHoursWorkedMinutes;
+
+
+if (
+    summaryNormalHours
+) {
+
+    summaryNormalHours.textContent =
+        formatMinutesAsHours(
+            normalWorkedMinutes
+        );
+
+}
+
+
+if (
+    summaryAfterHours
+) {
+
+    summaryAfterHours.textContent =
+        formatMinutesAsHours(
+            afterHoursWorkedMinutes
+        );
+
+}
+
+
+if (
+    summaryTotalHours
+) {
+
+    summaryTotalHours.textContent =
+        formatMinutesAsHours(
+            combinedWorkedMinutes
+        );
+
+}
+
     } catch (
         error
     ) {
@@ -3441,6 +3779,146 @@ function resetAttendanceSummary() {
 
     }
 
+    if (
+        summaryNormalHours
+    ) {
+
+        summaryNormalHours.textContent =
+            "0h 00m";
+
+    }
+
+    if (
+        summaryAfterHours
+    ) {
+
+        summaryAfterHours.textContent =
+            "0h 00m";
+
+    }
+
+    if (
+        summaryTotalHours
+    ) {
+
+        summaryTotalHours.textContent =
+            "0h 00m";
+
+    }
+
+}
+
+// =====================================
+// Get After-Hours Worked Minutes
+// =====================================
+
+function getAfterHoursWorkedMinutes(
+    attendance
+) {
+
+    if (
+        !attendance
+    ) {
+
+        return 0;
+
+    }
+
+
+    // Prefer the total already calculated
+    // and stored by checkin.js.
+
+    const storedTotal =
+        Number(
+            attendance.afterHoursWorkedMinutes ??
+            0
+        );
+
+
+    if (
+        Number.isFinite(
+            storedTotal
+        )
+        &&
+        storedTotal >=
+        0
+    ) {
+
+        return Math.floor(
+            storedTotal
+        );
+
+    }
+
+
+    // Fallback for older records:
+    // calculate the total from the sessions.
+
+    const sessions =
+        Array.isArray(
+            attendance.afterHoursSessions
+        )
+            ?
+            attendance.afterHoursSessions
+            :
+            [];
+
+
+    return sessions.reduce(
+        function (
+            total,
+            session
+        ) {
+
+            const sessionMinutes =
+                Number(
+                    session?.workedMinutes ??
+                    0
+                );
+
+
+            if (
+                !Number.isFinite(
+                    sessionMinutes
+                )
+                ||
+                sessionMinutes <
+                0
+            ) {
+
+                return total;
+
+            }
+
+
+            return (
+                total +
+                Math.floor(
+                    sessionMinutes
+                )
+            );
+
+        },
+        0
+    );
+
+}
+
+
+// =====================================
+// Format After-Hours Worked
+// =====================================
+
+function formatAfterHoursWorked(
+    attendance
+) {
+
+    return formatMinutesAsHours(
+        getAfterHoursWorkedMinutes(
+            attendance
+        )
+    );
+
 }
 
 
@@ -3452,6 +3930,47 @@ function calculateHoursWorked(
     attendance
 ) {
 
+    // =====================================
+    // Attendance Status
+    // =====================================
+
+    const attendanceStatus =
+        String(
+            attendance.status ??
+            ""
+        ).trim();
+
+
+    // =====================================
+    // Statuses That Do Not Have Worked Hours
+    // =====================================
+
+    const nonWorkingStatuses = [
+        "Annual Leave",
+        "Sick Leave",
+        "Family Responsibility Leave",
+        "Maternity Leave",
+        "Unpaid Leave",
+        "Public Holiday",
+        "Absent"
+    ];
+
+
+    if (
+        nonWorkingStatuses.includes(
+            attendanceStatus
+        )
+    ) {
+
+        return "N/A";
+
+    }
+
+
+    // =====================================
+    // Employee Still Working
+    // =====================================
+
     if (
         !attendance.checkOutTime
         &&
@@ -3462,12 +3981,18 @@ function calculateHoursWorked(
 
     }
 
+
+    // =====================================
+    // Standard Work Start Time
+    // =====================================
+
     const standardStartParts =
         String(
             standardWorkStartTime
         )
             .split(":")
             .map(Number);
+
 
     const standardStartHour =
         Number.isFinite(
@@ -3478,6 +4003,7 @@ function calculateHoursWorked(
             :
             8;
 
+
     const standardStartMinute =
         Number.isFinite(
             standardStartParts[1]
@@ -3487,12 +4013,19 @@ function calculateHoursWorked(
             :
             0;
 
+
+    // =====================================
+    // Timestamp Calculation
+    // =====================================
+
     const checkInTimestamp =
         attendance.checkInTimestamp ??
         attendance.scanTimestamp;
 
+
     const checkOutTimestamp =
         attendance.checkOutTimestamp;
+
 
     if (
         checkInTimestamp
@@ -3509,13 +4042,16 @@ function calculateHoursWorked(
         const actualCheckInDate =
             checkInTimestamp.toDate();
 
+
         const checkOutDate =
             checkOutTimestamp.toDate();
+
 
         const standardStartDate =
             new Date(
                 actualCheckInDate
             );
+
 
         standardStartDate.setHours(
             standardStartHour,
@@ -3523,6 +4059,7 @@ function calculateHoursWorked(
             0,
             0
         );
+
 
         const effectiveCheckInDate =
             actualCheckInDate <
@@ -3532,10 +4069,12 @@ function calculateHoursWorked(
                 :
                 actualCheckInDate;
 
+
         const differenceMilliseconds =
             checkOutDate.getTime()
             -
             effectiveCheckInDate.getTime();
+
 
         if (
             differenceMilliseconds <
@@ -3546,22 +4085,30 @@ function calculateHoursWorked(
 
         }
 
+
         const elapsedMinutes =
             Math.floor(
                 differenceMilliseconds /
                 60000
             );
 
+
         const totalMinutes =
             deductUnpaidBreak(
                 elapsedMinutes
             );
+
 
         return formatMinutesAsHours(
             totalMinutes
         );
 
     }
+
+
+    // =====================================
+    // Fallback Time String Calculation
+    // =====================================
 
     if (
         attendance.time
@@ -3576,12 +4123,14 @@ function calculateHoursWorked(
                 .split(":")
                 .map(Number);
 
+
         const checkOutParts =
             String(
                 attendance.checkOutTime
             )
                 .split(":")
                 .map(Number);
+
 
         if (
             checkInParts.length <
@@ -3603,6 +4152,7 @@ function calculateHoursWorked(
 
         }
 
+
         const actualCheckInMinutes =
             (
                 checkInParts[0] *
@@ -3610,6 +4160,7 @@ function calculateHoursWorked(
             )
             +
             checkInParts[1];
+
 
         const standardStartMinutes =
             (
@@ -3619,11 +4170,13 @@ function calculateHoursWorked(
             +
             standardStartMinute;
 
+
         const effectiveCheckInMinutes =
             Math.max(
                 actualCheckInMinutes,
                 standardStartMinutes
             );
+
 
         const checkOutMinutes =
             (
@@ -3633,9 +4186,11 @@ function calculateHoursWorked(
             +
             checkOutParts[1];
 
+
         const elapsedMinutes =
             checkOutMinutes -
             effectiveCheckInMinutes;
+
 
         if (
             elapsedMinutes <
@@ -3646,16 +4201,19 @@ function calculateHoursWorked(
 
         }
 
+
         const totalMinutes =
             deductUnpaidBreak(
                 elapsedMinutes
             );
+
 
         return formatMinutesAsHours(
             totalMinutes
         );
 
     }
+
 
     return "Not available";
 
