@@ -1621,6 +1621,485 @@ if (
 }
 
 // =====================================================
+// End After-Hours Session
+// =====================================================
+
+async function endAfterHoursSession(
+    employee,
+    attendanceRecord
+) {
+
+    if (
+        !employee
+        ||
+        !attendanceRecord?.reference
+    ) {
+
+        throw new Error(
+            "AFTER_HOURS_ATTENDANCE_MISSING"
+        );
+
+    }
+
+
+    // =========================================
+    // Verify Employee After-Hours Permission
+    // =========================================
+
+    if (
+        employee.afterHoursEnabled !==
+        true
+    ) {
+
+        throw new Error(
+            "AFTER_HOURS_NOT_ENABLED"
+        );
+
+    }
+
+
+    const afterHoursCheckOutTime =
+        new Date(
+            originalScanTime.getTime()
+        );
+
+
+    const attendanceReference =
+        attendanceRecord.reference;
+
+
+    let savedSessionNumber =
+        0;
+
+
+    let savedSessionMinutes =
+        0;
+
+
+    let savedTotalAfterHoursMinutes =
+        0;
+
+
+    let savedCheckInTime =
+        "";
+
+
+    // =============================================
+    // Update Attendance Safely
+    // =============================================
+
+    await runTransaction(
+        db,
+        async function (
+            transaction
+        ) {
+
+            // =========================================
+            // Reload Current Attendance
+            // =========================================
+
+            const attendanceSnapshot =
+                await transaction.get(
+                    attendanceReference
+                );
+
+
+            if (
+                !attendanceSnapshot.exists()
+            ) {
+
+                throw new Error(
+                    "ATTENDANCE_RECORD_NOT_FOUND"
+                );
+
+            }
+
+
+            const currentAttendance =
+                attendanceSnapshot.data();
+
+
+            // =========================================
+            // Load Current After-Hours Sessions
+            // =========================================
+
+            const sessions =
+                Array.isArray(
+                    currentAttendance.afterHoursSessions
+                )
+                    ?
+                    currentAttendance.afterHoursSessions.map(
+                        function (
+                            session
+                        ) {
+
+                            return {
+                                ...session
+                            };
+
+                        }
+                    )
+                    :
+                    [];
+
+
+            // =========================================
+            // Find Open After-Hours Session
+            // =========================================
+
+            const openSession =
+                getOpenAfterHoursSession({
+                    afterHoursSessions:
+                        sessions
+                });
+
+
+            if (
+                !openSession
+            ) {
+
+                throw new Error(
+                    "NO_OPEN_AFTER_HOURS_SESSION"
+                );
+
+            }
+
+
+            const sessionIndex =
+                openSession.index;
+
+
+            const session =
+                sessions[
+                    sessionIndex
+                ];
+
+
+            // =========================================
+            // Determine After-Hours Check-In Date
+            // =========================================
+
+            let afterHoursCheckInDate =
+                null;
+
+
+            if (
+                session.checkInTimestamp
+            ) {
+
+                if (
+                    session.checkInTimestamp instanceof
+                    Date
+                ) {
+
+                    afterHoursCheckInDate =
+                        new Date(
+                            session.checkInTimestamp
+                        );
+
+                } else if (
+                    typeof session.checkInTimestamp.toDate ===
+                    "function"
+                ) {
+
+                    afterHoursCheckInDate =
+                        session.checkInTimestamp.toDate();
+
+                }
+
+            }
+
+
+            // =========================================
+            // Fallback Using Stored Check-In Time
+            // =========================================
+
+            if (
+                !afterHoursCheckInDate
+                &&
+                session.checkInTime
+            ) {
+
+                const timeParts =
+                    String(
+                        session.checkInTime
+                    )
+                        .split(":")
+                        .map(Number);
+
+
+                if (
+                    timeParts.length >=
+                    2
+                    &&
+                    Number.isFinite(
+                        timeParts[0]
+                    )
+                    &&
+                    Number.isFinite(
+                        timeParts[1]
+                    )
+                ) {
+
+                    afterHoursCheckInDate =
+                        new Date(
+                            afterHoursCheckOutTime
+                        );
+
+
+                    afterHoursCheckInDate.setHours(
+                        timeParts[0],
+                        timeParts[1],
+                        Number.isFinite(
+                            timeParts[2]
+                        )
+                            ?
+                            timeParts[2]
+                            :
+                            0,
+                        0
+                    );
+
+                }
+
+            }
+
+
+            if (
+                !afterHoursCheckInDate
+            ) {
+
+                throw new Error(
+                    "AFTER_HOURS_CHECKIN_TIME_INVALID"
+                );
+
+            }
+
+
+            // =========================================
+            // Calculate Worked Minutes
+            // =========================================
+
+            const workedMinutes =
+                calculateAfterHoursSessionMinutes(
+                    afterHoursCheckInDate,
+                    afterHoursCheckOutTime
+                );
+
+
+            savedSessionNumber =
+                Number(
+                    session.sessionNumber ??
+                    sessionIndex + 1
+                );
+
+
+            savedSessionMinutes =
+                workedMinutes;
+
+
+            savedCheckInTime =
+                String(
+                    session.checkInTime ??
+                    ""
+                ).trim();
+
+
+            // =========================================
+            // Close Session
+            // =========================================
+
+            sessions[
+                sessionIndex
+            ] = {
+
+                ...session,
+
+                checkOutTime:
+                    afterHoursCheckOutTime
+                        .toLocaleTimeString(
+                            "en-ZA"
+                        ),
+
+                checkOutTimestamp:
+                    afterHoursCheckOutTime,
+
+                workedMinutes:
+                    workedMinutes,
+
+                checkOutMethod:
+                    "QR Code"
+
+            };
+
+
+            savedTotalAfterHoursMinutes =
+                calculateTotalAfterHoursMinutes(
+                    sessions
+                );
+
+
+            // =========================================
+            // Update SAME Attendance Document
+            // =========================================
+
+            transaction.update(
+                attendanceReference,
+                {
+
+                    afterHoursSessions:
+                        sessions,
+
+                    afterHoursActive:
+                        false,
+
+                    afterHoursWorkedMinutes:
+                        savedTotalAfterHoursMinutes,
+
+                    updatedAt:
+                        serverTimestamp()
+
+                }
+            );
+
+        }
+    );
+
+
+    // =============================================
+    // Audit Log
+    // =============================================
+
+    await writeAuditLog({
+
+        category:
+            "Attendance",
+
+        action:
+            "After-Hours Check-Out",
+
+        description:
+            `${employee.name ?? employee.employeeNumber} completed after-hours work at ${afterHoursCheckOutTime.toLocaleTimeString("en-ZA")}.`,
+
+        actorType:
+            "Employee",
+
+        actorName:
+            employee.name ??
+            employee.employeeNumber ??
+            "Unknown Employee",
+
+        actorId:
+            employee.employeeNumber ??
+            "",
+
+        targetType:
+            "Employee",
+
+        targetName:
+            employee.name ??
+            employee.employeeNumber ??
+            "Unknown Employee",
+
+        targetId:
+            employee.employeeNumber ??
+            "",
+
+        source:
+            "Employee Attendance",
+
+        metadata: {
+
+            employeeNumber:
+                employee.employeeNumber ??
+                "",
+
+            sessionNumber:
+                savedSessionNumber,
+
+            checkInTime:
+                savedCheckInTime,
+
+            checkOutTime:
+                afterHoursCheckOutTime
+                    .toLocaleTimeString(
+                        "en-ZA"
+                    ),
+
+            workedMinutes:
+                savedSessionMinutes,
+
+            totalAfterHoursMinutes:
+                savedTotalAfterHoursMinutes,
+
+            deviceId:
+                getDeviceId()
+
+        }
+
+    });
+
+
+    // =============================================
+    // Employee Confirmation
+    // =============================================
+
+    message.style.color =
+        "green";
+
+
+    message.innerHTML =
+        "✅ After-hours work completed."
+        +
+        "<br><br>"
+        +
+        "Employee: "
+        +
+        escapeHtml(
+            employee.name ??
+            employee.employeeNumber
+        )
+        +
+        "<br>After-Hours Check In: "
+        +
+        escapeHtml(
+            savedCheckInTime ||
+            "-"
+        )
+        +
+        "<br>After-Hours Check Out: "
+        +
+        escapeHtml(
+            afterHoursCheckOutTime
+                .toLocaleTimeString(
+                    "en-ZA"
+                )
+        )
+        +
+        "<br>After-Hours Worked: "
+        +
+        escapeHtml(
+            formatMinutesAsHoursAndMinutes(
+                savedSessionMinutes
+            )
+        )
+        +
+        "<br>Total After-Hours Today: "
+        +
+        escapeHtml(
+            formatMinutesAsHoursAndMinutes(
+                savedTotalAfterHoursMinutes
+            )
+        );
+
+
+    resetCheckInForm();
+
+    updateRegisteredDeviceDisplay();
+
+}
+
+// =====================================================
 // Get Registered Employee
 // =====================================================
 
