@@ -5710,16 +5710,21 @@ addAttendanceChange(
                     "",
 
             leaveTime:
-                LEAVE_STATUSES.includes(
-                    selectedStatus
-                )
-                &&
-                selectedLeaveDuration ===
-                "custom"
-                    ?
-                    selectedLeaveTime
-                    :
-                    "",
+    LEAVE_STATUSES.includes(
+        selectedStatus
+    )
+    &&
+    (
+        selectedLeaveDuration ===
+            "custom"
+        ||
+        selectedLeaveDuration ===
+            "half-day"
+    )
+        ?
+        selectedLeaveTime
+        :
+        "",
 
             notes:
                 notes,
