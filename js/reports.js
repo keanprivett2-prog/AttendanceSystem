@@ -1058,8 +1058,35 @@ function calculateReportWorkedMinutes(
     record
 ) {
 
+    // =====================================
+    // Attendance Status
+    // =====================================
+
+    const status =
+        normalizeStatus(
+            record.status
+        );
+
+
+    // =====================================
+    // Non-Working Statuses
+    // =====================================
+
+    const nonWorkingStatuses = [
+        "annual leave",
+        "sick leave",
+        "family responsibility leave",
+        "maternity leave",
+        "unpaid leave",
+        "public holiday",
+        "absent"
+    ];
+
+
     if (
-        !record.checkOutTime
+        nonWorkingStatuses.includes(
+            status
+        )
     ) {
 
         return null;
@@ -1067,8 +1094,104 @@ function calculateReportWorkedMinutes(
     }
 
 
+    // =====================================
+    // After-Hours Worked Minutes
+    // =====================================
+
+    let afterHoursWorkedMinutes =
+        Number(
+            record.afterHoursWorkedMinutes ??
+            0
+        );
+
+
+    if (
+        !Number.isFinite(
+            afterHoursWorkedMinutes
+        )
+        ||
+        afterHoursWorkedMinutes <
+        0
+    ) {
+
+        afterHoursWorkedMinutes =
+            0;
+
+    }
+
+
+    // =====================================
+    // After-Hours Sessions Fallback
+    // =====================================
+    //
+    // Older attendance records may contain
+    // afterHoursSessions but may not yet have
+    // afterHoursWorkedMinutes stored.
+    // =====================================
+
+    if (
+        afterHoursWorkedMinutes ===
+        0
+        &&
+        Array.isArray(
+            record.afterHoursSessions
+        )
+    ) {
+
+        afterHoursWorkedMinutes =
+            record.afterHoursSessions.reduce(
+                function (
+                    total,
+                    session
+                ) {
+
+                    const sessionWorkedMinutes =
+                        Number(
+                            session?.workedMinutes ??
+                            0
+                        );
+
+
+                    if (
+                        !Number.isFinite(
+                            sessionWorkedMinutes
+                        )
+                        ||
+                        sessionWorkedMinutes <
+                        0
+                    ) {
+
+                        return total;
+
+                    }
+
+
+                    return (
+                        total +
+                        Math.floor(
+                            sessionWorkedMinutes
+                        )
+                    );
+
+                },
+                0
+            );
+
+    }
+
+
+    // =====================================
+    // Normal Shift Worked Minutes
+    // =====================================
+
+    let normalWorkedMinutes =
+        null;
+
+
     const checkInTimestamp =
+        record.checkInTimestamp ??
         record.scanTimestamp;
+
 
     const checkOutTimestamp =
         record.checkOutTimestamp;
@@ -1090,6 +1213,7 @@ function calculateReportWorkedMinutes(
         const actualCheckInDate =
             checkInTimestamp.toDate();
 
+
         const checkOutDate =
             checkOutTimestamp.toDate();
 
@@ -1102,14 +1226,35 @@ function calculateReportWorkedMinutes(
                 .map(Number);
 
 
+        const standardStartHour =
+            Number.isFinite(
+                standardStartParts[0]
+            )
+                ?
+                standardStartParts[0]
+                :
+                8;
+
+
+        const standardStartMinute =
+            Number.isFinite(
+                standardStartParts[1]
+            )
+                ?
+                standardStartParts[1]
+                :
+                0;
+
+
         const standardStartDate =
             new Date(
                 actualCheckInDate
             );
 
+
         standardStartDate.setHours(
-            standardStartParts[0],
-            standardStartParts[1],
+            standardStartHour,
+            standardStartMinute,
             0,
             0
         );
@@ -1142,7 +1287,7 @@ function calculateReportWorkedMinutes(
                 );
 
 
-            let totalMinutes =
+            normalWorkedMinutes =
                 elapsedMinutes;
 
 
@@ -1155,7 +1300,7 @@ function calculateReportWorkedMinutes(
                 360
             ) {
 
-                totalMinutes =
+                normalWorkedMinutes =
                     Math.max(
                         0,
                         elapsedMinutes -
@@ -1163,9 +1308,6 @@ function calculateReportWorkedMinutes(
                     );
 
             }
-
-
-            return totalMinutes;
 
         }
 
@@ -1177,7 +1319,11 @@ function calculateReportWorkedMinutes(
     // =====================================
 
     if (
-        record.time &&
+        normalWorkedMinutes ===
+        null
+        &&
+        record.time
+        &&
         record.checkOutTime
     ) {
 
@@ -1187,6 +1333,7 @@ function calculateReportWorkedMinutes(
             )
                 .split(":")
                 .map(Number);
+
 
         const checkOutParts =
             String(
@@ -1198,9 +1345,18 @@ function calculateReportWorkedMinutes(
 
         if (
             checkInParts.length >=
-                2 &&
+            2
+            &&
             checkOutParts.length >=
-                2
+            2
+            &&
+            !checkInParts.some(
+                Number.isNaN
+            )
+            &&
+            !checkOutParts.some(
+                Number.isNaN
+            )
         ) {
 
             const actualCheckInMinutes =
@@ -1220,13 +1376,33 @@ function calculateReportWorkedMinutes(
                     .map(Number);
 
 
+            const standardStartHour =
+                Number.isFinite(
+                    standardStartParts[0]
+                )
+                    ?
+                    standardStartParts[0]
+                    :
+                    8;
+
+
+            const standardStartMinute =
+                Number.isFinite(
+                    standardStartParts[1]
+                )
+                    ?
+                    standardStartParts[1]
+                    :
+                    0;
+
+
             const standardStartMinutes =
                 (
-                    standardStartParts[0] *
+                    standardStartHour *
                     60
                 )
                 +
-                standardStartParts[1];
+                standardStartMinute;
 
 
             const effectiveCheckInMinutes =
@@ -1255,7 +1431,7 @@ function calculateReportWorkedMinutes(
                 0
             ) {
 
-                let totalMinutes =
+                normalWorkedMinutes =
                     elapsedMinutes;
 
 
@@ -1268,7 +1444,7 @@ function calculateReportWorkedMinutes(
                     360
                 ) {
 
-                    totalMinutes =
+                    normalWorkedMinutes =
                         Math.max(
                             0,
                             elapsedMinutes -
@@ -1277,9 +1453,6 @@ function calculateReportWorkedMinutes(
 
                 }
 
-
-                return totalMinutes;
-
             }
 
         }
@@ -1287,7 +1460,38 @@ function calculateReportWorkedMinutes(
     }
 
 
-    return null;
+    // =====================================
+    // No Normal Shift Available
+    // =====================================
+
+    if (
+        normalWorkedMinutes ===
+        null
+    ) {
+
+        if (
+            afterHoursWorkedMinutes >
+            0
+        ) {
+
+            return afterHoursWorkedMinutes;
+
+        }
+
+
+        return null;
+
+    }
+
+
+    // =====================================
+    // Normal + After-Hours Total
+    // =====================================
+
+    return (
+        normalWorkedMinutes +
+        afterHoursWorkedMinutes
+    );
 
 }
 
@@ -3286,7 +3490,8 @@ function showTableMessage(message) {
 function exportReportToCsv() {
 
     if (
-        currentReportRecords.length === 0
+        currentReportRecords.length ===
+        0
     ) {
 
         alert(
@@ -3297,112 +3502,405 @@ function exportReportToCsv() {
 
     }
 
+
+    // =====================================
+    // CSV Header
+    // =====================================
+
     const csvRows = [
-    [
-        "Date",
-        "Employee Number",
-        "Employee Name",
-        "Department",
-        "Work Location",
-        "Check In",
-        "Check Out",
-        "Hours Worked",
-        "Status",
-        "Leave Duration",
-        "Late Reason",
-        "Early Exit",
-        "Early Exit Reason"
-    ]
-];
+        [
+            "Date",
+            "Employee Number",
+            "Employee Name",
+            "Department",
+            "Work Location",
+            "Check In",
+            "Check Out",
+            "Hours Worked",
+            "After-Hours Worked",
+            "Status",
+            "Leave Duration",
+            "Late Reason",
+            "Early Exit",
+            "Early Exit Reason"
+        ]
+    ];
+
+
+    // =====================================
+    // Report Totals
+    // =====================================
+
+    let totalWorkedMinutes =
+        0;
+
+    let totalAfterHoursWorkedMinutes =
+        0;
+
+
+    // =====================================
+    // Add Report Records
+    // =====================================
 
     currentReportRecords.forEach(
-        (record) => {
+        function (
+            record
+        ) {
 
-            csvRows.push([
+            // =====================================
+            // Total Hours Worked
+            // =====================================
 
-    formatReportDate(
-        record.dateKey ??
-        record.date
-    ),
-
-    record.employeeNumber ??
-        "",
-
-    record.name ??
-        "",
-
-    record.department ??
-
-           "",
-
-           String(
-    record.workLocation ??
-    "Office"
-).trim()
-||
-"Office",
-
-    record.time ??
-        "",
-
-    record.checkOutTime ??
-        "",
-
-    calculateReportHoursWorked(
-        record
-    ),
-
-    record.status ??
-        "",
-
-        formatReportLeaveDuration(
-    record.leaveDuration
-),
-
-    normalizeStatus(
-        record.status
-    ) === "late"
-        ?
-        record.lateReason ??
-        ""
-        :
-        "",
-
-    record.checkOutTime
-        ?
-        record.earlyExit === true
-            ?
-            "Yes"
-            :
-            "No"
-        :
-        "",
-
-    record.earlyExit === true
-        ?
-        record.earlyExitReason ??
-        ""
-        :
-        ""
-
-    ]);
+            const workedMinutes =
+                calculateReportWorkedMinutes(
+                    record
+                );
 
 
+            if (
+                workedMinutes !==
+                null
+            ) {
+
+                totalWorkedMinutes +=
+                    workedMinutes;
+
+            }
+
+
+            // =====================================
+            // After-Hours Worked
+            // =====================================
+
+            let afterHoursWorkedMinutes =
+                Number(
+                    record.afterHoursWorkedMinutes ??
+                    0
+                );
+
+
+            if (
+                !Number.isFinite(
+                    afterHoursWorkedMinutes
+                )
+                ||
+                afterHoursWorkedMinutes <
+                0
+            ) {
+
+                afterHoursWorkedMinutes =
+                    0;
+
+            }
+
+
+            // =====================================
+            // Older Record Fallback
+            // =====================================
+
+            if (
+                afterHoursWorkedMinutes ===
+                0
+                &&
+                Array.isArray(
+                    record.afterHoursSessions
+                )
+            ) {
+
+                afterHoursWorkedMinutes =
+                    record.afterHoursSessions.reduce(
+                        function (
+                            total,
+                            session
+                        ) {
+
+                            const sessionWorkedMinutes =
+                                Number(
+                                    session?.workedMinutes ??
+                                    0
+                                );
+
+
+                            if (
+                                !Number.isFinite(
+                                    sessionWorkedMinutes
+                                )
+                                ||
+                                sessionWorkedMinutes <
+                                0
+                            ) {
+
+                                return total;
+
+                            }
+
+
+                            return (
+                                total +
+                                Math.floor(
+                                    sessionWorkedMinutes
+                                )
+                            );
+
+                        },
+                        0
+                    );
+
+            }
+
+
+            totalAfterHoursWorkedMinutes +=
+                afterHoursWorkedMinutes;
+
+
+            // =====================================
+            // Add CSV Row
+            // =====================================
+
+            csvRows.push(
+                [
+
+                    formatReportDate(
+                        record.dateKey ??
+                        record.date
+                    ),
+
+                    record.employeeNumber ??
+                        "",
+
+                    record.name ??
+                        "",
+
+                    record.department ??
+                        "",
+
+                    String(
+                        record.workLocation ??
+                        "Office"
+                    ).trim()
+                    ||
+                    "Office",
+
+                    record.time ??
+                        "",
+
+                    record.checkOutTime ??
+                        "",
+
+                    calculateReportHoursWorked(
+                        record
+                    ),
+
+                    formatMinutesAsHours(
+                        afterHoursWorkedMinutes
+                    ),
+
+                    record.status ??
+                        "",
+
+                    formatReportLeaveDuration(
+                        record.leaveDuration
+                    ),
+
+                    normalizeStatus(
+                        record.status
+                    ) ===
+                    "late"
+                        ?
+                        record.lateReason ??
+                        ""
+                        :
+                        "",
+
+                    record.checkOutTime
+                        ?
+                        record.earlyExit ===
+                        true
+                            ?
+                            "Yes"
+                            :
+                            "No"
+                        :
+                        "",
+
+                    record.earlyExit ===
+                    true
+                        ?
+                        record.earlyExitReason ??
+                        ""
+                        :
+                        ""
+
+                ]
+            );
 
         }
     );
 
+
+    // =====================================
+    // Calculate Normal Hours
+    // =====================================
+
+    const totalNormalWorkedMinutes =
+        Math.max(
+            0,
+            totalWorkedMinutes -
+            totalAfterHoursWorkedMinutes
+        );
+
+
+    // =====================================
+    // Blank Row Before Summary
+    // =====================================
+
+    csvRows.push(
+        [
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+        ]
+    );
+
+
+    // =====================================
+    // Hours Summary Heading
+    // =====================================
+
+    csvRows.push(
+        [
+            "HOURS SUMMARY",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+        ]
+    );
+
+
+    // =====================================
+    // Total Normal Hours Worked
+    // =====================================
+
+    csvRows.push(
+        [
+            "Total Normal Hours Worked",
+            formatMinutesAsHours(
+                totalNormalWorkedMinutes
+            ),
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+        ]
+    );
+
+
+    // =====================================
+    // Total After-Hours Worked
+    // =====================================
+
+    csvRows.push(
+        [
+            "Total After-Hours Worked",
+            formatMinutesAsHours(
+                totalAfterHoursWorkedMinutes
+            ),
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+        ]
+    );
+
+
+    // =====================================
+    // Grand Total Hours Worked
+    // =====================================
+
+    csvRows.push(
+        [
+            "TOTAL HOURS WORKED",
+            formatMinutesAsHours(
+                totalWorkedMinutes
+            ),
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+        ]
+    );
+
+
+    // =====================================
+    // Create CSV
+    // =====================================
+
     const csvContent =
         csvRows
             .map(
-                (row) =>
+                function (
                     row
+                ) {
+
+                    return row
                         .map(
                             escapeCsvValue
                         )
-                        .join(";")
+                        .join(";");
+
+                }
             )
             .join("\n");
+
+
+    // =====================================
+    // Create Download
+    // =====================================
 
     const blob =
         new Blob(
@@ -3416,31 +3914,39 @@ function exportReportToCsv() {
             }
         );
 
+
     const downloadUrl =
         URL.createObjectURL(
             blob
         );
+
 
     const downloadLink =
         document.createElement(
             "a"
         );
 
+
     downloadLink.href =
         downloadUrl;
 
+
     downloadLink.download =
         `attendance-report-${startDateInput.value}-to-${endDateInput.value}.csv`;
+
 
     document.body.appendChild(
         downloadLink
     );
 
+
     downloadLink.click();
+
 
     document.body.removeChild(
         downloadLink
     );
+
 
     URL.revokeObjectURL(
         downloadUrl
@@ -3489,144 +3995,1340 @@ function printReport() {
 
 
     // =====================================
-    // Remember Current Collapsed Sections
-    // =====================================
+// Report Filter Information
+// =====================================
 
-    const collapsibleContents =
-        document.querySelectorAll(
-            ".collapsible-content"
-        );
+const startDate =
+    startDateInput?.value ??
+    "";
 
-    const collapsedStates =
-        [];
+const endDate =
+    endDateInput?.value ??
+    "";
 
-    collapsibleContents.forEach(
-        function (
-            content
-        ) {
 
-            collapsedStates.push({
-                element:
-                    content,
+// =====================================
+// Selected Employee
+// =====================================
 
-                wasCollapsed:
-                    content.classList.contains(
-                        "collapsed"
+const selectedEmployeeNumber =
+    String(
+        employeeFilter?.value ??
+        ""
+    ).trim();
+
+
+const isSingleEmployeeReport =
+    selectedEmployeeNumber !==
+    "";
+
+
+const selectedEmployeeText =
+    employeeFilter &&
+    employeeFilter.selectedOptions &&
+    employeeFilter.selectedOptions.length >
+    0
+        ?
+        employeeFilter.selectedOptions[0].textContent
+        :
+        "All Employees";
+
+
+// =====================================
+// Department
+// =====================================
+
+let selectedDepartmentText =
+    "All Departments";
+
+
+if (
+    isSingleEmployeeReport
+) {
+
+    const employeeDepartments =
+        [
+            ...new Set(
+                currentReportRecords
+                    .map(
+                        function (
+                            record
+                        ) {
+
+                            return String(
+                                record.department ??
+                                ""
+                            ).trim();
+
+                        }
                     )
-            });
+                    .filter(
+                        function (
+                            department
+                        ) {
 
-            content.classList.remove(
-                "collapsed"
+                            return (
+                                department !==
+                                ""
+                            );
+
+                        }
+                    )
+            )
+        ];
+
+
+    if (
+        employeeDepartments.length ===
+        1
+    ) {
+
+        selectedDepartmentText =
+            employeeDepartments[0];
+
+    } else if (
+        employeeDepartments.length >
+        1
+    ) {
+
+        selectedDepartmentText =
+            employeeDepartments.join(
+                " / "
             );
 
-        }
-    );
+    } else {
+
+        selectedDepartmentText =
+            "Not Assigned";
+
+    }
+
+} else if (
+    departmentFilter &&
+    departmentFilter.value !==
+    ""
+) {
+
+    selectedDepartmentText =
+        departmentFilter
+            .selectedOptions[0]
+            ?.textContent ??
+        departmentFilter.value;
+
+}
 
 
-    // =====================================
-    // Update Toggle Buttons For Printing
-    // =====================================
+// =====================================
+// Work Location
+// =====================================
 
-    sectionToggleButtons.forEach(
-        function (
-            button
-        ) {
+let selectedWorkLocationText =
+    "All Locations";
 
-            button.textContent =
-                "Collapse";
 
-            button.setAttribute(
-                "aria-expanded",
-                "true"
+if (
+    isSingleEmployeeReport
+) {
+
+    const employeeWorkLocations =
+        [
+            ...new Set(
+                currentReportRecords
+                    .filter(
+                        function (
+                            record
+                        ) {
+
+                            const status =
+                                normalizeStatus(
+                                    record.status
+                                );
+
+
+                            const isLeaveRecord =
+                                status ===
+                                    "annual leave" ||
+                                status ===
+                                    "sick leave" ||
+                                status ===
+                                    "maternity leave" ||
+                                status ===
+                                    "family responsibility leave" ||
+                                status ===
+                                    "unpaid leave" ||
+                                status ===
+                                    "public holiday" ||
+                                status ===
+                                    "absent";
+
+
+                            return (
+                                !isLeaveRecord
+                            );
+
+                        }
+                    )
+                    .map(
+                        function (
+                            record
+                        ) {
+
+                            return (
+                                String(
+                                    record.workLocation ??
+                                    "Office"
+                                ).trim()
+                                ||
+                                "Office"
+                            );
+
+                        }
+                    )
+            )
+        ];
+
+
+    if (
+        employeeWorkLocations.length ===
+        1
+    ) {
+
+        selectedWorkLocationText =
+            employeeWorkLocations[0];
+
+    } else if (
+        employeeWorkLocations.length >
+        1
+    ) {
+
+        selectedWorkLocationText =
+            employeeWorkLocations.join(
+                " / "
             );
 
-        }
-    );
+    } else {
+
+        selectedWorkLocationText =
+            "No Work Location Recorded";
+
+    }
+
+} else if (
+    workLocationFilter &&
+    workLocationFilter.value !==
+    ""
+) {
+
+    selectedWorkLocationText =
+        workLocationFilter
+            .selectedOptions[0]
+            ?.textContent ??
+        workLocationFilter.value;
+
+}
+
+
+// =====================================
+// Selected Status
+// =====================================
+
+const selectedStatusText =
+    statusFilter &&
+    statusFilter.selectedOptions &&
+    statusFilter.selectedOptions.length >
+    0
+        ?
+        statusFilter.selectedOptions[0].textContent
+        :
+        "All Statuses";
 
 
     // =====================================
-    // Restore Page After Printing
+    // Report Totals
     // =====================================
 
-    const restoreReportSections =
-        function () {
+    let totalWorkedMinutes =
+        0;
 
-            collapsedStates.forEach(
+    let totalAfterHoursWorkedMinutes =
+        0;
+
+    let onTimeTotal =
+        0;
+
+    let lateTotal =
+        0;
+
+    let absentTotal =
+        0;
+
+    let leaveTotal =
+        0;
+
+
+    // =====================================
+    // Build Report Rows
+    // =====================================
+
+    const reportRows =
+        currentReportRecords
+            .map(
                 function (
-                    state
+                    record
                 ) {
 
+                    const status =
+                        normalizeStatus(
+                            record.status
+                        );
+
+
+                    const isLeaveRecord =
+                        status ===
+                            "annual leave" ||
+                        status ===
+                            "sick leave" ||
+                        status ===
+                            "maternity leave" ||
+                        status ===
+                            "family responsibility leave" ||
+                        status ===
+                            "unpaid leave" ||
+                        status ===
+                            "public holiday";
+
+
+                    // =====================================
+                    // Attendance Counters
+                    // =====================================
+
                     if (
-                        state.wasCollapsed
+                        status ===
+                        "on time"
                     ) {
 
-                        state.element.classList.add(
-                            "collapsed"
-                        );
+                        onTimeTotal++;
 
                     }
 
-                }
-            );
 
-            sectionToggleButtons.forEach(
-                function (
-                    button
-                ) {
+                    if (
+                        status ===
+                        "late"
+                    ) {
 
-                    const targetId =
-                        button.dataset.target;
+                        lateTotal++;
 
-                    const content =
-                        document.getElementById(
-                            targetId
+                    }
+
+
+                    if (
+                        status ===
+                        "absent"
+                    ) {
+
+                        absentTotal++;
+
+                    }
+
+
+                    if (
+                        isLeaveRecord
+                    ) {
+
+                        leaveTotal++;
+
+                    }
+
+
+                    // =====================================
+                    // Worked Minutes
+                    // =====================================
+
+                    const workedMinutes =
+                        calculateReportWorkedMinutes(
+                            record
                         );
 
-                    const isCollapsed =
-                        content
+
+                    if (
+                        workedMinutes !==
+                        null
+                    ) {
+
+                        totalWorkedMinutes +=
+                            workedMinutes;
+
+                    }
+
+
+                    // =====================================
+                    // After-Hours Minutes
+                    // =====================================
+
+                    let afterHoursWorkedMinutes =
+                        Number(
+                            record.afterHoursWorkedMinutes ??
+                            0
+                        );
+
+
+                    if (
+                        !Number.isFinite(
+                            afterHoursWorkedMinutes
+                        )
+                        ||
+                        afterHoursWorkedMinutes <
+                        0
+                    ) {
+
+                        afterHoursWorkedMinutes =
+                            0;
+
+                    }
+
+
+                    // =====================================
+                    // Older Record Fallback
+                    // =====================================
+
+                    if (
+                        afterHoursWorkedMinutes ===
+                        0
+                        &&
+                        Array.isArray(
+                            record.afterHoursSessions
+                        )
+                    ) {
+
+                        afterHoursWorkedMinutes =
+                            record.afterHoursSessions.reduce(
+                                function (
+                                    total,
+                                    session
+                                ) {
+
+                                    const sessionMinutes =
+                                        Number(
+                                            session?.workedMinutes ??
+                                            0
+                                        );
+
+
+                                    if (
+                                        !Number.isFinite(
+                                            sessionMinutes
+                                        )
+                                        ||
+                                        sessionMinutes <
+                                        0
+                                    ) {
+
+                                        return total;
+
+                                    }
+
+
+                                    return (
+                                        total +
+                                        Math.floor(
+                                            sessionMinutes
+                                        )
+                                    );
+
+                                },
+                                0
+                            );
+
+                    }
+
+
+                    totalAfterHoursWorkedMinutes +=
+                        afterHoursWorkedMinutes;
+
+
+                    // =====================================
+                    // Display Values
+                    // =====================================
+
+                    const checkInTime =
+                        isLeaveRecord
                             ?
-                            content.classList.contains(
-                                "collapsed"
+                            "N/A"
+                            :
+                            (
+                                record.time ??
+                                "-"
+                            );
+
+
+                    const checkOutTime =
+                        isLeaveRecord
+                            ?
+                            "N/A"
+                            :
+                            (
+                                record.checkOutTime ??
+                                "Still at work"
+                            );
+
+
+                    const hoursWorked =
+                        isLeaveRecord
+                            ?
+                            "N/A"
+                            :
+                            calculateReportHoursWorked(
+                                record
+                            );
+
+
+                    const afterHoursWorked =
+                        isLeaveRecord
+                            ?
+                            "N/A"
+                            :
+                            formatMinutesAsHours(
+                                afterHoursWorkedMinutes
+                            );
+
+
+                    const workLocation =
+                        isLeaveRecord
+                            ?
+                            "Out of Office"
+                            :
+                            (
+                                String(
+                                    record.workLocation ??
+                                    "Office"
+                                ).trim()
+                                ||
+                                "Office"
+                            );
+
+
+                    const leaveDuration =
+                        isLeaveRecord
+                            ?
+                            formatReportLeaveDuration(
+                                record.leaveDuration
                             )
                             :
-                            false;
+                            "-";
 
-                    button.textContent =
-                        isCollapsed
+
+                    const lateReason =
+                        status ===
+                            "late"
                             ?
-                            "Expand"
+                            (
+                                record.lateReason ??
+                                "-"
+                            )
                             :
-                            "Collapse";
+                            "-";
 
-                    button.setAttribute(
-                        "aria-expanded",
-                        String(
-                            !isCollapsed
-                        )
-                    );
 
+                    return `
+                        <tr>
+
+                            <td>
+                                ${escapeHtml(
+                                    formatReportDate(
+                                        record.dateKey ??
+                                        record.date
+                                    )
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                                    record.employeeNumber ??
+                                    "-"
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                                    record.name ??
+                                    "-"
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                                    record.department ??
+                                    "-"
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                                    workLocation
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                                    checkInTime
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                                    checkOutTime
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                                    hoursWorked
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                                    afterHoursWorked
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                                    record.status ??
+                                    "-"
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                                    leaveDuration
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                                    lateReason
+                                )}
+                            </td>
+
+                        </tr>
+                    `;
+
+                }
+            )
+            .join("");
+
+
+    // =====================================
+    // Normal Worked Minutes
+    // =====================================
+
+    const totalNormalWorkedMinutes =
+        Math.max(
+            0,
+            totalWorkedMinutes -
+            totalAfterHoursWorkedMinutes
+        );
+
+
+    // =====================================
+    // Generated Date
+    // =====================================
+
+    const generatedDate =
+        new Date()
+            .toLocaleString(
+                "en-ZA",
+                {
+                    dateStyle:
+                        "medium",
+
+                    timeStyle:
+                        "short"
                 }
             );
 
-            window.removeEventListener(
-                "afterprint",
-                restoreReportSections
+
+    // =====================================
+    // Build Printable Report
+    // =====================================
+
+    const reportHtml = `
+        <!DOCTYPE html>
+
+        <html lang="en">
+
+        <head>
+
+            <meta charset="UTF-8">
+
+            <title>
+                R-E-D Attendance Report
+            </title>
+
+            <style>
+
+                @page {
+                    size: landscape;
+                    margin: 12mm;
+                }
+
+                * {
+                    box-sizing: border-box;
+                }
+
+                body {
+                    margin: 0;
+                    padding: 0;
+
+                    font-family:
+                        Arial,
+                        Helvetica,
+                        sans-serif;
+
+                    color: #1f2937;
+
+                    background: #ffffff;
+                }
+
+                .report-container {
+                    width: 100%;
+                }
+
+                .report-header {
+                    border-bottom:
+                        3px solid #0b2a4a;
+
+                    padding-bottom:
+                        12px;
+
+                    margin-bottom:
+                        18px;
+                }
+
+                .report-title {
+                    margin: 0;
+
+                    font-size: 24px;
+                    font-weight: 800;
+
+                    color: #0b2a4a;
+                }
+
+                .report-subtitle {
+                    margin-top: 5px;
+
+                    font-size: 13px;
+                    color: #64748b;
+                }
+
+                .report-filter-grid {
+                    display: grid;
+
+                    grid-template-columns:
+                        repeat(
+                            4,
+                            1fr
+                        );
+
+                    gap: 8px;
+
+                    margin-bottom:
+                        18px;
+                }
+
+                .filter-item {
+                    border:
+                        1px solid #dbe2ea;
+
+                    border-radius:
+                        6px;
+
+                    padding:
+                        8px 10px;
+
+                    background:
+                        #f8fafc;
+                }
+
+                .filter-label {
+                    display: block;
+
+                    margin-bottom:
+                        3px;
+
+                    font-size:
+                        9px;
+
+                    font-weight:
+                        700;
+
+                    text-transform:
+                        uppercase;
+
+                    color:
+                        #64748b;
+                }
+
+                .filter-value {
+                    font-size:
+                        11px;
+
+                    font-weight:
+                        700;
+                }
+
+                .summary-grid {
+                    display: grid;
+
+                    grid-template-columns:
+                        repeat(
+                            4,
+                            1fr
+                        );
+
+                    gap:
+                        8px;
+
+                    margin-bottom:
+                        18px;
+                }
+
+                .summary-card {
+                    border:
+                        1px solid #dbe2ea;
+
+                    border-radius:
+                        6px;
+
+                    padding:
+                        10px;
+
+                    text-align:
+                        center;
+                }
+
+                .summary-card span {
+                    display:
+                        block;
+
+                    font-size:
+                        9px;
+
+                    font-weight:
+                        700;
+
+                    text-transform:
+                        uppercase;
+
+                    color:
+                        #64748b;
+                }
+
+                .summary-card strong {
+                    display:
+                        block;
+
+                    margin-top:
+                        5px;
+
+                    font-size:
+                        16px;
+
+                    color:
+                        #0b2a4a;
+                }
+
+                .hours-summary {
+                    display:
+                        grid;
+
+                    grid-template-columns:
+                        repeat(
+                            3,
+                            1fr
+                        );
+
+                    gap:
+                        8px;
+
+                    margin-bottom:
+                        20px;
+                }
+
+                .hours-card {
+                    border:
+                        2px solid #dbe2ea;
+
+                    border-radius:
+                        6px;
+
+                    padding:
+                        12px;
+
+                    text-align:
+                        center;
+                }
+
+                .hours-card span {
+                    display:
+                        block;
+
+                    font-size:
+                        10px;
+
+                    font-weight:
+                        700;
+
+                    text-transform:
+                        uppercase;
+
+                    color:
+                        #475569;
+                }
+
+                .hours-card strong {
+                    display:
+                        block;
+
+                    margin-top:
+                        5px;
+
+                    font-size:
+                        18px;
+
+                    font-weight:
+                        800;
+
+                    color:
+                        #0b2a4a;
+                }
+
+                .grand-total {
+                    border:
+                        3px solid #0b2a4a;
+                }
+
+                table {
+                    width:
+                        100%;
+
+                    border-collapse:
+                        collapse;
+
+                    font-size:
+                        9px;
+                }
+
+                thead {
+                    display:
+                        table-header-group;
+                }
+
+                th {
+                    padding:
+                        7px 5px;
+
+                    border:
+                        1px solid #cbd5e1;
+
+                    background:
+                        #e8eef5;
+
+                    font-size:
+                        8px;
+
+                    font-weight:
+                        800;
+
+                    text-align:
+                        left;
+
+                    text-transform:
+                        uppercase;
+
+                    color:
+                        #0b2a4a;
+                }
+
+                td {
+                    padding:
+                        6px 5px;
+
+                    border:
+                        1px solid #dbe2ea;
+
+                    vertical-align:
+                        top;
+                }
+
+                tr {
+                    page-break-inside:
+                        avoid;
+                }
+
+                tbody tr:nth-child(even) {
+                    background:
+                        #f8fafc;
+                }
+
+                .report-footer {
+                    margin-top:
+                        15px;
+
+                    padding-top:
+                        8px;
+
+                    border-top:
+                        1px solid #cbd5e1;
+
+                    font-size:
+                        9px;
+
+                    color:
+                        #64748b;
+
+                    display:
+                        flex;
+
+                    justify-content:
+                        space-between;
+                }
+
+                @media print {
+
+                    body {
+                        print-color-adjust:
+                            exact;
+
+                        -webkit-print-color-adjust:
+                            exact;
+                    }
+
+                }
+
+            </style>
+
+        </head>
+
+        <body>
+
+            <div class="report-container">
+
+
+                <div class="report-header">
+
+                    <h1 class="report-title">
+                        R-E-D Attendance Report
+                    </h1>
+
+                    <div class="report-subtitle">
+                        Attendance and Hours Worked Report
+                    </div>
+
+                </div>
+
+
+                <div class="report-filter-grid">
+
+                    <div class="filter-item">
+
+                        <span class="filter-label">
+                            Report Period
+                        </span>
+
+                        <span class="filter-value">
+                            ${escapeHtml(
+                                startDate
+                            )}
+                            to
+                            ${escapeHtml(
+                                endDate
+                            )}
+                        </span>
+
+                    </div>
+
+
+                    <div class="filter-item">
+
+                        <span class="filter-label">
+                            Employee
+                        </span>
+
+                        <span class="filter-value">
+                            ${escapeHtml(
+                                selectedEmployeeText
+                            )}
+                        </span>
+
+                    </div>
+
+
+                    <div class="filter-item">
+
+                        <span class="filter-label">
+                            Department
+                        </span>
+
+                        <span class="filter-value">
+                            ${escapeHtml(
+                                selectedDepartmentText
+                            )}
+                        </span>
+
+                    </div>
+
+
+                    <div class="filter-item">
+
+                        <span class="filter-label">
+                            Work Location
+                        </span>
+
+                        <span class="filter-value">
+                            ${escapeHtml(
+                                selectedWorkLocationText
+                            )}
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="summary-grid">
+
+                    <div class="summary-card">
+
+                        <span>
+                            Records
+                        </span>
+
+                        <strong>
+                            ${currentReportRecords.length}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="summary-card">
+
+                        <span>
+                            On Time
+                        </span>
+
+                        <strong>
+                            ${onTimeTotal}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="summary-card">
+
+                        <span>
+                            Late
+                        </span>
+
+                        <strong>
+                            ${lateTotal}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="summary-card">
+
+                        <span>
+                            Absent
+                        </span>
+
+                        <strong>
+                            ${absentTotal}
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="hours-summary">
+
+                    <div class="hours-card">
+
+                        <span>
+                            Normal Hours Worked
+                        </span>
+
+                        <strong>
+                            ${escapeHtml(
+                                formatMinutesAsHours(
+                                    totalNormalWorkedMinutes
+                                )
+                            )}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="hours-card">
+
+                        <span>
+                            After-Hours Worked
+                        </span>
+
+                        <strong>
+                            ${escapeHtml(
+                                formatMinutesAsHours(
+                                    totalAfterHoursWorkedMinutes
+                                )
+                            )}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="hours-card grand-total">
+
+                        <span>
+                            Total Hours Worked
+                        </span>
+
+                        <strong>
+                            ${escapeHtml(
+                                formatMinutesAsHours(
+                                    totalWorkedMinutes
+                                )
+                            )}
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Date</th>
+
+                            <th>Employee No.</th>
+
+                            <th>Employee</th>
+
+                            <th>Department</th>
+
+                            <th>Location</th>
+
+                            <th>Check In</th>
+
+                            <th>Check Out</th>
+
+                            <th>Total Hours</th>
+
+                            <th>After-Hours Worked</th>
+
+                            <th>Status</th>
+
+                            <th>Leave</th>
+
+                            <th>Late Reason</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        ${reportRows}
+
+                    </tbody>
+
+                </table>
+
+
+                <div class="report-footer">
+
+                    <span>
+                        R-E-D Attendance Enterprise System
+                    </span>
+
+                    <span>
+                        Generated:
+                        ${escapeHtml(
+                            generatedDate
+                        )}
+                    </span>
+
+                </div>
+
+
+            </div>
+
+        </body>
+
+        </html>
+    `;
+
+
+    // =====================================
+    // Open Clean Printable Report
+    // =====================================
+
+    const printWindow =
+        window.open(
+            "",
+            "_blank",
+            "width=1400,height=900"
+        );
+
+
+    if (
+        !printWindow
+    ) {
+
+        alert(
+            "The print report could not be opened. Please allow pop-ups for this site."
+        );
+
+        return;
+
+    }
+
+
+    printWindow.document.open();
+
+    printWindow.document.write(
+        reportHtml
+    );
+
+    printWindow.document.close();
+
+
+    // =====================================
+    // Print When Report Has Loaded
+    // =====================================
+
+    printWindow.onload =
+        function () {
+
+            printWindow.focus();
+
+            setTimeout(
+                function () {
+
+                    printWindow.print();
+
+                },
+                250
             );
 
         };
-
-
-    window.addEventListener(
-        "afterprint",
-        restoreReportSections
-    );
-
-
-    // =====================================
-    // Print Expanded Report
-    // =====================================
-
-    window.print();
 
 }
 
