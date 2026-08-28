@@ -1051,6 +1051,263 @@ function setGenerateButtonState(
 }
 
 // =====================================
+// Calculate Paid Leave Credit Minutes
+// =====================================
+
+function calculatePaidLeaveCreditMinutes(
+    record
+) {
+
+    if (
+        !record
+    ) {
+
+        return 0;
+
+    }
+
+
+    const status =
+        normalizeStatus(
+            record.status
+        );
+
+
+    // =====================================
+    // Unpaid / Non-Credited Statuses
+    // =====================================
+
+    if (
+        status ===
+            "unpaid leave"
+        ||
+        status ===
+            "absent"
+    ) {
+
+        return 0;
+
+    }
+
+
+    // =====================================
+    // Paid Leave Statuses
+    // =====================================
+
+    const paidLeaveStatuses = [
+        "annual leave",
+        "sick leave",
+        "family responsibility leave",
+        "maternity leave"
+    ];
+
+
+    const isPublicHoliday =
+        status ===
+        "public holiday";
+
+
+    const isPaidLeave =
+        paidLeaveStatuses.includes(
+            status
+        );
+
+
+    if (
+        !isPaidLeave
+        &&
+        !isPublicHoliday
+    ) {
+
+        return 0;
+
+    }
+
+
+    // =====================================
+    // Standard Paid Workday
+    // =====================================
+    //
+    // 08:00 - 16:30
+    // less 30-minute unpaid break
+    // = 8 paid hours / 480 minutes.
+    // =====================================
+
+    const standardPaidDayMinutes =
+        480;
+
+
+    // Public Holidays and Maternity Leave
+    // are treated as full paid days.
+
+    if (
+        isPublicHoliday
+        ||
+        status ===
+            "maternity leave"
+    ) {
+
+        return standardPaidDayMinutes;
+
+    }
+
+
+    // =====================================
+    // Leave Duration
+    // =====================================
+
+    const leaveDuration =
+        String(
+            record.leaveDuration ??
+            "full-day"
+        )
+            .trim()
+            .toLowerCase();
+
+
+    // =====================================
+    // Full-Day Paid Leave
+    // =====================================
+
+    if (
+        leaveDuration ===
+            "full-day"
+        ||
+        leaveDuration ===
+            ""
+    ) {
+
+        return standardPaidDayMinutes;
+
+    }
+
+
+    // =====================================
+    // Actual Worked Minutes
+    // =====================================
+    //
+    // Partial paid leave only credits the
+    // missing portion of the normal day.
+    // =====================================
+
+    const totalWorkedMinutes =
+        calculateReportWorkedMinutes(
+            record
+        );
+
+
+    let afterHoursMinutes =
+        Number(
+            record.afterHoursWorkedMinutes ??
+            0
+        );
+
+
+    if (
+        !Number.isFinite(
+            afterHoursMinutes
+        )
+        ||
+        afterHoursMinutes <
+            0
+    ) {
+
+        afterHoursMinutes =
+            0;
+
+    }
+
+
+    if (
+        afterHoursMinutes ===
+            0
+        &&
+        Array.isArray(
+            record.afterHoursSessions
+        )
+    ) {
+
+        afterHoursMinutes =
+            record.afterHoursSessions.reduce(
+                function (
+                    total,
+                    session
+                ) {
+
+                    const sessionMinutes =
+                        Number(
+                            session?.workedMinutes ??
+                            0
+                        );
+
+
+                    if (
+                        !Number.isFinite(
+                            sessionMinutes
+                        )
+                        ||
+                        sessionMinutes <
+                            0
+                    ) {
+
+                        return total;
+
+                    }
+
+
+                    return (
+                        total +
+                        Math.floor(
+                            sessionMinutes
+                        )
+                    );
+
+                },
+                0
+            );
+
+    }
+
+
+    const normalWorkedMinutes =
+        totalWorkedMinutes ===
+            null
+            ?
+            0
+            :
+            Math.max(
+                0,
+                totalWorkedMinutes -
+                afterHoursMinutes
+            );
+
+
+    // =====================================
+    // Half-Day / Custom Paid Leave
+    // =====================================
+
+    if (
+        leaveDuration ===
+            "half-day"
+        ||
+        leaveDuration ===
+            "custom"
+    ) {
+
+        return Math.max(
+            0,
+            standardPaidDayMinutes -
+            normalWorkedMinutes
+        );
+
+    }
+
+
+    return 0;
+
+}
+
+// =====================================
 // Calculate Worked Minutes
 // =====================================
 
@@ -2216,77 +2473,209 @@ const remoteDays =
 
 
     // =====================================
-    // Hours Worked
-    // =====================================
+// Hours Worked + Paid Leave Credit
+// =====================================
 
-    let totalWorkedMinutes =
-        0;
+let totalWorkedMinutes =
+    0;
 
-    let completedWorkdays =
-        0;
+let totalPaidLeaveMinutes =
+    0;
 
-    records.forEach(
-        function (
-            record
+let completedWorkdays =
+    0;
+
+
+records.forEach(
+    function (
+        record
+    ) {
+
+        const workedMinutes =
+            calculateReportWorkedMinutes(
+                record
+            );
+
+
+        const paidLeaveMinutes =
+            calculatePaidLeaveCreditMinutes(
+                record
+            );
+
+            
+
+        if (
+            workedMinutes !==
+            null
         ) {
-
-            const workedMinutes =
-                calculateReportWorkedMinutes(
-                    record
-                );
-
-            if (
-                workedMinutes ===
-                null
-            ) {
-
-                return;
-
-            }
 
             totalWorkedMinutes +=
                 workedMinutes;
 
+        }
+
+
+        totalPaidLeaveMinutes +=
+            paidLeaveMinutes;
+
+
+        if (
+            workedMinutes !==
+                null
+            ||
+            paidLeaveMinutes >
+                0
+        ) {
+
             completedWorkdays++;
 
         }
-    );
+
+    }
+);
+
+const totalAccountedMinutes =
+    totalWorkedMinutes +
+    totalPaidLeaveMinutes;
 
 
     const averageWorkedMinutes =
-        completedWorkdays ===
-            0
-            ?
-            0
-            :
-            Math.round(
-                totalWorkedMinutes /
-                completedWorkdays
+    completedWorkdays ===
+        0
+        ?
+        0
+        :
+        Math.round(
+            totalAccountedMinutes /
+            completedWorkdays
+        );
+
+
+    // =====================================
+// Attendance Rate
+// =====================================
+
+let excludedPublicHolidays =
+    0;
+
+let partialWorkedDays =
+    0;
+
+
+records.forEach(
+    function (
+        record
+    ) {
+
+        const status =
+            normalizeStatus(
+                record.status
             );
 
 
-    // =====================================
-    // Attendance Rate
-    // =====================================
+        if (
+            status ===
+            "public holiday"
+        ) {
 
-    const attended =
+            excludedPublicHolidays++;
+
+            return;
+
+        }
+
+
+        const leaveDuration =
+            String(
+                record.leaveDuration ??
+                ""
+            )
+                .trim()
+                .toLowerCase();
+
+
+        const partialLeaveStatuses = [
+            "annual leave",
+            "sick leave",
+            "family responsibility leave",
+            "unpaid leave"
+        ];
+
+
+        const isPartialLeave =
+            partialLeaveStatuses.includes(
+                status
+            )
+            &&
+            (
+                leaveDuration ===
+                    "half-day"
+                ||
+                leaveDuration ===
+                    "custom"
+            );
+
+
+        const workedMinutes =
+            calculateReportWorkedMinutes(
+                record
+            );
+
+
+        if (
+            (
+                isPartialLeave
+                ||
+                status ===
+                    "half day"
+            )
+            &&
+            workedMinutes !==
+                null
+            &&
+            workedMinutes >
+                0
+        ) {
+
+            partialWorkedDays++;
+
+        }
+
+    }
+);
+
+
+const attendanceEligibleDays =
+    Math.max(
+        0,
+        total -
+        excludedPublicHolidays
+    );
+
+
+const attendedDays =
+    Math.min(
+        attendanceEligibleDays,
         onTime +
-        late;
+        late +
+        partialWorkedDays
+    );
 
-    const rate =
-        total ===
-            0
-            ?
-            0
-            :
-            Math.round(
-                (
-                    attended /
-                    total
-                )
-                *
-                100
-            );
+
+const rate =
+    attendanceEligibleDays ===
+        0
+        ?
+        100
+        :
+        Math.round(
+            (
+                attendedDays /
+                attendanceEligibleDays
+            )
+            *
+            100
+        );
 
 
     // =====================================
@@ -2333,16 +2722,11 @@ if (
 }
 
     totalHoursWorked.textContent =
-        formatMinutesAsHours(
-            totalWorkedMinutes
-        );
+    formatMinutesAsHours(
+        totalAccountedMinutes
+    );
 
-    averageHoursPerDay.textContent =
-        formatMinutesAsHours(
-            averageWorkedMinutes
-        );
-
-    attendanceRate.textContent =
+        attendanceRate.textContent =
         `${rate}%`;
 
 }
@@ -2551,16 +2935,19 @@ function updateDepartmentBreakdown(
             ) {
 
                 departmentData[
-                    department
-                ] = {
+    department
+] = {
 
-                    total:
-                        0,
+    total:
+        0,
 
-                    attended:
-                        0
+    attended:
+        0,
 
-                };
+    excluded:
+        0
+
+};
 
             }
 
@@ -2573,18 +2960,124 @@ function updateDepartmentBreakdown(
                     record.status
                 );
 
-            if (
-                status ===
-                    "on time" ||
-                status ===
-                    "late"
-            ) {
+                // =====================================
+// Leave Duration
+// =====================================
 
-                departmentData[
-                    department
-                ].attended++;
+const leaveDuration =
+    String(
+        record.leaveDuration ??
+        ""
+    )
+        .trim()
+        .toLowerCase();
 
-            }
+
+// =====================================
+// Partial Leave Statuses
+// =====================================
+
+const departmentLeaveStatuses = [
+    "annual leave",
+    "sick leave",
+    "family responsibility leave",
+    "unpaid leave"
+];
+
+
+const isPartialLeave =
+    departmentLeaveStatuses.includes(
+        status
+    )
+    &&
+    (
+        leaveDuration ===
+            "half-day"
+        ||
+        leaveDuration ===
+            "custom"
+    );
+
+
+// =====================================
+// Attendance Rate Exclusions
+// =====================================
+//
+// IMPORTANT:
+// Only Public Holidays are excluded.
+//
+// Full-day employee leave is NOT
+// excluded. It therefore lowers the
+// attendance percentage.
+//
+// Partial leave counts as attended
+// when the employee actually worked.
+// =====================================
+
+if (
+    status ===
+    "public holiday"
+) {
+
+    departmentData[
+        department
+    ].excluded++;
+
+}
+
+
+// =====================================
+// Worked Minutes
+// =====================================
+
+const workedMinutes =
+    calculateReportWorkedMinutes(
+        record
+    );
+
+
+// =====================================
+// Counts As Attended
+// =====================================
+
+const countsAsAttended =
+    status ===
+        "on time"
+    ||
+    status ===
+        "late"
+    ||
+    (
+        isPartialLeave
+        &&
+        workedMinutes !==
+            null
+        &&
+        workedMinutes >
+            0
+    )
+    ||
+    (
+        status ===
+            "half day"
+        &&
+        workedMinutes !==
+            null
+        &&
+        workedMinutes >
+            0
+    );
+
+
+if (
+    countsAsAttended
+) {
+
+    departmentData[
+        department
+    ].attended++;
+
+}
 
         }
     );
@@ -2619,20 +3112,28 @@ function updateDepartmentBreakdown(
 
 
                 
-            const attendancePercentage =
-                data.total ===
-                    0
-                    ?
-                    0
-                    :
-                    Math.round(
-                        (
-                            data.attended /
-                            data.total
-                        )
-                        *
-                        100
-                    );
+           const eligibleDays =
+    Math.max(
+        0,
+        data.total -
+        data.excluded
+    );
+
+
+const attendancePercentage =
+    eligibleDays ===
+        0
+        ?
+        100
+        :
+        Math.round(
+            (
+                data.attended /
+                eligibleDays
+            )
+            *
+            100
+        );
 
             const row =
                 document.createElement(
@@ -2689,12 +3190,18 @@ function updateEmployeePerformanceSummary(
 
     }
 
+
     employeePerformanceSummary.innerHTML =
         "";
 
+
     if (
+        !Array.isArray(
+            records
+        )
+        ||
         records.length ===
-        0
+            0
     ) {
 
         employeePerformanceSummary.innerHTML = `
@@ -2709,12 +3216,123 @@ function updateEmployeePerformanceSummary(
 
 
     // =====================================
+    // Standard Paid Working Day
+    // =====================================
+    //
+    // 08:00 - 16:30
+    // less 30-minute unpaid break
+    // = 8 paid hours.
+    // =====================================
+
+    const STANDARD_PAID_DAY_MINUTES =
+        480;
+
+
+    // =====================================
+    // Get Record After-Hours Minutes
+    // =====================================
+
+    function getRecordAfterHoursMinutes(
+        record
+    ) {
+
+        let minutes =
+            Number(
+                record.afterHoursWorkedMinutes ??
+                0
+            );
+
+
+        if (
+            !Number.isFinite(
+                minutes
+            )
+            ||
+            minutes <
+                0
+        ) {
+
+            minutes =
+                0;
+
+        }
+
+
+        // Older records may only contain
+        // afterHoursSessions.
+
+        if (
+            minutes ===
+                0
+            &&
+            Array.isArray(
+                record.afterHoursSessions
+            )
+        ) {
+
+            minutes =
+                record.afterHoursSessions.reduce(
+                    function (
+                        total,
+                        session
+                    ) {
+
+                        const sessionMinutes =
+                            Number(
+                                session?.workedMinutes ??
+                                0
+                            );
+
+
+                        if (
+                            !Number.isFinite(
+                                sessionMinutes
+                            )
+                            ||
+                            sessionMinutes <
+                                0
+                        ) {
+
+                            return total;
+
+                        }
+
+
+                        return (
+                            total +
+                            Math.floor(
+                                sessionMinutes
+                            )
+                        );
+
+                    },
+                    0
+                );
+
+        }
+
+
+        return Math.max(
+            0,
+            Math.floor(
+                minutes
+            )
+        );
+
+    }
+
+
+    // =====================================
     // Employee Data
     // =====================================
 
     const employeeData =
         {};
 
+
+    // =====================================
+    // Process Attendance Records
+    // =====================================
 
     records.forEach(
         function (
@@ -2727,18 +3345,20 @@ function updateEmployeePerformanceSummary(
                     "Unknown"
                 );
 
+
             const employeeName =
                 String(
                     record.name ??
                     "Unknown Employee"
                 );
 
+
             const employeeKey =
                 employeeNumber;
 
 
             // =====================================
-            // Create Employee Summary
+            // Create Employee
             // =====================================
 
             if (
@@ -2779,16 +3399,22 @@ function updateEmployeePerformanceSummary(
                         0,
 
                     earlyExits:
-    0,
+                        0,
 
-workedDays:
-    0,
+                    actualNormalMinutes:
+                        0,
 
-workedMinutes:
-    0,
+                    paidLeaveMinutes:
+                        0,
 
-afterHoursWorkedMinutes:
-    0
+                    afterHoursMinutes:
+                        0,
+
+                    attendanceCredit:
+                        0,
+
+                    excludedAttendanceDays:
+                        0
 
                 };
 
@@ -2800,10 +3426,6 @@ afterHoursWorkedMinutes:
                     employeeKey
                 ];
 
-
-            // =====================================
-            // Total Records
-            // =====================================
 
             data.total++;
 
@@ -2819,12 +3441,25 @@ afterHoursWorkedMinutes:
 
 
             // =====================================
-            // On Time
+            // Leave Duration
+            // =====================================
+
+            const leaveDuration =
+                String(
+                    record.leaveDuration ??
+                    ""
+                )
+                    .trim()
+                    .toLowerCase();
+
+
+            // =====================================
+            // Status Counts
             // =====================================
 
             if (
                 status ===
-                "on time"
+                    "on time"
             ) {
 
                 data.onTime++;
@@ -2832,13 +3467,9 @@ afterHoursWorkedMinutes:
             }
 
 
-            // =====================================
-            // Late
-            // =====================================
-
             if (
                 status ===
-                "late"
+                    "late"
             ) {
 
                 data.late++;
@@ -2846,13 +3477,9 @@ afterHoursWorkedMinutes:
             }
 
 
-            // =====================================
-            // Absent
-            // =====================================
-
             if (
                 status ===
-                "absent"
+                    "absent"
             ) {
 
                 data.absent++;
@@ -2860,13 +3487,9 @@ afterHoursWorkedMinutes:
             }
 
 
-            // =====================================
-            // Sick Leave
-            // =====================================
-
             if (
                 status ===
-                "sick leave"
+                    "sick leave"
             ) {
 
                 data.sickLeave++;
@@ -2874,13 +3497,9 @@ afterHoursWorkedMinutes:
             }
 
 
-            // =====================================
-            // Annual Leave
-            // =====================================
-
             if (
                 status ===
-                "annual leave"
+                    "annual leave"
             ) {
 
                 data.annualLeave++;
@@ -2888,17 +3507,16 @@ afterHoursWorkedMinutes:
             }
 
 
-            // =====================================
-            // Other Leave
-            // =====================================
-
             if (
                 status ===
-                    "maternity leave" ||
+                    "maternity leave"
+                ||
                 status ===
-                    "family responsibility leave" ||
+                    "family responsibility leave"
+                ||
                 status ===
-                    "unpaid leave" ||
+                    "unpaid leave"
+                ||
                 status ===
                     "medical appointment"
             ) {
@@ -2907,10 +3525,6 @@ afterHoursWorkedMinutes:
 
             }
 
-
-            // =====================================
-            // Early Exits
-            // =====================================
 
             if (
                 record.earlyExit ===
@@ -2923,122 +3537,235 @@ afterHoursWorkedMinutes:
 
 
             // =====================================
-// Hours Worked
-// =====================================
+            // Public Holiday
+            // =====================================
+            //
+            // Public holidays provide paid hours
+            // but are excluded from attendance %.
+            // =====================================
 
-const workedMinutes =
-    calculateReportWorkedMinutes(
-        record
-    );
-
-
-if (
-    workedMinutes !==
-    null
-) {
-
-    data.workedMinutes +=
-        workedMinutes;
-
-
-    // A record with genuine worked time
-    // counts as a worked day, including:
-    // Half Day, partial leave, custom leave,
-    // normal attendance and after-hours-only work.
-
-    if (
-        workedMinutes >
-        0
-    ) {
-
-        data.workedDays++;
-
-    }
-
-}
-
-
-// =====================================
-// After-Hours Worked
-// =====================================
-
-let recordAfterHoursMinutes =
-    Number(
-        record.afterHoursWorkedMinutes ??
-        0
-    );
-
-
-if (
-    !Number.isFinite(
-        recordAfterHoursMinutes
-    )
-    ||
-    recordAfterHoursMinutes <
-    0
-) {
-
-    recordAfterHoursMinutes =
-        0;
-
-}
-
-
-// Older records may only have sessions.
-
-if (
-    recordAfterHoursMinutes ===
-    0
-    &&
-    Array.isArray(
-        record.afterHoursSessions
-    )
-) {
-
-    recordAfterHoursMinutes =
-        record.afterHoursSessions.reduce(
-            function (
-                total,
-                session
+            if (
+                status ===
+                    "public holiday"
             ) {
 
-                const sessionMinutes =
-                    Number(
-                        session?.workedMinutes ??
-                        0
+                data.excludedAttendanceDays++;
+
+            }
+
+
+            // =====================================
+            // Actual Worked Minutes
+            // =====================================
+
+            const totalWorkedMinutes =
+                calculateReportWorkedMinutes(
+                    record
+                );
+
+
+            // =====================================
+            // After-Hours Minutes
+            // =====================================
+
+            const recordAfterHoursMinutes =
+                getRecordAfterHoursMinutes(
+                    record
+                );
+
+
+            data.afterHoursMinutes +=
+                recordAfterHoursMinutes;
+
+
+            // =====================================
+            // Actual Normal Minutes
+            // =====================================
+
+            const recordNormalWorkedMinutes =
+                totalWorkedMinutes ===
+                    null
+                    ?
+                    0
+                    :
+                    Math.max(
+                        0,
+                        totalWorkedMinutes -
+                        recordAfterHoursMinutes
                     );
 
 
-                if (
-                    !Number.isFinite(
-                        sessionMinutes
-                    )
-                    ||
-                    sessionMinutes <
+            data.actualNormalMinutes +=
+                recordNormalWorkedMinutes;
+
+
+            // =====================================
+            // Paid Leave Credit
+            // =====================================
+
+            let paidLeaveMinutes =
+                calculatePaidLeaveCreditMinutes(
+                    record
+                );
+
+
+            if (
+                !Number.isFinite(
+                    paidLeaveMinutes
+                )
+                ||
+                paidLeaveMinutes <
                     0
+            ) {
+
+                paidLeaveMinutes =
+                    0;
+
+            }
+
+
+            // =====================================
+            // Standalone Half Day
+            // =====================================
+            //
+            // The standalone Half Day status must
+            // behave like other paid half-day
+            // records unless explicitly unpaid.
+            // =====================================
+
+            if (
+                status ===
+                    "half day"
+            ) {
+
+                paidLeaveMinutes =
+                    Math.max(
+                        0,
+                        STANDARD_PAID_DAY_MINUTES -
+                        recordNormalWorkedMinutes
+                    );
+
+            }
+
+
+            // =====================================
+            // Unpaid Leave
+            // =====================================
+            //
+            // Unpaid leave NEVER receives paid
+            // leave credit.
+            // =====================================
+
+            if (
+                status ===
+                    "unpaid leave"
+            ) {
+
+                paidLeaveMinutes =
+                    0;
+
+            }
+
+
+            // =====================================
+            // Absence
+            // =====================================
+
+            if (
+                status ===
+                    "absent"
+            ) {
+
+                paidLeaveMinutes =
+                    0;
+
+            }
+
+
+            data.paidLeaveMinutes +=
+                paidLeaveMinutes;
+
+
+            // =====================================
+            // Attendance Credit
+            // =====================================
+            //
+            // On Time / Late = 1 full attendance day
+            //
+            // Half-day/custom leave uses the
+            // physical percentage of the normal
+            // 8-hour day actually worked.
+            //
+            // Full-day leave = 0 attendance
+            //
+            // Public Holiday = excluded entirely
+            // =====================================
+
+            if (
+                status ===
+                    "on time"
+                ||
+                status ===
+                    "late"
+            ) {
+
+                data.attendanceCredit +=
+                    1;
+
+            } else {
+
+                const partialLeaveStatuses = [
+                    "annual leave",
+                    "sick leave",
+                    "family responsibility leave",
+                    "unpaid leave"
+                ];
+
+
+                const isPartialLeave =
+                    partialLeaveStatuses.includes(
+                        status
+                    )
+                    &&
+                    (
+                        leaveDuration ===
+                            "half-day"
+                        ||
+                        leaveDuration ===
+                            "custom"
+                    );
+
+
+                const isStandaloneHalfDay =
+                    status ===
+                    "half day";
+
+
+                if (
+                    (
+                        isPartialLeave
+                        ||
+                        isStandaloneHalfDay
+                    )
+                    &&
+                    recordNormalWorkedMinutes >
+                        0
                 ) {
 
-                    return total;
+                    const attendanceFraction =
+                        Math.min(
+                            1,
+                            recordNormalWorkedMinutes /
+                            STANDARD_PAID_DAY_MINUTES
+                        );
+
+
+                    data.attendanceCredit +=
+                        attendanceFraction;
 
                 }
 
-
-                return (
-                    total +
-                    Math.floor(
-                        sessionMinutes
-                    )
-                );
-
-            },
-            0
-        );
-
-}
-
-
-data.afterHoursWorkedMinutes +=
-    recordAfterHoursMinutes;
+            }
 
         }
     );
@@ -3075,186 +3802,253 @@ data.afterHoursWorkedMinutes +=
             employee
         ) {
 
-
             // =====================================
-// Worked Days
-// =====================================
-
-const completedWorkdays =
-    employee.workedDays;
-
-
-// =====================================
-// Average Hours / Worked Day
-// =====================================
-
-const averageWorkedMinutes =
-    completedWorkdays >
-    0
-        ?
-        Math.round(
-            employee.workedMinutes /
-            completedWorkdays
-        )
-        :
-        0;
-
-
-            // =====================================
-            // Attendance Rate
+            // Hours
             // =====================================
 
-            const attended =
-                employee.onTime +
-                employee.late;
+            const actualNormalMinutes =
+                Math.max(
+                    0,
+                    employee.actualNormalMinutes
+                );
+
+
+            const paidLeaveMinutes =
+                Math.max(
+                    0,
+                    employee.paidLeaveMinutes
+                );
+
+
+            const normalAccountedMinutes =
+                actualNormalMinutes +
+                paidLeaveMinutes;
+
+
+            const afterHoursMinutes =
+                Math.max(
+                    0,
+                    employee.afterHoursMinutes
+                );
+
+
+            const totalEmployeeMinutes =
+                normalAccountedMinutes +
+                afterHoursMinutes;
+
+
+            // =====================================
+            // Attendance Eligible Days
+            // =====================================
+            //
+            // ONLY Public Holidays are excluded.
+            //
+            // Annual Leave, Sick Leave,
+            // Family Responsibility Leave,
+            // Maternity Leave, Unpaid Leave and
+            // Absence remain in the denominator.
+            // =====================================
+
+            const attendanceEligibleDays =
+                Math.max(
+                    0,
+                    employee.total -
+                    employee.excludedAttendanceDays
+                );
+
+
+            // =====================================
+            // Attendance Percentage
+            // =====================================
 
             const attendancePercentage =
-                employee.total ===
+                attendanceEligibleDays ===
                     0
                     ?
-                    0
+                    100
                     :
                     Math.round(
                         (
-                            attended /
-                            employee.total
+                            employee.attendanceCredit /
+                            attendanceEligibleDays
                         )
                         *
                         100
                     );
 
-                    
-// =====================================
-// Performance Status
-// =====================================
-
-let performanceStatus =
-    "Good";
-
-let performanceStatusClass =
-    "performance-status-good";
-
-    const performanceReasons =
-    [];
-
-
-const hasLowAverageHours =
-    employee.total > 0 &&
-    averageWorkedMinutes <
-    (
-        shortWorkdayHours *
-        60
-    );
-
-
-const hasWarning =
-    attendancePercentage <
-        90 ||
-    employee.late >=
-        consecutiveLateThreshold ||
-    employee.earlyExits >=
-        frequentEarlyExitThreshold ||
-    hasLowAverageHours;
-
-
-const needsAttention =
-    attendancePercentage <
-        80 ||
-    employee.absent >
-        0;
-
-        if (
-    attendancePercentage <
-    80
-) {
-
-    performanceReasons.push(
-        "Attendance rate below 80%"
-    );
-
-}
-
-if (
-    employee.absent >
-    0
-) {
-
-    performanceReasons.push(
-        `${employee.absent} absence${employee.absent === 1 ? "" : "s"} recorded`
-    );
-
-}
-
-if (
-    employee.late >=
-    consecutiveLateThreshold
-) {
-
-    performanceReasons.push(
-        `${employee.late} late record${employee.late === 1 ? "" : "s"}`
-    );
-
-}
-
-if (
-    employee.earlyExits >=
-    frequentEarlyExitThreshold
-) {
-
-    performanceReasons.push(
-        `${employee.earlyExits} early exit${employee.earlyExits === 1 ? "" : "s"}`
-    );
-
-}
-
-if (
-    hasLowAverageHours
-) {
-
-    performanceReasons.push(
-        "Average hours below target"
-    );
-
-}
-
-if (
-    attendancePercentage >=
-        80 &&
-    attendancePercentage <
-        90
-) {
-
-    performanceReasons.push(
-        "Attendance rate below 90%"
-    );
-
-}
-
-
-if (
-    needsAttention
-) {
-
-    performanceStatus =
-        "Needs Attention";
-
-    performanceStatusClass =
-        "performance-status-danger";
-
-} else if (
-    hasWarning
-) {
-
-    performanceStatus =
-        "Watch";
-
-    performanceStatusClass =
-        "performance-status-watch";
-
-}
 
             // =====================================
-            // Create Employee Row
+            // Average Accounted Hours / Day
+            // =====================================
+            //
+            // This deliberately uses the eligible
+            // working days as the denominator.
+            //
+            // Paid leave preserves scheduled hours.
+            // Unpaid leave reduces the average.
+            // Public Holidays are excluded.
+            // After-hours are NOT included here.
+            // =====================================
+
+            const averageWorkedMinutes =
+                attendanceEligibleDays ===
+                    0
+                    ?
+                    0
+                    :
+                    Math.round(
+                        normalAccountedMinutes /
+                        attendanceEligibleDays
+                    );
+
+
+            // =====================================
+            // Performance Status
+            // =====================================
+
+            let performanceStatus =
+                "Good";
+
+
+            let performanceStatusClass =
+                "performance-status-good";
+
+
+            const performanceReasons =
+                [];
+
+
+            const hasLowAverageHours =
+                attendanceEligibleDays >
+                    0
+                &&
+                averageWorkedMinutes <
+                    (
+                        shortWorkdayHours *
+                        60
+                    );
+
+
+            const hasWarning =
+                attendancePercentage <
+                    90
+                ||
+                employee.late >=
+                    consecutiveLateThreshold
+                ||
+                employee.earlyExits >=
+                    frequentEarlyExitThreshold
+                ||
+                hasLowAverageHours;
+
+
+            const needsAttention =
+                attendancePercentage <
+                    80
+                ||
+                employee.absent >
+                    0;
+
+
+            if (
+                attendancePercentage <
+                80
+            ) {
+
+                performanceReasons.push(
+                    "Attendance rate below 80%"
+                );
+
+            }
+
+
+            if (
+                employee.absent >
+                0
+            ) {
+
+                performanceReasons.push(
+                    `${employee.absent} absence${employee.absent === 1 ? "" : "s"} recorded`
+                );
+
+            }
+
+
+            if (
+                employee.late >=
+                consecutiveLateThreshold
+            ) {
+
+                performanceReasons.push(
+                    `${employee.late} late record${employee.late === 1 ? "" : "s"}`
+                );
+
+            }
+
+
+            if (
+                employee.earlyExits >=
+                frequentEarlyExitThreshold
+            ) {
+
+                performanceReasons.push(
+                    `${employee.earlyExits} early exit${employee.earlyExits === 1 ? "" : "s"}`
+                );
+
+            }
+
+
+            if (
+                hasLowAverageHours
+            ) {
+
+                performanceReasons.push(
+                    "Average hours below target"
+                );
+
+            }
+
+
+            if (
+                attendancePercentage >=
+                    80
+                &&
+                attendancePercentage <
+                    90
+            ) {
+
+                performanceReasons.push(
+                    "Attendance rate below 90%"
+                );
+
+            }
+
+
+            if (
+                needsAttention
+            ) {
+
+                performanceStatus =
+                    "Needs Attention";
+
+                performanceStatusClass =
+                    "performance-status-danger";
+
+            } else if (
+                hasWarning
+            ) {
+
+                performanceStatus =
+                    "Watch";
+
+                performanceStatusClass =
+                    "performance-status-watch";
+
+            }
+
+
+            // =====================================
+            // Employee Row
             // =====================================
 
             const row =
@@ -3262,11 +4056,14 @@ if (
                     "div"
                 );
 
+
             row.className =
                 "employee-performance-row";
 
 
             row.innerHTML = `
+
+                <!-- 1. Employee -->
 
                 <span class="employee-performance-name">
 
@@ -3283,190 +4080,220 @@ if (
                 </span>
 
 
-                <!-- Records -->
+                <!-- 2. Records -->
 
                 <span>
                     ${employee.total}
                 </span>
 
 
-                <!-- On Time -->
+                <!-- 3. On Time -->
 
                 <span>
                     ${employee.onTime}
                 </span>
 
 
-                <!-- Late -->
+                <!-- 4. Late -->
 
-<span
-    class="${
-        employee.late >=
-        consecutiveLateThreshold
-            ?
-            "performance-warning-cell"
-            :
-            ""
-    }"
->
-    ${employee.late}
-</span>
-
-
-                <!-- Absent -->
-
-<span
-    class="${
-        employee.absent >
-        0
-            ?
-            "performance-danger-cell"
-            :
-            ""
-    }"
->
-    ${employee.absent}
-</span>
+                <span
+                    class="${
+                        employee.late >=
+                        consecutiveLateThreshold
+                            ?
+                            "performance-warning-cell"
+                            :
+                            ""
+                    }"
+                >
+                    ${employee.late}
+                </span>
 
 
-                <!-- Sick Leave -->
+                <!-- 5. Absent -->
+
+                <span
+                    class="${
+                        employee.absent >
+                        0
+                            ?
+                            "performance-danger-cell"
+                            :
+                            ""
+                    }"
+                >
+                    ${employee.absent}
+                </span>
+
+
+                <!-- 6. Sick Leave -->
 
                 <span>
                     ${employee.sickLeave}
                 </span>
 
 
-                <!-- Annual Leave -->
+                <!-- 7. Annual Leave -->
 
                 <span>
                     ${employee.annualLeave}
                 </span>
 
 
-                <!-- Other Leave -->
+                <!-- 8. Other Leave -->
 
                 <span>
                     ${employee.otherLeave}
                 </span>
 
 
-                <!-- Early Exits -->
+                <!-- 9. Early Exits -->
 
-<span
-    class="${
-        employee.earlyExits >=
-        frequentEarlyExitThreshold
-            ?
-            "performance-warning-cell"
-            :
-            ""
-    }"
->
-    ${employee.earlyExits}
-</span>
-
-
-                <!-- Total Hours Worked -->
-
-<span>
-    ${escapeHtml(
-        formatMinutesAsHours(
-            employee.workedMinutes
-        )
-    )}
-</span>
+                <span
+                    class="${
+                        employee.earlyExits >=
+                        frequentEarlyExitThreshold
+                            ?
+                            "performance-warning-cell"
+                            :
+                            ""
+                    }"
+                >
+                    ${employee.earlyExits}
+                </span>
 
 
-<!-- After-Hours Worked -->
+                <!-- 10. Actual Normal Hours -->
 
-<span>
-    ${escapeHtml(
-        formatMinutesAsHours(
-            employee.afterHoursWorkedMinutes
-        )
-    )}
-</span>
-
-
-<!-- Average Hours / Day -->
-
-<span
-    class="${
-        employee.total > 0 &&
-        averageWorkedMinutes <
-        (
-            shortWorkdayHours *
-            60
-        )
-            ?
-            "performance-warning-cell"
-            :
-            ""
-    }"
->
-    ${escapeHtml(
-        formatMinutesAsHours(
-            averageWorkedMinutes
-        )
-    )}
-</span>
+                <span>
+                    ${escapeHtml(
+                        formatMinutesAsHours(
+                            actualNormalMinutes
+                        )
+                    )}
+                </span>
 
 
-                <!-- Attendance Rate -->
+                <!-- 11. Paid Leave Hours -->
 
-<span
-    class="attendance-rate-cell ${getAttendanceRateClass(
-        attendancePercentage
-    )}"
->
-    ${attendancePercentage}%
-</span>
+                <span>
+                    ${escapeHtml(
+                        formatMinutesAsHours(
+                            paidLeaveMinutes
+                        )
+                    )}
+                </span>
 
-<!-- Performance Status -->
 
-<span
-    class="performance-status-wrapper"
->
+                <!-- 12. Normal Accounted Hours -->
 
-    <span
-        class="performance-status-cell ${performanceStatusClass}"
-    >
-        ${performanceStatus}
-    </span>
+                <span>
+                    ${escapeHtml(
+                        formatMinutesAsHours(
+                            normalAccountedMinutes
+                        )
+                    )}
+                </span>
 
-    <span class="performance-status-tooltip">
 
-        ${
-            performanceReasons.length > 0
-                ?
-                performanceReasons
-                    .map(
-                        function (
-                            reason
-                        ) {
+                <!-- 13. After-Hours Worked -->
 
-                            return `
-                                <span>
-                                    • ${escapeHtml(
-                                        reason
-                                    )}
-                                </span>
-                            `;
+                <span>
+                    ${escapeHtml(
+                        formatMinutesAsHours(
+                            afterHoursMinutes
+                        )
+                    )}
+                </span>
 
-                        }
-                    )
-                    .join("")
-                :
-                `
-                    <span>
-                        No performance concerns detected
+
+                <!-- 14. Total Hours -->
+
+                <span>
+                    ${escapeHtml(
+                        formatMinutesAsHours(
+                            totalEmployeeMinutes
+                        )
+                    )}
+                </span>
+
+
+                <!-- 15. Average Hours / Day -->
+
+                <span
+                    class="${
+                        hasLowAverageHours
+                            ?
+                            "performance-warning-cell"
+                            :
+                            ""
+                    }"
+                >
+                    ${escapeHtml(
+                        formatMinutesAsHours(
+                            averageWorkedMinutes
+                        )
+                    )}
+                </span>
+
+
+                <!-- 16. Attendance Rate -->
+
+                <span
+                    class="attendance-rate-cell ${getAttendanceRateClass(
+                        attendancePercentage
+                    )}"
+                >
+                    ${attendancePercentage}%
+                </span>
+
+
+                <!-- 17. Performance Status -->
+
+                <span
+                    class="performance-status-wrapper"
+                >
+
+                    <span
+                        class="performance-status-cell ${performanceStatusClass}"
+                    >
+                        ${performanceStatus}
                     </span>
-                `
-        }
 
-    </span>
+                    <span class="performance-status-tooltip">
 
-</span>
+                        ${
+                            performanceReasons.length >
+                            0
+                                ?
+                                performanceReasons
+                                    .map(
+                                        function (
+                                            reason
+                                        ) {
+
+                                            return `
+                                                <span>
+                                                    • ${escapeHtml(
+                                                        reason
+                                                    )}
+                                                </span>
+                                            `;
+
+                                        }
+                                    )
+                                    .join("")
+                                :
+                                `
+                                    <span>
+                                        No performance concerns detected
+                                    </span>
+                                `
+                        }
+
+                    </span>
+
+                </span>
 
             `;
 

@@ -157,10 +157,68 @@ const absentTodayElement =
         "absentTodayCard"
     );
 
+    // =====================================
+// Leave Today
+// =====================================
+
+const leaveTodayCard =
+    document.getElementById(
+        "leaveTodayCard"
+    );
+
+const leaveTodayCount =
+    document.getElementById(
+        "leaveTodayCount"
+    );
+
+    // =====================================
+// Employees Requiring Attention
+// =====================================
+
+const employeesAttentionCard =
+    document.getElementById(
+        "employeesAttentionCard"
+    );
+
+const employeesAttentionCount =
+    document.getElementById(
+        "employeesAttentionCount"
+    );
+
+    // =====================================
+// Upcoming Leave - Next 7 Days
+// =====================================
+
+const upcomingLeaveCard =
+    document.getElementById(
+        "upcomingLeaveCard"
+    );
+
+const upcomingLeaveCount =
+    document.getElementById(
+        "upcomingLeaveCount"
+    );
+
+    const unpaidLeaveCard =
+    document.getElementById(
+        "unpaidLeaveCard"
+    );
+
+const unpaidLeaveCount =
+    document.getElementById(
+        "unpaidLeaveCount"
+    );
+
+    const unpaidLeaveCardTitle =
+    document.getElementById(
+        "unpaidLeaveCardTitle"
+    );
+
 const totalHoursTodayElement =
     document.getElementById(
         "totalHoursToday"
     );
+
 
 const logoutButton =
     document.getElementById(
@@ -177,6 +235,19 @@ let currentDashboardAttendanceRecords =
     let currentDashboardEmployeeRecords =
     [];
 
+    let currentMonthlyUnpaidLeaveRecords =
+    [];
+
+    let currentMonthlyAttentionRecords =
+    [];
+
+    // =====================================
+// Upcoming Leave Records
+// =====================================
+
+let currentUpcomingLeaveRecords =
+    [];
+
     // =====================================
 // Today's Attendance Pagination
 // =====================================
@@ -187,6 +258,7 @@ const DASHBOARD_ATTENDANCE_PAGE_SIZE =
 let currentDashboardAttendancePage =
     1;
 
+    
     // =====================================
 // Attendance Settings
 // =====================================
@@ -393,6 +465,116 @@ if (
 
 }
 
+// =====================================
+// Leave Today Card
+// =====================================
+
+if (
+    leaveTodayCard
+) {
+
+    leaveTodayCard.addEventListener(
+        "click",
+        function () {
+
+            const leaveStatuses = [
+                "annual leave",
+                "sick leave",
+                "family responsibility leave",
+                "maternity leave",
+                "unpaid leave",
+                "half day"
+            ];
+
+
+            const leaveRecords =
+                currentDashboardAttendanceRecords.filter(
+                    function (
+                        record
+                    ) {
+
+                        return leaveStatuses.includes(
+                            normalizeStatus(
+                                record.status
+                            )
+                        );
+
+                    }
+                );
+
+
+            openLeaveTodayModal(
+    leaveRecords
+);
+
+        }
+    );
+
+}
+
+// =====================================
+// Employees Requiring Attention Card
+// =====================================
+
+if (
+    employeesAttentionCard
+) {
+
+    employeesAttentionCard.addEventListener(
+        "click",
+        function () {
+
+            openEmployeesAttentionModal(
+                currentMonthlyAttentionRecords
+            );
+
+        }
+    );
+
+}
+
+// =====================================
+// Upcoming Leave Card
+// =====================================
+
+if (
+    upcomingLeaveCard
+) {
+
+    upcomingLeaveCard.addEventListener(
+        "click",
+        function () {
+
+            openUpcomingLeaveModal(
+                currentUpcomingLeaveRecords
+            );
+
+        }
+    );
+
+}
+
+// =====================================
+// Unpaid Leave Card
+// =====================================
+
+if (
+    unpaidLeaveCard
+) {
+
+    unpaidLeaveCard.addEventListener(
+        "click",
+        function () {
+
+            openUnpaidLeaveModal(
+    currentMonthlyUnpaidLeaveRecords
+);
+
+        }
+    );
+
+}
+
 
     // =====================================
     // Close Dashboard Stat Modal
@@ -443,10 +625,15 @@ if (
 
     loadCompanyBranding();
 
-    loadAttendance();
+loadAttendance();
+
+loadCurrentMonthUnpaidLeave();
+
+loadCurrentMonthAttentionRecords();
+
+loadUpcomingLeave();
 
 }
-
 
 // =====================================
 // Load Company Branding
@@ -668,6 +855,743 @@ async function loadAttendance() {
         );
 
         showDashboardErrorState();
+
+    }
+
+}
+
+// =====================================
+// Load Current Month Unpaid Leave
+// =====================================
+
+async function loadCurrentMonthUnpaidLeave() {
+
+    const currentMonthName =
+    new Date().toLocaleDateString(
+        "en-ZA",
+        {
+            month:
+                "long"
+        }
+    );
+
+
+if (
+    unpaidLeaveCardTitle
+) {
+
+    unpaidLeaveCardTitle.textContent =
+        `Unpaid Leave - ${currentMonthName}`;
+
+}
+
+    if (!unpaidLeaveCount) {
+        return;
+    }
+
+    try {
+
+        const today =
+            new Date();
+
+        const monthStart =
+            new Date(
+                today.getFullYear(),
+                today.getMonth(),
+                1
+            );
+
+        const monthEnd =
+            new Date(
+                today.getFullYear(),
+                today.getMonth() + 1,
+                0
+            );
+
+        const startDateKey =
+            formatLocalDateKey(
+                monthStart
+            );
+
+        const endDateKey =
+            formatLocalDateKey(
+                monthEnd
+            );
+
+
+        const unpaidLeaveQuery =
+            query(
+                collection(
+                    db,
+                    "attendance"
+                ),
+                where(
+                    "dateKey",
+                    ">=",
+                    startDateKey
+                ),
+                where(
+                    "dateKey",
+                    "<=",
+                    endDateKey
+                )
+            );
+
+
+        const snapshot =
+            await getDocs(
+                unpaidLeaveQuery
+            );
+
+
+        currentMonthlyUnpaidLeaveRecords =
+            snapshot.docs
+                .map(
+                    function (
+                        attendanceDocument
+                    ) {
+
+                        return {
+                            id:
+                                attendanceDocument.id,
+
+                            ...attendanceDocument.data()
+                        };
+
+                    }
+                )
+                .filter(
+                    function (
+                        record
+                    ) {
+
+                        return (
+                            normalizeStatus(
+                                record.status
+                            ) ===
+                            "unpaid leave"
+                        );
+
+                    }
+                );
+
+
+        // =====================================
+        // Count Unique Employees
+        // =====================================
+
+        unpaidLeaveCount.textContent =
+    currentMonthlyUnpaidLeaveRecords.length;
+
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Unable to load monthly unpaid leave:",
+            error
+        );
+
+        currentMonthlyUnpaidLeaveRecords =
+            [];
+
+        unpaidLeaveCount.textContent =
+            "0";
+
+    }
+
+}
+
+// =====================================
+// Load Current Month Attention Records
+// =====================================
+
+async function loadCurrentMonthAttentionRecords() {
+
+    if (
+        !employeesAttentionCount
+    ) {
+
+        return;
+
+    }
+
+    try {
+
+        const today =
+            new Date();
+
+        const monthStart =
+            new Date(
+                today.getFullYear(),
+                today.getMonth(),
+                1
+            );
+
+        const monthEnd =
+            new Date(
+                today.getFullYear(),
+                today.getMonth() + 1,
+                0
+            );
+
+        const startDateKey =
+            formatLocalDateKey(
+                monthStart
+            );
+
+        const endDateKey =
+            formatLocalDateKey(
+                monthEnd
+            );
+
+
+        const attentionQuery =
+            query(
+                collection(
+                    db,
+                    "attendance"
+                ),
+                where(
+                    "dateKey",
+                    ">=",
+                    startDateKey
+                ),
+                where(
+                    "dateKey",
+                    "<=",
+                    endDateKey
+                )
+            );
+
+
+        const snapshot =
+            await getDocs(
+                attentionQuery
+            );
+
+
+        const monthlyRecords =
+            snapshot.docs.map(
+                function (
+                    attendanceDocument
+                ) {
+
+                    return {
+                        id:
+                            attendanceDocument.id,
+
+                        ...attendanceDocument.data()
+                    };
+
+                }
+            );
+
+
+        const employeeMap =
+            {};
+
+
+        monthlyRecords.forEach(
+            function (
+                record
+            ) {
+
+                const employeeNumber =
+                    String(
+                        record.employeeNumber ??
+                        "Unknown"
+                    );
+
+                const employeeName =
+                    String(
+                        record.name ??
+                        "Unknown Employee"
+                    );
+
+                const employeeKey =
+                    employeeNumber;
+
+
+                if (
+                    !employeeMap[
+                        employeeKey
+                    ]
+                ) {
+
+                    employeeMap[
+                        employeeKey
+                    ] = {
+
+                        employeeNumber:
+                            employeeNumber,
+
+                        name:
+                            employeeName,
+
+                        department:
+                            record.department ??
+                            "Unassigned",
+
+                        totalRecords:
+                            0,
+
+                        presentCredit:
+                            0,
+
+                        lateCount:
+                            0,
+
+                        absentCount:
+                            0,
+
+                        earlyExitCount:
+                            0,
+
+                        excludedDays:
+                            0,
+
+                        reasons:
+                            []
+
+                    };
+
+                }
+
+
+                const employee =
+                    employeeMap[
+                        employeeKey
+                    ];
+
+
+                employee.totalRecords++;
+
+
+                const status =
+                    normalizeStatus(
+                        record.status
+                    );
+
+
+                // Public Holiday excluded
+                if (
+                    status ===
+                    "public holiday"
+                ) {
+
+                    employee.excludedDays++;
+
+                    return;
+
+                }
+
+
+                if (
+                    status ===
+                    "on time"
+                    ||
+                    status ===
+                    "late"
+                ) {
+
+                    employee.presentCredit +=
+                        1;
+
+                }
+
+
+                if (
+                    status ===
+                    "late"
+                ) {
+
+                    employee.lateCount++;
+
+                }
+
+
+                if (
+                    status ===
+                    "absent"
+                ) {
+
+                    employee.absentCount++;
+
+                }
+
+
+                if (
+                    record.earlyExit ===
+                    true
+                ) {
+
+                    employee.earlyExitCount++;
+
+                }
+
+
+                // Partial leave attendance credit
+                const leaveDuration =
+                    String(
+                        record.leaveDuration ??
+                        ""
+                    )
+                        .trim()
+                        .toLowerCase();
+
+
+                const partialLeaveStatuses = [
+                    "annual leave",
+                    "sick leave",
+                    "family responsibility leave",
+                    "unpaid leave",
+                    "half day"
+                ];
+
+
+                const isPartialLeave =
+                    partialLeaveStatuses.includes(
+                        status
+                    )
+                    &&
+                    (
+                        leaveDuration ===
+                            "half-day"
+                        ||
+                        leaveDuration ===
+                            "custom"
+                        ||
+                        status ===
+                            "half day"
+                    );
+
+
+                if (
+                    isPartialLeave
+                ) {
+
+                    const workedMinutes =
+                        calculateWorkedMinutes(
+                            record
+                        );
+
+
+                    if (
+                        workedMinutes >
+                        0
+                    ) {
+
+                        employee.presentCredit +=
+                            Math.min(
+                                1,
+                                workedMinutes /
+                                480
+                            );
+
+                    }
+
+                }
+
+            }
+        );
+
+
+        currentMonthlyAttentionRecords =
+            Object.values(
+                employeeMap
+            )
+                .map(
+                    function (
+                        employee
+                    ) {
+
+                        const eligibleDays =
+                            Math.max(
+                                0,
+                                employee.totalRecords -
+                                employee.excludedDays
+                            );
+
+
+                        const attendanceRate =
+                            eligibleDays ===
+                                0
+                                ?
+                                100
+                                :
+                                Math.round(
+                                    (
+                                        employee.presentCredit /
+                                        eligibleDays
+                                    )
+                                    *
+                                    100
+                                );
+
+
+                        const reasons =
+                            [];
+
+
+                        if (
+                            employee.absentCount >=
+                            1
+                        ) {
+
+                            reasons.push(
+                                "Absence recorded"
+                            );
+
+                        }
+
+
+                        if (
+                            employee.lateCount >=
+                            3
+                        ) {
+
+                            reasons.push(
+                                "Repeated lateness"
+                            );
+
+                        }
+
+
+                        if (
+                            employee.earlyExitCount >=
+                            2
+                        ) {
+
+                            reasons.push(
+                                "Frequent early exits"
+                            );
+
+                        }
+
+
+                        if (
+                            attendanceRate <
+                            80
+                        ) {
+
+                            reasons.push(
+                                "Attendance below 80%"
+                            );
+
+                        }
+
+
+                        return {
+
+                            ...employee,
+
+                            attendanceRate:
+                                attendanceRate,
+
+                            reasons:
+                                reasons
+
+                        };
+
+                    }
+                )
+                .filter(
+                    function (
+                        employee
+                    ) {
+
+                        return (
+                            employee.reasons.length >
+                            0
+                        );
+
+                    }
+                );
+
+
+        employeesAttentionCount.textContent =
+            currentMonthlyAttentionRecords.length;
+
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Unable to load employee attention records:",
+            error
+        );
+
+
+        currentMonthlyAttentionRecords =
+            [];
+
+
+        employeesAttentionCount.textContent =
+            "0";
+
+    }
+
+}
+
+// =====================================
+// Load Upcoming Leave - Next 7 Days
+// =====================================
+
+async function loadUpcomingLeave() {
+
+    if (
+        !upcomingLeaveCount
+    ) {
+
+        return;
+
+    }
+
+    try {
+
+        const today =
+            new Date();
+
+
+        // Start tomorrow
+        const startDate =
+            new Date(
+                today.getFullYear(),
+                today.getMonth(),
+                today.getDate() + 1
+            );
+
+
+        // End 7 days from today
+        const endDate =
+            new Date(
+                today.getFullYear(),
+                today.getMonth(),
+                today.getDate() + 7
+            );
+
+
+        const startDateKey =
+            formatLocalDateKey(
+                startDate
+            );
+
+
+        const endDateKey =
+            formatLocalDateKey(
+                endDate
+            );
+
+
+        const upcomingLeaveQuery =
+            query(
+                collection(
+                    db,
+                    "attendance"
+                ),
+                where(
+                    "dateKey",
+                    ">=",
+                    startDateKey
+                ),
+                where(
+                    "dateKey",
+                    "<=",
+                    endDateKey
+                )
+            );
+
+
+        const snapshot =
+            await getDocs(
+                upcomingLeaveQuery
+            );
+
+
+        const leaveStatuses = [
+            "annual leave",
+            "sick leave",
+            "family responsibility leave",
+            "maternity leave",
+            "unpaid leave",
+            "half day"
+        ];
+
+
+        currentUpcomingLeaveRecords =
+            snapshot.docs
+                .map(
+                    function (
+                        attendanceDocument
+                    ) {
+
+                        return {
+
+                            id:
+                                attendanceDocument.id,
+
+                            ...attendanceDocument.data()
+
+                        };
+
+                    }
+                )
+                .filter(
+                    function (
+                        record
+                    ) {
+
+                        return leaveStatuses.includes(
+                            normalizeStatus(
+                                record.status
+                            )
+                        );
+
+                    }
+                )
+                .sort(
+                    function (
+                        firstRecord,
+                        secondRecord
+                    ) {
+
+                        return String(
+                            firstRecord.dateKey ??
+                            ""
+                        ).localeCompare(
+                            String(
+                                secondRecord.dateKey ??
+                                ""
+                            )
+                        );
+
+                    }
+                );
+
+
+        upcomingLeaveCount.textContent =
+            currentUpcomingLeaveRecords.length;
+
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Unable to load upcoming leave:",
+            error
+        );
+
+
+        currentUpcomingLeaveRecords =
+            [];
+
+
+        upcomingLeaveCount.textContent =
+            "0";
 
     }
 
@@ -1824,6 +2748,615 @@ function formatWorkedMinutes(
 }
 
 // =====================================
+// Open Leave Today Modal
+// =====================================
+
+function openLeaveTodayModal(
+    records
+) {
+
+    if (
+        !dashboardStatModal ||
+        !dashboardStatModalTitle ||
+        !dashboardStatModalContent
+    ) {
+
+        return;
+
+    }
+
+
+    dashboardStatModalTitle.textContent =
+        "Leave Today";
+
+
+    dashboardStatModalContent.innerHTML =
+        "";
+
+
+    if (
+        records.length ===
+        0
+    ) {
+
+        dashboardStatModalContent.innerHTML = `
+            <p class="empty-row">
+                No employees on leave today.
+            </p>
+        `;
+
+        dashboardStatModal.hidden =
+            false;
+
+        return;
+
+    }
+
+
+    records.forEach(
+        function (
+            record
+        ) {
+
+            const item =
+                document.createElement(
+                    "div"
+                );
+
+
+            item.className =
+                "dashboard-stat-employee-item";
+
+
+            const leaveType =
+                String(
+                    record.status ??
+                    "Leave"
+                ).trim();
+
+
+            const leaveDuration =
+                String(
+                    record.leaveDuration ??
+                    "full-day"
+                )
+                    .trim()
+                    .toLowerCase();
+
+
+            let durationDisplay =
+                "Full Day";
+
+
+            if (
+                leaveDuration ===
+                "half-day"
+            ) {
+
+                durationDisplay =
+                    "Half Day";
+
+            } else if (
+                leaveDuration ===
+                "custom"
+            ) {
+
+                durationDisplay =
+                    "Custom";
+
+            }
+
+
+            const leaveTime =
+                String(
+                    record.leaveTime ??
+                    record.checkOutTime ??
+                    ""
+                ).trim();
+
+
+            let durationWithTime =
+                durationDisplay;
+
+
+            if (
+                (
+                    leaveDuration ===
+                        "half-day"
+                    ||
+                    leaveDuration ===
+                        "custom"
+                )
+                &&
+                leaveTime !==
+                    ""
+            ) {
+
+                durationWithTime =
+                    `${durationDisplay} - From ${leaveTime}`;
+
+            }
+
+
+            item.innerHTML = `
+
+                <strong>
+                    ${escapeHtml(
+                        record.name ??
+                        "Unknown Employee"
+                    )}
+                </strong>
+
+                <span>
+                    ${escapeHtml(
+                        record.department ??
+                        "Unassigned"
+                    )}
+                </span>
+
+                <div class="upcoming-leave-details">
+
+    <span>
+        Leave Type:
+        <strong>
+            ${escapeHtml(
+                leaveType
+            )}
+        </strong>
+    </span>
+
+    <span>
+        Duration:
+        ${escapeHtml(
+            durationDisplay
+        )}
+
+        ${
+            leaveTime !==
+                ""
+                ?
+                ` - From ${escapeHtml(
+                    leaveTime
+                )}`
+                :
+                ""
+        }
+    </span>
+
+</div>
+
+            `;
+
+
+            dashboardStatModalContent.appendChild(
+                item
+            );
+
+        }
+    );
+
+
+    dashboardStatModal.hidden =
+        false;
+
+}
+
+// =====================================
+// Open Employees Requiring Attention
+// =====================================
+
+function openEmployeesAttentionModal(
+    records
+) {
+
+    if (
+        !dashboardStatModal ||
+        !dashboardStatModalTitle ||
+        !dashboardStatModalContent
+    ) {
+
+        return;
+
+    }
+
+
+    const monthName =
+        new Date().toLocaleDateString(
+            "en-ZA",
+            {
+                month:
+                    "long",
+
+                year:
+                    "numeric"
+            }
+        );
+
+
+    dashboardStatModalTitle.textContent =
+        `Employees Requiring Attention - ${monthName}`;
+
+
+    dashboardStatModalContent.innerHTML =
+        "";
+
+
+    if (
+        records.length ===
+        0
+    ) {
+
+        dashboardStatModalContent.innerHTML = `
+            <p class="empty-row">
+                No employees currently require attention.
+            </p>
+        `;
+
+        dashboardStatModal.hidden =
+            false;
+
+        return;
+
+    }
+
+
+    records.forEach(
+        function (
+            employee
+        ) {
+
+            const item =
+                document.createElement(
+                    "div"
+                );
+
+
+            item.className =
+                "dashboard-stat-employee-item";
+
+
+            const reasonsDisplay =
+                employee.reasons
+                    .map(
+                        function (
+                            reason
+                        ) {
+
+                            return `
+                                <span>
+                                    • ${escapeHtml(
+                                        reason
+                                    )}
+                                </span>
+                            `;
+
+                        }
+                    )
+                    .join("");
+
+
+            item.innerHTML = `
+
+                <strong>
+                    ${escapeHtml(
+                        employee.name ??
+                        "Unknown Employee"
+                    )}
+                </strong>
+
+                <span>
+                    ${escapeHtml(
+                        employee.department ??
+                        "Unassigned"
+                    )}
+                </span>
+
+                <span>
+                    Attendance Rate:
+                    <strong>
+                        ${escapeHtml(
+                            String(
+                                employee.attendanceRate ??
+                                0
+                            )
+                        )}%
+                    </strong>
+                </span>
+
+                <span>
+                    Late:
+                    ${escapeHtml(
+                        String(
+                            employee.lateCount ??
+                            0
+                        )
+                    )}
+                </span>
+
+                <span>
+                    Absent:
+                    ${escapeHtml(
+                        String(
+                            employee.absentCount ??
+                            0
+                        )
+                    )}
+                </span>
+
+                <span>
+                    Early Exits:
+                    ${escapeHtml(
+                        String(
+                            employee.earlyExitCount ??
+                            0
+                        )
+                    )}
+                </span>
+
+                <br>
+
+                <strong>
+                    Reasons:
+                </strong>
+
+                ${reasonsDisplay}
+
+            `;
+
+
+            dashboardStatModalContent.appendChild(
+                item
+            );
+
+        }
+    );
+
+
+    dashboardStatModal.hidden =
+        false;
+
+}
+
+// =====================================
+// Open Upcoming Leave Modal
+// =====================================
+
+function openUpcomingLeaveModal(
+    records
+) {
+
+    if (
+        !dashboardStatModal ||
+        !dashboardStatModalTitle ||
+        !dashboardStatModalContent
+    ) {
+
+        return;
+
+    }
+
+
+    dashboardStatModalTitle.textContent =
+        "Upcoming Leave - Next 7 Days";
+
+
+    dashboardStatModalContent.innerHTML =
+        "";
+
+
+    if (
+        records.length ===
+        0
+    ) {
+
+        dashboardStatModalContent.innerHTML = `
+            <p class="empty-row">
+                No upcoming leave in the next 7 days.
+            </p>
+        `;
+
+        dashboardStatModal.hidden =
+            false;
+
+        return;
+
+    }
+
+
+    records.forEach(
+        function (
+            record
+        ) {
+
+            const item =
+                document.createElement(
+                    "div"
+                );
+
+
+            item.className =
+                "dashboard-stat-employee-item";
+
+
+            let leaveDate =
+                record.dateKey ??
+                "Unknown Date";
+
+
+            if (
+                record.dateKey
+            ) {
+
+                const date =
+                    new Date(
+                        `${record.dateKey}T00:00:00`
+                    );
+
+
+                leaveDate =
+                    date.toLocaleDateString(
+                        "en-ZA",
+                        {
+                            day:
+                                "2-digit",
+
+                            month:
+                                "short",
+
+                            year:
+                                "numeric"
+                        }
+                    );
+
+            }
+
+
+            const leaveType =
+                String(
+                    record.status ??
+                    "Leave"
+                ).trim();
+
+
+            const leaveDuration =
+                String(
+                    record.leaveDuration ??
+                    "full-day"
+                )
+                    .trim()
+                    .toLowerCase();
+
+
+            let durationDisplay =
+                "Full Day";
+
+
+            if (
+                leaveDuration ===
+                "half-day"
+            ) {
+
+                durationDisplay =
+                    "Half Day";
+
+            } else if (
+                leaveDuration ===
+                "custom"
+            ) {
+
+                durationDisplay =
+                    "Custom";
+
+            }
+
+
+            const leaveTime =
+    String(
+        record.leaveTime ??
+        record.leaveStartTime ??
+        record.customLeaveTime ??
+        record.halfDayTime ??
+        record.checkOutTime ??
+        ""
+    ).trim();
+
+
+            let durationWithTime =
+                durationDisplay;
+
+
+            if (
+                (
+                    leaveDuration ===
+                        "half-day"
+                    ||
+                    leaveDuration ===
+                        "custom"
+                )
+                &&
+                leaveTime !==
+                    ""
+            ) {
+
+                durationWithTime =
+                    `${durationDisplay} - From ${leaveTime}`;
+
+            }
+
+
+            item.innerHTML = `
+
+                <strong>
+                    ${escapeHtml(
+                        record.name ??
+                        "Unknown Employee"
+                    )}
+                </strong>
+
+                <span>
+                    ${escapeHtml(
+                        record.department ??
+                        "Unassigned"
+                    )}
+                </span>
+
+                <span>
+    Date:
+    <strong>
+        ${escapeHtml(
+            leaveDate
+        )}
+    </strong>
+</span>
+
+<div class="upcoming-leave-details">
+
+    <span>
+        Leave Type:
+        <strong>
+            ${escapeHtml(
+                leaveType
+            )}
+        </strong>
+    </span>
+
+    <span>
+        Duration:
+        ${escapeHtml(
+            durationDisplay
+        )}
+
+        ${
+            leaveTime !==
+                ""
+                ?
+                ` - From ${escapeHtml(
+                    leaveTime
+                )}`
+                :
+                ""
+        }
+    </span>
+
+</div>
+
+            `;
+
+
+            dashboardStatModalContent.appendChild(
+                item
+            );
+
+        }
+    );
+
+
+    dashboardStatModal.hidden =
+        false;
+
+}
+
+// =====================================
 // Open Dashboard Stat Modal
 // =====================================
 
@@ -1916,6 +3449,440 @@ function openDashboardStatModal(
         );
 
     }
+
+    dashboardStatModal.hidden =
+        false;
+
+}
+
+// =====================================
+// Calculate Unpaid Leave Deduction
+// =====================================
+
+function calculateUnpaidLeaveDeductionMinutes(
+    record
+) {
+
+    const STANDARD_START_MINUTES =
+        8 * 60;
+
+    const STANDARD_END_MINUTES =
+        (16 * 60) + 30;
+
+    const STANDARD_PAID_DAY_MINUTES =
+        8 * 60;
+
+    const BREAK_MINUTES =
+        30;
+
+
+    const leaveDuration =
+        String(
+            record.leaveDuration ??
+            "full-day"
+        )
+            .trim()
+            .toLowerCase();
+
+
+    // =====================================
+    // Full Day
+    // =====================================
+
+    if (
+        leaveDuration ===
+            "full-day"
+        ||
+        leaveDuration ===
+            ""
+    ) {
+
+        return STANDARD_PAID_DAY_MINUTES;
+
+    }
+
+
+    // =====================================
+    // Leave Time
+    // =====================================
+
+    const leaveTime =
+        String(
+            record.leaveTime ??
+            record.checkOutTime ??
+            ""
+        ).trim();
+
+
+    if (
+        !leaveTime.includes(":")
+    ) {
+
+        // Half Day fallback.
+        if (
+            leaveDuration ===
+            "half-day"
+        ) {
+
+            return 240;
+
+        }
+
+        return 0;
+
+    }
+
+
+    const timeParts =
+        leaveTime
+            .split(":")
+            .map(Number);
+
+
+    if (
+        timeParts.length <
+            2
+        ||
+        !Number.isFinite(
+            timeParts[0]
+        )
+        ||
+        !Number.isFinite(
+            timeParts[1]
+        )
+    ) {
+
+        return 0;
+
+    }
+
+
+    const leaveMinutes =
+        (
+            timeParts[0] *
+            60
+        )
+        +
+        timeParts[1];
+
+
+    // =====================================
+    // Clamp To Normal Workday
+    // =====================================
+
+    const effectiveLeaveMinutes =
+        Math.min(
+            STANDARD_END_MINUTES,
+            Math.max(
+                STANDARD_START_MINUTES,
+                leaveMinutes
+            )
+        );
+
+
+    // =====================================
+    // Minutes At Work Before Leave
+    // =====================================
+
+    let workedMinutes =
+        effectiveLeaveMinutes -
+        STANDARD_START_MINUTES;
+
+
+    // Deduct the normal unpaid 30-minute
+    // break once the employee has worked
+    // beyond the first four hours.
+
+    if (
+        workedMinutes >
+        240
+    ) {
+
+        workedMinutes -=
+            BREAK_MINUTES;
+
+    }
+
+
+    workedMinutes =
+        Math.max(
+            0,
+            Math.min(
+                STANDARD_PAID_DAY_MINUTES,
+                workedMinutes
+            )
+        );
+
+
+    // =====================================
+    // Payroll Deduction
+    // =====================================
+
+    return Math.max(
+        0,
+        STANDARD_PAID_DAY_MINUTES -
+        workedMinutes
+    );
+
+}
+
+// =====================================
+// Open Unpaid Leave Modal
+// =====================================
+
+function openUnpaidLeaveModal(
+    records
+) {
+
+    if (
+        !dashboardStatModal ||
+        !dashboardStatModalTitle ||
+        !dashboardStatModalContent
+    ) {
+
+        return;
+
+    }
+
+
+    const monthName =
+        new Date().toLocaleDateString(
+            "en-ZA",
+            {
+                month:
+                    "long",
+
+                year:
+                    "numeric"
+            }
+        );
+
+
+    dashboardStatModalTitle.textContent =
+        `Unpaid Leave - ${monthName}`;
+
+
+    dashboardStatModalContent.innerHTML =
+        "";
+
+
+    if (
+        records.length ===
+        0
+    ) {
+
+        dashboardStatModalContent.innerHTML = `
+            <p class="empty-row">
+                No employees with unpaid leave this month.
+            </p>
+        `;
+
+        dashboardStatModal.hidden =
+            false;
+
+        return;
+
+    }
+
+
+    records.forEach(
+        function (
+            record
+        ) {
+
+            const item =
+                document.createElement(
+                    "div"
+                );
+
+
+            item.className =
+                "dashboard-stat-employee-item";
+
+
+            // =====================================
+            // Format Leave Date
+            // =====================================
+
+            let leaveDate =
+                record.dateKey ??
+                "Unknown Date";
+
+
+            if (
+                record.dateKey
+            ) {
+
+                const date =
+                    new Date(
+                        `${record.dateKey}T00:00:00`
+                    );
+
+
+                leaveDate =
+                    date.toLocaleDateString(
+                        "en-ZA",
+                        {
+                            day:
+                                "2-digit",
+
+                            month:
+                                "short",
+
+                            year:
+                                "numeric"
+                        }
+                    );
+
+            }
+
+
+            // =====================================
+            // Format Leave Duration
+            // =====================================
+
+            const leaveDuration =
+                String(
+                    record.leaveDuration ??
+                    "full-day"
+                )
+                    .trim()
+                    .toLowerCase();
+
+
+            let durationDisplay =
+    "Full Day";
+
+
+if (
+    leaveDuration ===
+    "half-day"
+) {
+
+    durationDisplay =
+        "Half Day";
+
+} else if (
+    leaveDuration ===
+    "custom"
+) {
+
+    durationDisplay =
+        "Custom";
+
+}
+
+
+// =====================================
+// Partial Leave Time
+// =====================================
+
+const leaveTime =
+    String(
+        record.leaveTime ??
+        record.checkOutTime ??
+        ""
+    ).trim();
+
+
+let leaveTimeDisplay =
+    "";
+
+
+if (
+    (
+        leaveDuration ===
+            "half-day"
+        ||
+        leaveDuration ===
+            "custom"
+    )
+    &&
+    leaveTime !==
+        ""
+) {
+
+    leaveTimeDisplay =
+        leaveTime;
+
+}
+
+const deductionMinutes =
+    calculateUnpaidLeaveDeductionMinutes(
+        record
+    );
+
+
+const deductionDisplay =
+    formatWorkedMinutes(
+        deductionMinutes
+    );
+
+
+            item.innerHTML = `
+
+                <strong>
+                    ${escapeHtml(
+                        record.name ??
+                        "Unknown Employee"
+                    )}
+                </strong>
+
+                <span>
+                    ${escapeHtml(
+                        record.department ??
+                        "Unassigned"
+                    )}
+                </span>
+
+                <span>
+                    Date:
+                    ${escapeHtml(
+                        leaveDate
+                    )}
+                </span>
+
+               <div class="unpaid-leave-duration-details">
+
+    <span>
+        Duration:
+        ${escapeHtml(
+            durationDisplay
+        )}
+
+        ${
+            leaveTimeDisplay !==
+                ""
+                ?
+                ` - ${escapeHtml(
+                    leaveTimeDisplay
+                )}`
+                :
+                ""
+        }
+    </span>
+
+    <span>
+        Hours to Deduct from Pay:
+        <strong>
+            ${escapeHtml(
+                deductionDisplay
+            )}
+        </strong>
+    </span>
+
+</div>
+
+            `;
+
+
+            dashboardStatModalContent.appendChild(
+                item
+            );
+
+        }
+    );
+
 
     dashboardStatModal.hidden =
         false;
@@ -2103,6 +4070,35 @@ function updateDashboardStatistics(
             }
         ).length;
 
+        // =====================================
+// Leave Today Count
+// =====================================
+
+const leaveStatuses = [
+    "annual leave",
+    "sick leave",
+    "family responsibility leave",
+    "maternity leave",
+    "unpaid leave",
+    "half day"
+];
+
+
+const leaveTodayTotal =
+    attendanceRecords.filter(
+        function (
+            record
+        ) {
+
+            return leaveStatuses.includes(
+                normalizeStatus(
+                    record.status
+                )
+            );
+
+        }
+    ).length;
+
         const totalWorkedMinutes =
     attendanceRecords.reduce(
         (
@@ -2181,6 +4177,15 @@ function updateDashboardStatistics(
             absentCount;
 
     }
+
+    if (
+    leaveTodayCount
+) {
+
+    leaveTodayCount.textContent =
+        leaveTodayTotal;
+
+}
 
     if (
     totalHoursTodayElement
