@@ -1069,29 +1069,66 @@ function calculateReportWorkedMinutes(
 
 
     // =====================================
-    // Non-Working Statuses
-    // =====================================
+// Leave Duration
+// =====================================
 
-    const nonWorkingStatuses = [
-        "annual leave",
-        "sick leave",
-        "family responsibility leave",
-        "maternity leave",
-        "unpaid leave",
-        "public holiday",
-        "absent"
-    ];
+const leaveDuration =
+    String(
+        record.leaveDuration ??
+        ""
+    )
+        .trim()
+        .toLowerCase();
 
 
-    if (
-        nonWorkingStatuses.includes(
-            status
-        )
-    ) {
+const partialLeaveStatuses = [
+    "annual leave",
+    "sick leave",
+    "family responsibility leave",
+    "unpaid leave"
+];
 
-        return null;
 
-    }
+const isPartialLeave =
+    partialLeaveStatuses.includes(
+        status
+    )
+    &&
+    (
+        leaveDuration ===
+            "half-day"
+        ||
+        leaveDuration ===
+            "custom"
+    );
+
+
+// =====================================
+// Non-Working Statuses
+// =====================================
+
+const nonWorkingStatuses = [
+    "annual leave",
+    "sick leave",
+    "family responsibility leave",
+    "maternity leave",
+    "unpaid leave",
+    "public holiday",
+    "absent"
+];
+
+
+if (
+    nonWorkingStatuses.includes(
+        status
+    )
+    &&
+    !isPartialLeave
+) {
+
+    return null;
+
+}
 
 
     // =====================================
@@ -1749,13 +1786,59 @@ const pageRecords =
         record.status
     );
 
+const reportLeaveDuration =
+    String(
+        record.leaveDuration ??
+        ""
+    )
+        .trim()
+        .toLowerCase();
+
+
+const reportPartialLeaveStatuses = [
+    "annual leave",
+    "sick leave",
+    "family responsibility leave",
+    "unpaid leave"
+];
+
+
+const isPartialLeave =
+    reportPartialLeaveStatuses.includes(
+        recordStatus
+    )
+    &&
+    (
+        reportLeaveDuration ===
+            "half-day"
+        ||
+        reportLeaveDuration ===
+            "custom"
+    );
+
+
 const isLeaveRecord =
-    recordStatus === "annual leave" ||
-    recordStatus === "sick leave" ||
-    recordStatus === "maternity leave" ||
-    recordStatus === "family responsibility leave" ||
-    recordStatus === "unpaid leave" ||
-    recordStatus === "public holiday";
+    (
+        recordStatus ===
+            "annual leave"
+        ||
+        recordStatus ===
+            "sick leave"
+        ||
+        recordStatus ===
+            "maternity leave"
+        ||
+        recordStatus ===
+            "family responsibility leave"
+        ||
+        recordStatus ===
+            "unpaid leave"
+        ||
+        recordStatus ===
+            "public holiday"
+    )
+    &&
+    !isPartialLeave;
 
 
 const checkInTime =
@@ -2696,10 +2779,16 @@ function updateEmployeePerformanceSummary(
                         0,
 
                     earlyExits:
-                        0,
+    0,
 
-                    workedMinutes:
-                        0
+workedDays:
+    0,
+
+workedMinutes:
+    0,
+
+afterHoursWorkedMinutes:
+    0
 
                 };
 
@@ -2834,23 +2923,122 @@ function updateEmployeePerformanceSummary(
 
 
             // =====================================
-            // Hours Worked
-            // =====================================
+// Hours Worked
+// =====================================
 
-            const workedMinutes =
-                calculateReportWorkedMinutes(
-                    record
-                );
+const workedMinutes =
+    calculateReportWorkedMinutes(
+        record
+    );
 
-            if (
-                workedMinutes !==
-                null
+
+if (
+    workedMinutes !==
+    null
+) {
+
+    data.workedMinutes +=
+        workedMinutes;
+
+
+    // A record with genuine worked time
+    // counts as a worked day, including:
+    // Half Day, partial leave, custom leave,
+    // normal attendance and after-hours-only work.
+
+    if (
+        workedMinutes >
+        0
+    ) {
+
+        data.workedDays++;
+
+    }
+
+}
+
+
+// =====================================
+// After-Hours Worked
+// =====================================
+
+let recordAfterHoursMinutes =
+    Number(
+        record.afterHoursWorkedMinutes ??
+        0
+    );
+
+
+if (
+    !Number.isFinite(
+        recordAfterHoursMinutes
+    )
+    ||
+    recordAfterHoursMinutes <
+    0
+) {
+
+    recordAfterHoursMinutes =
+        0;
+
+}
+
+
+// Older records may only have sessions.
+
+if (
+    recordAfterHoursMinutes ===
+    0
+    &&
+    Array.isArray(
+        record.afterHoursSessions
+    )
+) {
+
+    recordAfterHoursMinutes =
+        record.afterHoursSessions.reduce(
+            function (
+                total,
+                session
             ) {
 
-                data.workedMinutes +=
-                    workedMinutes;
+                const sessionMinutes =
+                    Number(
+                        session?.workedMinutes ??
+                        0
+                    );
 
-            }
+
+                if (
+                    !Number.isFinite(
+                        sessionMinutes
+                    )
+                    ||
+                    sessionMinutes <
+                    0
+                ) {
+
+                    return total;
+
+                }
+
+
+                return (
+                    total +
+                    Math.floor(
+                        sessionMinutes
+                    )
+                );
+
+            },
+            0
+        );
+
+}
+
+
+data.afterHoursWorkedMinutes +=
+    recordAfterHoursMinutes;
 
         }
     );
@@ -2889,28 +3077,27 @@ function updateEmployeePerformanceSummary(
 
 
             // =====================================
-            // Completed Attendance Days
-            // =====================================
+// Worked Days
+// =====================================
 
-            const completedWorkdays =
-                employee.onTime +
-                employee.late;
+const completedWorkdays =
+    employee.workedDays;
 
 
-            // =====================================
-            // Average Hours / Day
-            // =====================================
+// =====================================
+// Average Hours / Worked Day
+// =====================================
 
-            const averageWorkedMinutes =
-                completedWorkdays >
-                0
-                    ?
-                    Math.round(
-                        employee.workedMinutes /
-                        completedWorkdays
-                    )
-                    :
-                    0;
+const averageWorkedMinutes =
+    completedWorkdays >
+    0
+        ?
+        Math.round(
+            employee.workedMinutes /
+            completedWorkdays
+        )
+        :
+        0;
 
 
             // =====================================
@@ -3181,16 +3368,27 @@ if (
 
                 <!-- Total Hours Worked -->
 
-                <span>
-                    ${escapeHtml(
-                        formatMinutesAsHours(
-                            employee.workedMinutes
-                        )
-                    )}
-                </span>
+<span>
+    ${escapeHtml(
+        formatMinutesAsHours(
+            employee.workedMinutes
+        )
+    )}
+</span>
 
 
-                <!-- Average Hours / Day -->
+<!-- After-Hours Worked -->
+
+<span>
+    ${escapeHtml(
+        formatMinutesAsHours(
+            employee.afterHoursWorkedMinutes
+        )
+    )}
+</span>
+
+
+<!-- Average Hours / Day -->
 
 <span
     class="${
@@ -4283,19 +4481,59 @@ const selectedStatusText =
                         );
 
 
-                    const isLeaveRecord =
-                        status ===
-                            "annual leave" ||
-                        status ===
-                            "sick leave" ||
-                        status ===
-                            "maternity leave" ||
-                        status ===
-                            "family responsibility leave" ||
-                        status ===
-                            "unpaid leave" ||
-                        status ===
-                            "public holiday";
+                    const leaveDurationValue =
+    String(
+        record.leaveDuration ??
+        ""
+    )
+        .trim()
+        .toLowerCase();
+
+
+const partialLeaveStatuses = [
+    "annual leave",
+    "sick leave",
+    "family responsibility leave",
+    "unpaid leave"
+];
+
+
+const isPartialLeave =
+    partialLeaveStatuses.includes(
+        status
+    )
+    &&
+    (
+        leaveDurationValue ===
+            "half-day"
+        ||
+        leaveDurationValue ===
+            "custom"
+    );
+
+
+const isLeaveRecord =
+    (
+        status ===
+            "annual leave"
+        ||
+        status ===
+            "sick leave"
+        ||
+        status ===
+            "maternity leave"
+        ||
+        status ===
+            "family responsibility leave"
+        ||
+        status ===
+            "unpaid leave"
+        ||
+        status ===
+            "public holiday"
+    )
+    &&
+    !isPartialLeave;
 
 
                     // =====================================
@@ -4509,13 +4747,17 @@ const selectedStatusText =
 
 
                     const leaveDuration =
-                        isLeaveRecord
-                            ?
-                            formatReportLeaveDuration(
-                                record.leaveDuration
-                            )
-                            :
-                            "-";
+    (
+        isLeaveRecord
+        ||
+        isPartialLeave
+    )
+        ?
+        formatReportLeaveDuration(
+            record.leaveDuration
+        )
+        :
+        "-";
 
 
                     const lateReason =

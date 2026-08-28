@@ -1551,7 +1551,7 @@ if (
 
 
 // =====================================
-// Custom Leave Time Visibility
+// Partial Leave Time Visibility
 // =====================================
 
 function handleLeaveDurationChange() {
@@ -1566,19 +1566,26 @@ function handleLeaveDurationChange() {
 
     }
 
-    const isCustomTime =
-    leaveDuration.value ===
-    "custom";
 
-const isHalfDay =
-    attendanceStatus &&
-    attendanceStatus.value ===
-    "Half Day";
+    const isPartialLeaveDuration =
+        leaveDuration.value ===
+            "custom"
+        ||
+        leaveDuration.value ===
+            "half-day";
+
+
+    const isHalfDayStatus =
+        attendanceStatus &&
+        attendanceStatus.value ===
+            "Half Day";
+
 
     if (
-    isCustomTime ||
-    isHalfDay
-) {
+        isPartialLeaveDuration
+        ||
+        isHalfDayStatus
+    ) {
 
         leaveTimeGroup.style.display =
             "";
@@ -1589,6 +1596,7 @@ const isHalfDay =
         return;
 
     }
+
 
     leaveTimeGroup.style.display =
         "none";
@@ -2671,21 +2679,93 @@ async function loadAttendanceHistory() {
                     ).trim();
 
                 const isLate =
-                    String(
-                        attendance.status ??
-                        ""
-                    ).trim() ===
-                    "Late";
+    String(
+        attendance.status ??
+        ""
+    ).trim() ===
+    "Late";
 
-                const checkInTime =
-                    attendance.time ??
-                    "Not recorded";
 
-                const checkOutTime =
-                    attendance.checkOutTime ??
-                    "Still at work";
+// =====================================
+// Leave Record Detection
+// =====================================
 
-                    const hasCheckedIn =
+const attendanceStatus =
+    String(
+        attendance.status ??
+        ""
+    ).trim();
+
+
+const attendanceLeaveDuration =
+    String(
+        attendance.leaveDuration ??
+        ""
+    ).trim();
+
+
+const isPartialLeave =
+    LEAVE_STATUSES.includes(
+        attendanceStatus
+    )
+    &&
+    (
+        attendanceLeaveDuration ===
+            "custom"
+        ||
+        attendanceLeaveDuration ===
+            "half-day"
+    );
+
+
+const isLeaveRecord =
+    (
+        LEAVE_STATUSES.includes(
+            attendanceStatus
+        )
+        &&
+        !isPartialLeave
+    )
+    ||
+    attendanceStatus ===
+        "Public Holiday";
+
+
+// =====================================
+// Check-In Time
+// =====================================
+
+const checkInTime =
+    isLeaveRecord
+        ?
+        "N/A"
+        :
+        (
+            attendance.time ??
+            "Not recorded"
+        );
+
+
+// =====================================
+// Check-Out Time
+// =====================================
+
+const checkOutTime =
+    isLeaveRecord
+        ?
+        "N/A"
+        :
+        (
+            attendance.checkOutTime ??
+            "Still at work"
+        );
+
+
+// =====================================
+// Missing Check-Out Detection
+// =====================================
+
+const hasCheckedIn =
     Boolean(
         attendance.time
         ||
@@ -2694,12 +2774,14 @@ async function loadAttendanceHistory() {
         attendance.checkInTimestamp
     );
 
+
 const hasCheckedOut =
     Boolean(
         attendance.checkOutTime
         ||
         attendance.checkOutTimestamp
     );
+
 
 const attendanceDateKey =
     String(
@@ -2708,20 +2790,24 @@ const attendanceDateKey =
         ""
     ).trim();
 
+
 const scheduledEndDateTime =
     buildDateTimeFromDateAndTime(
         attendanceDateKey,
         employeeEndTime
     );
 
+
 const nowDateTime =
     new Date();
+
 
 const workdayHasEnded =
     scheduledEndDateTime
     &&
     nowDateTime >
         scheduledEndDateTime;
+
 
 const isMissingCheckOut =
     hasCheckedIn
@@ -2730,23 +2816,23 @@ const isMissingCheckOut =
     &&
     workdayHasEnded
     &&
-    attendance.status !==
+    attendanceStatus !==
         "Absent"
     &&
-    !LEAVE_STATUSES.includes(
-        attendance.status
-    );
+    !isLeaveRecord;
 
-    if (
+
+if (
     isMissingCheckOut
 ) {
 
     console.log(
-    "Creating missing checkout notification:",
-    employee.employeeNumber,
-    attendance.dateKey,
-    employee.department
-);
+        "Creating missing checkout notification:",
+        employee.employeeNumber,
+        attendance.dateKey,
+        employee.department
+    );
+
 
     createMissingCheckOutNotification(
         employee,
@@ -2766,12 +2852,22 @@ const isMissingCheckOut =
 
 }
 
-                const hoursWorked =
-                    calculateHoursWorked(
-                        attendance
-                    );
 
-                    // =====================================
+// =====================================
+// Hours Worked
+// =====================================
+
+const hoursWorked =
+    isLeaveRecord
+        ?
+        "N/A"
+        :
+        calculateHoursWorked(
+            attendance
+        );
+
+
+// =====================================
 // After-Hours Attendance
 // =====================================
 
@@ -2786,17 +2882,26 @@ const afterHoursSessions =
 
 
 const afterHoursWorkedMinutes =
-    getAfterHoursWorkedMinutes(
-        attendance
-    );
+    isLeaveRecord
+        ?
+        0
+        :
+        getAfterHoursWorkedMinutes(
+            attendance
+        );
 
 
 const afterHoursWorked =
-    formatAfterHoursWorked(
-        attendance
-    );
+    isLeaveRecord
+        ?
+        "N/A"
+        :
+        formatAfterHoursWorked(
+            attendance
+        );
 
-    // =====================================
+
+// =====================================
 // Combined Normal + After-Hours Total
 // =====================================
 
@@ -2840,21 +2945,33 @@ const combinedWorkedMinutes =
 
 
 const combinedHoursWorked =
-    formatMinutesAsHours(
-        combinedWorkedMinutes
-    );
+    isLeaveRecord
+        ?
+        "N/A"
+        :
+        formatMinutesAsHours(
+            combinedWorkedMinutes
+        );
 
 
 const hasAfterHoursAttendance =
-    afterHoursSessions.length >
-    0
-    ||
-    afterHoursWorkedMinutes >
-    0
-    ||
-    attendance.afterHoursActive ===
-    true;
+    !isLeaveRecord
+    &&
+    (
+        afterHoursSessions.length >
+        0
+        ||
+        afterHoursWorkedMinutes >
+        0
+        ||
+        attendance.afterHoursActive ===
+        true
+    );
 
+
+// =====================================
+// After-Hours Session Detail
+// =====================================
 
 const afterHoursSessionsHtml =
     afterHoursSessions
@@ -2931,10 +3048,10 @@ const afterHoursSessionsHtml =
                     <div class="history-clean-row">
 
                         <span class="history-clean-label">
-    After-Hours Worked ${escapeHtml(
-        sessionNumber
-    )}
-</span>
+                            After-Hours Worked ${escapeHtml(
+                                sessionNumber
+                            )}
+                        </span>
 
                         <span class="history-clean-value">
                             ${escapeHtml(
@@ -3945,26 +4062,49 @@ function calculateHoursWorked(
     // Statuses That Do Not Have Worked Hours
     // =====================================
 
-    const nonWorkingStatuses = [
-        "Annual Leave",
-        "Sick Leave",
-        "Family Responsibility Leave",
-        "Maternity Leave",
-        "Unpaid Leave",
-        "Public Holiday",
-        "Absent"
-    ];
+    const leaveDurationValue =
+    String(
+        attendance.leaveDuration ??
+        ""
+    ).trim();
 
 
-    if (
-        nonWorkingStatuses.includes(
-            attendanceStatus
-        )
-    ) {
+const isPartialLeave =
+    LEAVE_STATUSES.includes(
+        attendanceStatus
+    )
+    &&
+    (
+        leaveDurationValue ===
+            "custom"
+        ||
+        leaveDurationValue ===
+            "half-day"
+    );
 
-        return "N/A";
 
-    }
+const nonWorkingStatuses = [
+    "Annual Leave",
+    "Sick Leave",
+    "Family Responsibility Leave",
+    "Maternity Leave",
+    "Unpaid Leave",
+    "Public Holiday",
+    "Absent"
+];
+
+
+if (
+    nonWorkingStatuses.includes(
+        attendanceStatus
+    )
+    &&
+    !isPartialLeave
+) {
+
+    return "N/A";
+
+}
 
 
     // =====================================
@@ -4742,20 +4882,29 @@ if (
     }
 
     if (
+    LEAVE_STATUSES.includes(
+        selectedStatus
+    )
+    &&
+    (
         selectedLeaveDuration ===
-        "custom"
-        &&
-        !selectedLeaveTime
-    ) {
+            "custom"
+        ||
+        selectedLeaveDuration ===
+            "half-day"
+    )
+    &&
+    !selectedLeaveTime
+) {
 
-        showMessage(
-            "Please enter the employee's leave / departure time.",
-            "red"
-        );
+    showMessage(
+        "Please enter the employee's leave / departure time.",
+        "red"
+    );
 
-        return;
+    return;
 
-    }
+}
 
     // =====================================
 // Build Dates To Save
@@ -4989,30 +5138,38 @@ for (
             selectedStatus
         );
 
-    const isCustomLeaveTime =
-        LEAVE_STATUSES.includes(
-            selectedStatus
-        )
-        &&
+    const isPartialLeaveTime =
+    LEAVE_STATUSES.includes(
+        selectedStatus
+    )
+    &&
+    (
         selectedLeaveDuration ===
-        "custom"
-        &&
-        Boolean(
-            selectedLeaveTime
-        );
+            "custom"
+        ||
+        selectedLeaveDuration ===
+            "half-day"
+    )
+    &&
+    Boolean(
+        selectedLeaveTime
+    );
 
-    const shouldWriteCheckout =
-        recordAlreadyExists
-        &&
-        employeeAlreadyCheckedIn
-        &&
-        isCheckoutStatus
-        &&
-        (
-            !employeeAlreadyCheckedOut
-            ||
-            isCustomLeaveTime
-        );
+    
+
+
+const shouldWriteCheckout =
+    recordAlreadyExists
+    &&
+    employeeAlreadyCheckedIn
+    &&
+    isCheckoutStatus
+    &&
+    (
+        !employeeAlreadyCheckedOut
+        ||
+        isPartialLeaveTime
+    );
 
 
     // =====================================
@@ -5043,26 +5200,48 @@ for (
         workLocation:
             selectedWorkLocation,
 
-        leaveDuration:
+        
+leaveDuration:
+    selectedStatus ===
+    "Half Day"
+        ?
+        "half-day"
+        :
+        (
             LEAVE_STATUSES.includes(
                 selectedStatus
             )
                 ?
                 selectedLeaveDuration
                 :
-                "",
+                ""
+        ),
 
-        leaveTime:
+leaveTime:
+    selectedStatus ===
+    "Half Day"
+        ?
+        selectedLeaveTime
+        :
+        (
             LEAVE_STATUSES.includes(
                 selectedStatus
             )
             &&
-            selectedLeaveDuration ===
-            "custom"
+            (
+                selectedLeaveDuration ===
+                    "custom"
+                ||
+                selectedLeaveDuration ===
+                    "half-day"
+            )
                 ?
                 selectedLeaveTime
                 :
-                "",
+                ""
+        ),
+
+
 
         notes:
     notes,
@@ -5136,7 +5315,7 @@ updatedAt:
 
 
         if (
-    isCustomLeaveTime
+    isPartialLeaveTime
     ||
     selectedStatus ===
     "Half Day"
