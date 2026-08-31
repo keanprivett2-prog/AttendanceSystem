@@ -4,7 +4,6 @@
 // =====================================================
 
 import {
-    db,
     firebaseConfig
 } from "../firebase/firebase.js";
 
@@ -19,6 +18,7 @@ import {
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {
+    getFirestore,
     collection,
     doc,
     addDoc,
@@ -32,9 +32,7 @@ import {
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-import {
-    writeAuditLog
-} from "./audit-logger.js";
+
 
 // =====================================================
 // Employee Attendance Authentication
@@ -54,6 +52,105 @@ const attendanceAuth =
     getAuth(
         attendanceAuthApp
     );
+
+    const db =
+    getFirestore(
+        attendanceAuthApp
+    );
+
+    // =====================================================
+// Attendance Audit Logger
+// =====================================================
+
+async function writeAuditLog(
+    auditData
+) {
+
+    try {
+
+        const currentUser =
+            attendanceAuth.currentUser;
+
+
+        await addDoc(
+            collection(
+                db,
+                "auditLog"
+            ),
+            {
+
+                category:
+                    auditData.category ??
+                    "Attendance",
+
+                action:
+                    auditData.action ??
+                    "Attendance Activity",
+
+                description:
+                    auditData.description ??
+                    "",
+
+                actorType:
+                    auditData.actorType ??
+                    "Employee",
+
+                actorName:
+                    auditData.actorName ??
+                    "",
+
+                actorId:
+                    auditData.actorId ??
+                    "",
+
+                targetType:
+                    auditData.targetType ??
+                    "",
+
+                targetName:
+                    auditData.targetName ??
+                    "",
+
+                targetId:
+                    auditData.targetId ??
+                    "",
+
+                source:
+                    auditData.source ??
+                    "Employee Attendance",
+
+                metadata:
+                    auditData.metadata ??
+                    {},
+
+                firebaseUid:
+                    currentUser?.uid ??
+                    "",
+
+                timestamp:
+                    serverTimestamp()
+
+            }
+        );
+
+
+        console.log(
+            "ATTENDANCE AUDIT LOG SAVED:",
+            auditData.action
+        );
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Unable to write attendance audit log:",
+            error
+        );
+
+    }
+
+}
 
 // =====================================================
 // Office Boundary
@@ -3907,6 +4004,111 @@ if (
     }
 }
 
+// =================================================
+// BLOCK DEVICE OWNED BY ANOTHER EMPLOYEE
+// =================================================
+
+const currentDeviceOwner =
+    await getRegisteredDeviceOwner();
+
+
+if (
+    currentDeviceOwner
+    &&
+    currentDeviceOwner.active === true
+    &&
+    String(
+        currentDeviceOwner.employeeNumber ??
+        ""
+    ).trim() !==
+    String(
+        employee.employeeNumber ??
+        ""
+    ).trim()
+) {
+
+    message.style.color =
+        "red";
+
+
+    message.innerHTML =
+        "❌ This device is registered to another employee."
+        +
+        "<br><br>"
+        +
+        "Please contact an administrator.";
+
+
+    checkInButton.disabled =
+        false;
+
+
+    await saveFailedAttendanceAttempt(
+        employee,
+        "Device belongs to another employee"
+    );
+
+
+    await writeAuditLog({
+
+        category:
+            "Security",
+
+        action:
+            "Blocked Device Ownership Attempt",
+
+        description:
+            `${employee.name ?? employee.employeeNumber} attempted attendance from a device assigned to another employee.`,
+
+        actorType:
+            "Employee",
+
+        actorName:
+            employee.name ??
+            employee.employeeNumber ??
+            "Unknown Employee",
+
+        actorId:
+            employee.employeeNumber ??
+            "",
+
+        targetType:
+            "Device",
+
+        targetName:
+            getDeviceId(),
+
+        targetId:
+            getDeviceId(),
+
+        source:
+            "Employee Attendance",
+
+        metadata: {
+
+            attemptedEmployeeNumber:
+                employee.employeeNumber ??
+                "",
+
+            registeredEmployeeNumber:
+                currentDeviceOwner.employeeNumber ??
+                "",
+
+            deviceId:
+                getDeviceId(),
+
+            fingerprint:
+                getFingerprint()
+
+        }
+
+    });
+
+
+    return;
+
+}
+
 
 // =================================================
 // Check Existing Firebase Registration
@@ -3916,6 +4118,140 @@ const existingRegistration =
     await getFirebaseDeviceRegistration(
         employee.employeeNumber
     );
+
+    // =================================================
+// Recover Missing Local Device Registration
+// =================================================
+//
+// This handles cases where browser localStorage was
+// cleared but Firebase still proves:
+//
+// 1. This device belongs to this employee
+// 2. The employee registration is active
+// 3. The stored Firebase device ID matches this device
+// 4. A valid registration token still exists
+//
+// =================================================
+
+if (
+    !getRegisteredEmployeeNumber()
+    &&
+    existingRegistration
+    &&
+    existingRegistration.active === true
+    &&
+    currentDeviceOwner
+    &&
+    currentDeviceOwner.active === true
+    &&
+    String(
+        currentDeviceOwner.employeeNumber ??
+        ""
+    ).trim() ===
+    String(
+        employee.employeeNumber ??
+        ""
+    ).trim()
+) {
+
+    const registeredDeviceId =
+        String(
+            existingRegistration.deviceId ??
+            ""
+        ).trim();
+
+
+    const currentDeviceId =
+        String(
+            getDeviceId() ??
+            ""
+        ).trim();
+
+
+    const registrationToken =
+        String(
+            existingRegistration.registrationToken ??
+            ""
+        ).trim();
+
+
+    if (
+        registeredDeviceId
+        &&
+        currentDeviceId
+        &&
+        registeredDeviceId ===
+        currentDeviceId
+        &&
+        registrationToken
+    ) {
+
+        saveLocalDeviceRegistration(
+            employee.employeeNumber,
+            registrationToken
+        );
+
+
+        console.log(
+            "LOCAL DEVICE REGISTRATION RECOVERED:",
+            employee.employeeNumber
+        );
+
+
+        await writeAuditLog({
+
+            category:
+                "Security",
+
+            action:
+                "Local Device Registration Recovered",
+
+            description:
+                `${employee.name ?? employee.employeeNumber} had the local device registration restored from the verified Firebase registration.`,
+
+            actorType:
+                "Employee",
+
+            actorName:
+                employee.name ??
+                employee.employeeNumber ??
+                "Unknown Employee",
+
+            actorId:
+                employee.employeeNumber ??
+                "",
+
+            targetType:
+                "Device",
+
+            targetName:
+                currentDeviceId,
+
+            targetId:
+                currentDeviceId,
+
+            source:
+                "Employee Attendance",
+
+            metadata: {
+
+                employeeNumber:
+                    employee.employeeNumber ??
+                    "",
+
+                deviceId:
+                    currentDeviceId,
+
+                recoveryReason:
+                    "Browser local registration missing"
+
+            }
+
+        });
+
+    }
+
+}
 
 
 // =================================================
