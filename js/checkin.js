@@ -126,6 +126,68 @@ function generateDeviceRegistrationToken() {
 }
 
 // =====================================================
+// Get Device Owner
+// =====================================================
+
+async function getRegisteredDeviceOwner() {
+
+    const deviceId =
+        String(
+            getDeviceId() ??
+            ""
+        ).trim();
+
+
+    if (
+        !deviceId
+    ) {
+
+        return null;
+
+    }
+
+
+    const safeDeviceId =
+        encodeURIComponent(
+            deviceId
+        );
+
+
+    const deviceReference =
+        doc(
+            db,
+            "registeredDevices",
+            safeDeviceId
+        );
+
+
+    const deviceSnapshot =
+        await getDoc(
+            deviceReference
+        );
+
+
+    if (
+        !deviceSnapshot.exists()
+    ) {
+
+        return null;
+
+    }
+
+
+    return {
+
+        reference:
+            deviceReference,
+
+        ...deviceSnapshot.data()
+
+    };
+
+}
+
+// =====================================================
 // Get Firebase Device Registration
 // =====================================================
 
@@ -178,7 +240,7 @@ async function getFirebaseDeviceRegistration(
 
 }
 
-// =====================================================
+/// =====================================================
 // Create Firebase Device Registration
 // =====================================================
 
@@ -192,6 +254,7 @@ async function createFirebaseDeviceRegistration(
             ""
         ).trim();
 
+
     if (
         !employeeNumber
     ) {
@@ -202,8 +265,34 @@ async function createFirebaseDeviceRegistration(
 
     }
 
+
+    const deviceId =
+        String(
+            getDeviceId() ??
+            ""
+        ).trim();
+
+
+    if (
+        !deviceId
+    ) {
+
+        throw new Error(
+            "DEVICE_ID_MISSING"
+        );
+
+    }
+
+
+    const safeDeviceId =
+        encodeURIComponent(
+            deviceId
+        );
+
+
     const registrationToken =
         generateDeviceRegistrationToken();
+
 
     const registrationReference =
         doc(
@@ -211,6 +300,48 @@ async function createFirebaseDeviceRegistration(
             "employeeDeviceRegistrations",
             employeeNumber
         );
+
+
+    const deviceReference =
+        doc(
+            db,
+            "registeredDevices",
+            safeDeviceId
+        );
+
+
+    // =================================================
+    // Make Sure Device Is Not Already Owned
+    // =================================================
+
+    const existingDeviceOwner =
+        await getDoc(
+            deviceReference
+        );
+
+
+    if (
+        existingDeviceOwner.exists()
+        &&
+        existingDeviceOwner.data().active === true
+        &&
+        String(
+            existingDeviceOwner.data().employeeNumber ??
+            ""
+        ).trim() !==
+        employeeNumber
+    ) {
+
+        throw new Error(
+            "DEVICE_ALREADY_REGISTERED_TO_OTHER_EMPLOYEE"
+        );
+
+    }
+
+
+    // =================================================
+    // Save Employee Registration
+    // =================================================
 
     await setDoc(
         registrationReference,
@@ -226,7 +357,7 @@ async function createFirebaseDeviceRegistration(
                 true,
 
             deviceId:
-                getDeviceId(),
+                deviceId,
 
             fingerprint:
                 getFingerprint(),
@@ -239,6 +370,37 @@ async function createFirebaseDeviceRegistration(
 
         }
     );
+
+
+    // =================================================
+    // Save Device Ownership
+    // =================================================
+
+    await setDoc(
+        deviceReference,
+        {
+
+            employeeNumber:
+                employeeNumber,
+
+            deviceId:
+                deviceId,
+
+            fingerprint:
+                getFingerprint(),
+
+            active:
+                true,
+
+            registeredAt:
+                serverTimestamp(),
+
+            updatedAt:
+                serverTimestamp()
+
+        }
+    );
+
 
     return registrationToken;
 
@@ -2226,6 +2388,185 @@ async function loadRegisteredEmployee() {
 
         }
 
+        // =============================================
+// Validate Device Ownership Record
+// =============================================
+
+let deviceOwner =
+    await getRegisteredDeviceOwner();
+
+    // =============================================
+// Migrate Legacy Registered Device
+// =============================================
+
+if (
+    !deviceOwner
+) {
+
+    const storedDeviceId =
+        String(
+            firebaseRegistration.deviceId ??
+            ""
+        ).trim();
+
+
+    const currentDeviceId =
+        String(
+            getDeviceId() ??
+            ""
+        ).trim();
+
+
+    // Only migrate if the old registration
+    // already proves this is the same device.
+    if (
+        storedDeviceId
+        &&
+        currentDeviceId
+        &&
+        storedDeviceId ===
+        currentDeviceId
+    ) {
+
+        const safeDeviceId =
+            encodeURIComponent(
+                currentDeviceId
+            );
+
+
+        const deviceOwnershipReference =
+            doc(
+                db,
+                "registeredDevices",
+                safeDeviceId
+            );
+
+
+        await setDoc(
+            deviceOwnershipReference,
+            {
+
+                employeeNumber:
+                    employeeNumber,
+
+                deviceId:
+                    currentDeviceId,
+
+                fingerprint:
+                    getFingerprint(),
+
+                active:
+                    true,
+
+                migratedFromLegacyRegistration:
+                    true,
+
+                registeredAt:
+                    serverTimestamp(),
+
+                updatedAt:
+                    serverTimestamp()
+
+            }
+        );
+
+                deviceOwner =
+            await getRegisteredDeviceOwner();
+
+
+        console.log(
+            "Legacy device registration migrated:",
+            employeeNumber
+        );
+
+    }
+
+}
+
+
+if (
+    !deviceOwner
+    ||
+    deviceOwner.active !== true
+    ||
+    String(
+        deviceOwner.employeeNumber ??
+        ""
+    ).trim() !==
+    employeeNumber
+) {
+
+    console.warn(
+        "DEVICE OWNERSHIP VALIDATION FAILED",
+        {
+            employeeNumber:
+                employeeNumber,
+
+            deviceId:
+                getDeviceId()
+        }
+    );
+
+
+    localStorage.removeItem(
+        DEVICE_REGISTRATION_KEY
+    );
+
+
+    return null;
+
+}
+
+
+// =============================================
+// Confirm Firebase Registration Device ID
+// =============================================
+
+const firebaseDeviceId =
+    String(
+        firebaseRegistration.deviceId ??
+        ""
+    ).trim();
+
+
+const currentDeviceId =
+    String(
+        getDeviceId() ??
+        ""
+    ).trim();
+
+
+if (
+    !firebaseDeviceId
+    ||
+    firebaseDeviceId !==
+    currentDeviceId
+) {
+
+    console.warn(
+        "REGISTERED DEVICE ID MISMATCH",
+        {
+            employeeNumber:
+                employeeNumber,
+
+            storedDeviceId:
+                firebaseDeviceId,
+
+            currentDeviceId:
+                currentDeviceId
+        }
+    );
+
+
+    localStorage.removeItem(
+        DEVICE_REGISTRATION_KEY
+    );
+
+
+    return null;
+
+}
+
 
         // =============================================
         // Load Current Employee Record
@@ -3630,16 +3971,125 @@ if (
     existingRegistration.active !== true
 ) {
 
-    const registrationToken =
-        await createFirebaseDeviceRegistration(
-            employee
+    try {
+
+        const registrationToken =
+            await createFirebaseDeviceRegistration(
+                employee
+            );
+
+
+        saveLocalDeviceRegistration(
+            employee.employeeNumber,
+            registrationToken
         );
 
+    } catch (
+        error
+    ) {
 
-    saveLocalDeviceRegistration(
-        employee.employeeNumber,
-        registrationToken
-    );
+        // =============================================
+        // Device Already Belongs To Another Employee
+        // =============================================
+
+        if (
+            error.message ===
+            "DEVICE_ALREADY_REGISTERED_TO_OTHER_EMPLOYEE"
+        ) {
+
+            message.style.color =
+                "red";
+
+
+            message.innerHTML =
+                "❌ This device is already registered to another employee."
+                +
+                "<br><br>"
+                +
+                "Please contact an administrator.";
+
+
+            // =========================================
+            // Failed Attendance Attempt
+            // =========================================
+
+            await saveFailedAttendanceAttempt(
+                employee,
+                "Device already registered to another employee"
+            );
+
+
+            // =========================================
+            // Audit Log
+            // =========================================
+
+            await writeAuditLog({
+
+                category:
+                    "Security",
+
+                action:
+                    "Blocked Device Registration",
+
+                description:
+                    `${employee.name ?? employee.employeeNumber} attempted to register a device already assigned to another employee.`,
+
+                actorType:
+                    "Employee",
+
+                actorName:
+                    employee.name ??
+                    employee.employeeNumber ??
+                    "Unknown Employee",
+
+                actorId:
+                    employee.employeeNumber ??
+                    "",
+
+                targetType:
+                    "Device",
+
+                targetName:
+                    getDeviceId(),
+
+                targetId:
+                    getDeviceId(),
+
+                source:
+                    "Employee Attendance",
+
+                metadata: {
+
+                    employeeNumber:
+                        employee.employeeNumber ??
+                        "",
+
+                    reason:
+                        "Device already registered to another employee",
+
+                    attemptedDeviceId:
+                        getDeviceId(),
+
+                    attemptedFingerprint:
+                        getFingerprint()
+
+                }
+
+            });
+
+
+            return;
+
+        }
+
+
+        // =============================================
+        // Unknown Registration Error
+        // =============================================
+
+        throw error;
+
+    }
 
 }
 

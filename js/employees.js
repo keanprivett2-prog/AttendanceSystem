@@ -3577,15 +3577,94 @@ async function resetEmployeeDevice(
         }
 
         const registrationReference =
-            doc(
-                db,
-                "employeeDeviceRegistrations",
-                employeeNumber
-            );
+    doc(
+        db,
+        "employeeDeviceRegistrations",
+        employeeNumber
+    );
+
+
+// =====================================
+// Load Existing Device Registration
+// =====================================
+
+const registrationSnapshot =
+    await getDoc(
+        registrationReference
+    );
+
+
+let registeredDeviceId =
+    "";
+
+
+if (
+    registrationSnapshot.exists()
+) {
+
+    registeredDeviceId =
+        String(
+            registrationSnapshot.data().deviceId ??
+            ""
+        ).trim();
+
+}
+
+
+// =====================================
+// Delete Employee Registration
+// =====================================
+
+await deleteDoc(
+    registrationReference
+);
+
+
+// =====================================
+// Delete Device Ownership Record
+// =====================================
+
+if (
+    registeredDeviceId
+) {
+
+    const safeDeviceId =
+        encodeURIComponent(
+            registeredDeviceId
+        );
+
+
+    const deviceOwnershipReference =
+        doc(
+            db,
+            "registeredDevices",
+            safeDeviceId
+        );
+
+
+    const deviceOwnershipSnapshot =
+        await getDoc(
+            deviceOwnershipReference
+        );
+
+
+    if (
+        deviceOwnershipSnapshot.exists()
+        &&
+        String(
+            deviceOwnershipSnapshot.data().employeeNumber ??
+            ""
+        ).trim() ===
+        employeeNumber
+    ) {
 
         await deleteDoc(
-            registrationReference
+            deviceOwnershipReference
         );
+
+    }
+
+}
 
         await writeAuditLog(
             "Reset Employee Device",
