@@ -2685,6 +2685,349 @@ async function loadAttendanceHistory() {
     ).trim() ===
     "Late";
 
+    // =====================================
+// Normal Work Sessions
+// =====================================
+
+const workSessions =
+    Array.isArray(
+        attendance.workSessions
+    )
+        ?
+        attendance.workSessions
+        :
+        [];
+
+
+const hasWorkSessions =
+    workSessions.length >
+    0;
+
+
+const workSessionsHtml =
+    workSessions
+        .map(
+            function (
+                session
+            ) {
+
+                const sessionNumber =
+                    Number(
+                        session.sessionNumber ??
+                        0
+                    );
+
+                const sessionCheckIn =
+                    String(
+                        session.checkInTime ??
+                        ""
+                    ).trim();
+
+                const sessionCheckOut =
+                    String(
+                        session.checkOutTime ??
+                        ""
+                    ).trim();
+
+                const workedMinutes =
+                    Number(
+                        session.workedMinutes ??
+                        0
+                    );
+
+
+                let workedDisplay =
+    "";
+
+
+if (
+    sessionCheckOut
+) {
+
+    const hours =
+        Math.floor(
+            workedMinutes /
+            60
+        );
+
+    const minutes =
+        workedMinutes %
+        60;
+
+
+    workedDisplay =
+        `${hours}h ${minutes}m`;
+
+} else {
+
+    let liveWorkedMinutes =
+        0;
+
+
+    let sessionStartDate =
+        null;
+
+
+    if (
+        session.checkInTimestamp
+    ) {
+
+        if (
+            session.checkInTimestamp instanceof
+            Date
+        ) {
+
+            sessionStartDate =
+                new Date(
+                    session.checkInTimestamp
+                );
+
+        } else if (
+            typeof session.checkInTimestamp.toDate ===
+            "function"
+        ) {
+
+            sessionStartDate =
+                session.checkInTimestamp.toDate();
+
+        }
+
+    }
+
+
+    if (
+        !sessionStartDate
+        &&
+        sessionCheckIn
+    ) {
+
+        sessionStartDate =
+            buildDateTimeFromDateAndTime(
+                attendance.dateKey ??
+                attendance.date,
+                sessionCheckIn
+            );
+
+    }
+
+
+    if (
+        sessionStartDate
+    ) {
+
+        const now =
+            new Date();
+
+
+        const scheduledEndDateTime =
+            buildDateTimeFromDateAndTime(
+                attendance.dateKey ??
+                attendance.date,
+                attendance.scheduledEndTime ??
+                standardWorkEndTime
+            );
+
+
+        const effectiveEnd =
+            scheduledEndDateTime
+            &&
+            now >
+                scheduledEndDateTime
+                ?
+                scheduledEndDateTime
+                :
+                now;
+
+
+        liveWorkedMinutes =
+            Math.max(
+                0,
+                Math.floor(
+                    (
+                        effectiveEnd.getTime()
+                        -
+                        sessionStartDate.getTime()
+                    )
+                    /
+                    60000
+                )
+            );
+
+    }
+
+
+    const hours =
+        Math.floor(
+            liveWorkedMinutes /
+            60
+        );
+
+    const minutes =
+        liveWorkedMinutes %
+        60;
+
+
+    workedDisplay =
+        `${hours}h ${minutes}m (In progress)`;
+
+}
+
+
+                return `
+                    <div class="history-clean-row">
+
+                        <span class="history-clean-label">
+                            Normal Work Session ${
+                                sessionNumber ||
+                                ""
+                            }
+                        </span>
+
+                        <span class="history-clean-value">
+                            ${escapeHtml(
+                                sessionCheckIn ||
+                                "-"
+                            )}
+                            →
+                            ${escapeHtml(
+                                sessionCheckOut ||
+                                "Still at work"
+                            )}
+                            —
+                            ${escapeHtml(
+                                workedDisplay
+                            )}
+                        </span>
+
+                    </div>
+                `;
+
+            }
+        )
+        .join(
+            ""
+        );
+
+    // =====================================
+// Historical Leave Sessions
+// =====================================
+
+const leaveSessions =
+    Array.isArray(
+        attendance.leaveSessions
+    )
+        ?
+        attendance.leaveSessions
+        :
+        [];
+
+
+const hasLeaveSessions =
+    leaveSessions.length >
+    0;
+
+    // =====================================
+// Historical Leave Session Display
+// =====================================
+
+const leaveSessionsHtml =
+    leaveSessions
+        .map(
+            function (
+                session
+            ) {
+
+                const leaveType =
+                    String(
+                        session.leaveType ??
+                        session.status ??
+                        "Leave"
+                    ).trim();
+
+                const startTime =
+                    String(
+                        session.startTime ??
+                        ""
+                    ).trim();
+
+                const endTime =
+                    String(
+                        session.endTime ??
+                        ""
+                    ).trim();
+
+                const durationMinutes =
+                    Number(
+                        session.durationMinutes ??
+                        0
+                    );
+
+
+                let durationDisplay =
+                    "";
+
+
+                if (
+                    Number.isFinite(
+                        durationMinutes
+                    )
+                    &&
+                    durationMinutes >
+                    0
+                ) {
+
+                    const hours =
+                        Math.floor(
+                            durationMinutes /
+                            60
+                        );
+
+                    const minutes =
+                        durationMinutes %
+                        60;
+
+
+                    durationDisplay =
+                        `${hours}h ${minutes}m`;
+                }
+
+
+                return `
+                    <div class="history-clean-row">
+
+                        <span class="history-clean-label">
+                            ${escapeHtml(
+                                leaveType
+                            )}
+                        </span>
+
+                        <span class="history-clean-value">
+                            ${escapeHtml(
+                                startTime || "-"
+                            )}
+                            →
+                            ${escapeHtml(
+                                endTime || "-"
+                            )}
+                            ${
+                                durationDisplay
+                                    ?
+                                    ` — ${escapeHtml(
+                                        durationDisplay
+                                    )}`
+                                    :
+                                    ""
+                            }
+                        </span>
+
+                    </div>
+                `;
+            }
+        )
+        .join(
+            ""
+        );
+
 
 // =====================================
 // Leave Record Detection
@@ -3304,6 +3647,54 @@ const authorisedDepartureNote =
     </span>
 
 </div>
+
+${
+    hasWorkSessions
+        ?
+        `
+
+        <div class="history-clean-row">
+
+            <span class="history-clean-label">
+                Normal Work Sessions
+            </span>
+
+            <span class="history-clean-value">
+                Recorded working periods for this day
+            </span>
+
+        </div>
+
+        ${workSessionsHtml}
+
+        `
+        :
+        ""
+}
+
+${
+    hasLeaveSessions
+        ?
+        `
+
+        <div class="history-clean-row">
+
+            <span class="history-clean-label">
+                Leave History
+            </span>
+
+            <span class="history-clean-value">
+                Recorded leave before / during this workday
+            </span>
+
+        </div>
+
+        ${leaveSessionsHtml}
+
+        `
+        :
+        ""
+}
 
                         ${
                             leaveDurationDisplay
@@ -4059,56 +4450,397 @@ function calculateHoursWorked(
 
 
     // =====================================
-    // Statuses That Do Not Have Worked Hours
+    // Normal Work Sessions
+    // =====================================
+
+    const workSessions =
+        Array.isArray(
+            attendance.workSessions
+        )
+            ?
+            attendance.workSessions
+            :
+            [];
+
+
+    // =====================================
+    // Session-Based Calculation
+    // =====================================
+    //
+    // workSessions is now the preferred source
+    // of truth for normal working time.
+    //
+    // This supports:
+    //
+    // Check In
+    // → Early Check Out
+    // → Return
+    // → Check Out
+    // → Return again
+    //
+    // After-hours is NOT included here.
+    //
+    // =====================================
+
+    if (
+        workSessions.length >
+        0
+    ) {
+
+        const dateKey =
+            String(
+                attendance.dateKey ??
+                attendance.date ??
+                ""
+            ).trim();
+
+
+        const scheduledStartTime =
+            String(
+                attendance.scheduledStartTime ??
+                standardWorkStartTime
+            ).trim();
+
+
+        const scheduledEndTime =
+            String(
+                attendance.scheduledEndTime ??
+                standardWorkEndTime
+            ).trim();
+
+
+        const scheduledStartDateTime =
+            buildDateTimeFromDateAndTime(
+                dateKey,
+                scheduledStartTime
+            );
+
+
+        const scheduledEndDateTime =
+            buildDateTimeFromDateAndTime(
+                dateKey,
+                scheduledEndTime
+            );
+
+
+        const now =
+            new Date();
+
+
+        let totalWorkedMinutes =
+            0;
+
+
+        let hasOpenSession =
+            false;
+
+
+        workSessions.forEach(
+            function (
+                session
+            ) {
+
+                let sessionStart =
+                    null;
+
+                let sessionEnd =
+                    null;
+
+
+                // =================================
+                // Session Check-In Timestamp
+                // =================================
+
+                if (
+                    session.checkInTimestamp
+                ) {
+
+                    if (
+                        session.checkInTimestamp instanceof
+                        Date
+                    ) {
+
+                        sessionStart =
+                            new Date(
+                                session.checkInTimestamp
+                            );
+
+                    } else if (
+                        typeof session.checkInTimestamp.toDate ===
+                        "function"
+                    ) {
+
+                        sessionStart =
+                            session.checkInTimestamp.toDate();
+
+                    }
+
+                }
+
+
+                // =================================
+                // Fallback Check-In Time
+                // =================================
+
+                if (
+                    !sessionStart
+                    &&
+                    session.checkInTime
+                ) {
+
+                    sessionStart =
+                        buildDateTimeFromDateAndTime(
+                            dateKey,
+                            session.checkInTime
+                        );
+
+                }
+
+
+                if (
+                    !sessionStart
+                ) {
+
+                    return;
+
+                }
+
+
+                // =================================
+                // Session Check-Out Timestamp
+                // =================================
+
+                if (
+                    session.checkOutTimestamp
+                ) {
+
+                    if (
+                        session.checkOutTimestamp instanceof
+                        Date
+                    ) {
+
+                        sessionEnd =
+                            new Date(
+                                session.checkOutTimestamp
+                            );
+
+                    } else if (
+                        typeof session.checkOutTimestamp.toDate ===
+                        "function"
+                    ) {
+
+                        sessionEnd =
+                            session.checkOutTimestamp.toDate();
+
+                    }
+
+                }
+
+
+                // =================================
+                // Fallback Check-Out Time
+                // =================================
+
+                if (
+                    !sessionEnd
+                    &&
+                    session.checkOutTime
+                ) {
+
+                    sessionEnd =
+                        buildDateTimeFromDateAndTime(
+                            dateKey,
+                            session.checkOutTime
+                        );
+
+                }
+
+
+                // =================================
+                // Open Session
+                // =================================
+
+                if (
+                    !sessionEnd
+                ) {
+
+                    hasOpenSession =
+                        true;
+
+
+                    sessionEnd =
+                        new Date(
+                            now
+                        );
+
+                }
+
+
+                // =================================
+                // Never Count Before Shift Start
+                // =================================
+
+                if (
+                    scheduledStartDateTime
+                    &&
+                    sessionStart <
+                    scheduledStartDateTime
+                ) {
+
+                    sessionStart =
+                        new Date(
+                            scheduledStartDateTime
+                        );
+
+                }
+
+
+                // =================================
+                // Never Count Normal Time
+                // After Scheduled End
+                // =================================
+
+                if (
+                    scheduledEndDateTime
+                    &&
+                    sessionEnd >
+                    scheduledEndDateTime
+                ) {
+
+                    sessionEnd =
+                        new Date(
+                            scheduledEndDateTime
+                        );
+
+                }
+
+
+                if (
+                    sessionEnd <=
+                    sessionStart
+                ) {
+
+                    return;
+
+                }
+
+
+                const sessionMinutes =
+                    Math.floor(
+                        (
+                            sessionEnd.getTime()
+                            -
+                            sessionStart.getTime()
+                        )
+                        /
+                        60000
+                    );
+
+
+                totalWorkedMinutes +=
+                    Math.max(
+                        0,
+                        sessionMinutes
+                    );
+
+            }
+        );
+
+
+        // =====================================
+        // Deduct Break Once From Total
+        // =====================================
+
+        totalWorkedMinutes =
+            deductUnpaidBreak(
+                totalWorkedMinutes
+            );
+
+
+        // =====================================
+        // Open Session
+        // =====================================
+        //
+        // We still show the accumulated time
+        // rather than only "In progress".
+        //
+        // =====================================
+
+        if (
+            hasOpenSession
+        ) {
+
+            return (
+                formatMinutesAsHours(
+                    totalWorkedMinutes
+                )
+                +
+                " (In progress)"
+            );
+
+        }
+
+
+        return formatMinutesAsHours(
+            totalWorkedMinutes
+        );
+
+    }
+
+
+    // =====================================
+    // Legacy Leave Records
     // =====================================
 
     const leaveDurationValue =
-    String(
-        attendance.leaveDuration ??
-        ""
-    ).trim();
+        String(
+            attendance.leaveDuration ??
+            ""
+        ).trim();
 
 
-const isPartialLeave =
-    LEAVE_STATUSES.includes(
-        attendanceStatus
-    )
-    &&
-    (
-        leaveDurationValue ===
-            "custom"
-        ||
-        leaveDurationValue ===
-            "half-day"
-    );
+    const isPartialLeave =
+        LEAVE_STATUSES.includes(
+            attendanceStatus
+        )
+        &&
+        (
+            leaveDurationValue ===
+                "custom"
+            ||
+            leaveDurationValue ===
+                "half-day"
+        );
 
 
-const nonWorkingStatuses = [
-    "Annual Leave",
-    "Sick Leave",
-    "Family Responsibility Leave",
-    "Maternity Leave",
-    "Unpaid Leave",
-    "Public Holiday",
-    "Absent"
-];
+    const nonWorkingStatuses = [
+
+        "Annual Leave",
+        "Sick Leave",
+        "Family Responsibility Leave",
+        "Maternity Leave",
+        "Unpaid Leave",
+        "Public Holiday",
+        "Absent"
+
+    ];
 
 
-if (
-    nonWorkingStatuses.includes(
-        attendanceStatus
-    )
-    &&
-    !isPartialLeave
-) {
+    if (
+        nonWorkingStatuses.includes(
+            attendanceStatus
+        )
+        &&
+        !isPartialLeave
+    ) {
 
-    return "N/A";
+        return "N/A";
 
-}
+    }
 
 
     // =====================================
-    // Employee Still Working
+    // Legacy Single Check-In
     // =====================================
 
     if (
@@ -4121,42 +4853,6 @@ if (
 
     }
 
-
-    // =====================================
-    // Standard Work Start Time
-    // =====================================
-
-    const standardStartParts =
-        String(
-            standardWorkStartTime
-        )
-            .split(":")
-            .map(Number);
-
-
-    const standardStartHour =
-        Number.isFinite(
-            standardStartParts[0]
-        )
-            ?
-            standardStartParts[0]
-            :
-            8;
-
-
-    const standardStartMinute =
-        Number.isFinite(
-            standardStartParts[1]
-        )
-            ?
-            standardStartParts[1]
-            :
-            0;
-
-
-    // =====================================
-    // Timestamp Calculation
-    // =====================================
 
     const checkInTimestamp =
         attendance.checkInTimestamp ??
@@ -4179,7 +4875,7 @@ if (
         "function"
     ) {
 
-        const actualCheckInDate =
+        const checkInDate =
             checkInTimestamp.toDate();
 
 
@@ -4187,67 +4883,32 @@ if (
             checkOutTimestamp.toDate();
 
 
-        const standardStartDate =
-            new Date(
-                actualCheckInDate
-            );
-
-
-        standardStartDate.setHours(
-            standardStartHour,
-            standardStartMinute,
-            0,
-            0
-        );
-
-
-        const effectiveCheckInDate =
-            actualCheckInDate <
-            standardStartDate
-                ?
-                standardStartDate
-                :
-                actualCheckInDate;
-
-
-        const differenceMilliseconds =
-            checkOutDate.getTime()
-            -
-            effectiveCheckInDate.getTime();
-
-
-        if (
-            differenceMilliseconds <
-            0
-        ) {
-
-            return "Unable to calculate";
-
-        }
-
-
         const elapsedMinutes =
-            Math.floor(
-                differenceMilliseconds /
-                60000
-            );
-
-
-        const totalMinutes =
-            deductUnpaidBreak(
-                elapsedMinutes
+            Math.max(
+                0,
+                Math.floor(
+                    (
+                        checkOutDate.getTime()
+                        -
+                        checkInDate.getTime()
+                    )
+                    /
+                    60000
+                )
             );
 
 
         return formatMinutesAsHours(
-            totalMinutes
+            deductUnpaidBreak(
+                elapsedMinutes
+            )
         );
 
     }
 
 
     // =====================================
-    // Fallback Time String Calculation
+    // Legacy Time String Fallback
     // =====================================
 
     if (
@@ -4273,84 +4934,54 @@ if (
 
 
         if (
-            checkInParts.length <
+            checkInParts.length >=
             2
-            ||
-            checkOutParts.length <
+            &&
+            checkOutParts.length >=
             2
-            ||
-            checkInParts.some(
+            &&
+            !checkInParts.some(
                 Number.isNaN
             )
-            ||
-            checkOutParts.some(
+            &&
+            !checkOutParts.some(
                 Number.isNaN
             )
         ) {
 
-            return "Not available";
-
-        }
-
-
-        const actualCheckInMinutes =
-            (
-                checkInParts[0] *
-                60
-            )
-            +
-            checkInParts[1];
+            const checkInMinutes =
+                (
+                    checkInParts[0] *
+                    60
+                )
+                +
+                checkInParts[1];
 
 
-        const standardStartMinutes =
-            (
-                standardStartHour *
-                60
-            )
-            +
-            standardStartMinute;
+            const checkOutMinutes =
+                (
+                    checkOutParts[0] *
+                    60
+                )
+                +
+                checkOutParts[1];
 
 
-        const effectiveCheckInMinutes =
-            Math.max(
-                actualCheckInMinutes,
-                standardStartMinutes
+            const elapsedMinutes =
+                Math.max(
+                    0,
+                    checkOutMinutes -
+                    checkInMinutes
+                );
+
+
+            return formatMinutesAsHours(
+                deductUnpaidBreak(
+                    elapsedMinutes
+                )
             );
 
-
-        const checkOutMinutes =
-            (
-                checkOutParts[0] *
-                60
-            )
-            +
-            checkOutParts[1];
-
-
-        const elapsedMinutes =
-            checkOutMinutes -
-            effectiveCheckInMinutes;
-
-
-        if (
-            elapsedMinutes <
-            0
-        ) {
-
-            return "Unable to calculate";
-
         }
-
-
-        const totalMinutes =
-            deductUnpaidBreak(
-                elapsedMinutes
-            );
-
-
-        return formatMinutesAsHours(
-            totalMinutes
-        );
 
     }
 

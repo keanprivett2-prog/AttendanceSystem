@@ -1,10 +1,9 @@
 const CACHE_NAME =
-    "red-attendance-v1";
-
+    "red-attendance-v2";
 const APP_FILES = [
     "./",
     "./checkin.html",
-    "./manifest.json",
+    "./attendance-auth/manifest.json",
     "./css/style.css?v=12"
 ];
 

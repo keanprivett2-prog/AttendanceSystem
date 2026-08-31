@@ -195,6 +195,520 @@ const TEST_MODE =
     false;
 
     // =====================================================
+// Leave Statuses
+// =====================================================
+
+const LEAVE_STATUSES = [
+
+    "Annual Leave",
+
+    "Sick Leave",
+
+    "Family Responsibility Leave",
+
+    "Maternity Leave",
+
+    "Unpaid Leave"
+
+];
+
+// =====================================================
+// Check Whether Status Is Leave
+// =====================================================
+
+function isLeaveStatus(
+    status
+) {
+
+    return LEAVE_STATUSES.includes(
+        String(
+            status ??
+            ""
+        ).trim()
+    );
+
+}
+
+// =====================================================
+// Get Leave Sessions
+// =====================================================
+
+function getLeaveSessions(
+    attendanceRecord
+) {
+
+    if (
+        !attendanceRecord
+        ||
+        !Array.isArray(
+            attendanceRecord.leaveSessions
+        )
+    ) {
+
+        return [];
+
+    }
+
+
+    return attendanceRecord.leaveSessions;
+
+}
+
+
+// =====================================================
+// Get Open Leave Session
+// =====================================================
+
+function getOpenLeaveSession(
+    attendanceRecord
+) {
+
+    const sessions =
+        getLeaveSessions(
+            attendanceRecord
+        );
+
+
+    for (
+        let index =
+            sessions.length - 1;
+
+        index >= 0;
+
+        index--
+    ) {
+
+        const session =
+            sessions[index];
+
+
+        const hasStart =
+            Boolean(
+                String(
+                    session?.startTime ??
+                    ""
+                ).trim()
+                ||
+                session?.startTimestamp
+            );
+
+
+        const hasEnd =
+            Boolean(
+                String(
+                    session?.endTime ??
+                    ""
+                ).trim()
+                ||
+                session?.endTimestamp
+            );
+
+
+        if (
+            hasStart
+            &&
+            !hasEnd
+        ) {
+
+            return {
+
+                index:
+                    index,
+
+                session:
+                    session
+
+            };
+
+        }
+
+    }
+
+
+    return null;
+
+}
+
+// =====================================================
+// Get Leave Session Start Date
+// =====================================================
+
+function getLeaveSessionStartDate(
+    employee,
+    attendanceRecord,
+    scanTime
+) {
+
+    const scheduledStartTime =
+        String(
+            attendanceRecord?.scheduledStartTime ??
+            employee?.startTime ??
+            "08:00"
+        ).trim();
+
+
+    const timeParts =
+        scheduledStartTime
+            .split(":")
+            .map(
+                Number
+            );
+
+
+    const leaveStartDate =
+        new Date(
+            scanTime
+        );
+
+
+    if (
+        timeParts.length >=
+        2
+        &&
+        Number.isFinite(
+            timeParts[0]
+        )
+        &&
+        Number.isFinite(
+            timeParts[1]
+        )
+    ) {
+
+        leaveStartDate.setHours(
+            timeParts[0],
+            timeParts[1],
+            0,
+            0
+        );
+
+    } else {
+
+        leaveStartDate.setHours(
+            8,
+            0,
+            0,
+            0
+        );
+
+    }
+
+
+    return leaveStartDate;
+
+}
+
+// =====================================================
+// Close Active Leave For Employee Check-In
+// =====================================================
+
+// =====================================================
+// Prepare Active Leave For Employee Check-In
+// =====================================================
+
+async function closeActiveLeaveForCheckIn(
+    employee,
+    attendanceRecord,
+    scanTime
+) {
+
+    if (
+        !attendanceRecord
+        ||
+        !isLeaveStatus(
+            attendanceRecord.status
+        )
+    ) {
+
+        return null;
+
+    }
+
+
+    const leaveType =
+        String(
+            attendanceRecord.status ??
+            ""
+        ).trim();
+
+
+    const sessions =
+        Array.isArray(
+            attendanceRecord.leaveSessions
+        )
+            ?
+            attendanceRecord.leaveSessions.map(
+                session => ({
+                    ...session
+                })
+            )
+            :
+            [];
+
+
+    let openLeaveSession =
+        getOpenLeaveSession({
+            leaveSessions:
+                sessions
+        });
+
+
+    // =================================================
+    // Legacy Leave Record
+    // =================================================
+    //
+    // Attendance Management may have created the leave
+    // using the older status / leaveDuration fields
+    // without a leaveSessions entry.
+    //
+    // Create ONE temporary session in memory.
+    //
+    // IMPORTANT:
+    // Nothing is written to Firestore here.
+    //
+    // =================================================
+
+    if (
+        !openLeaveSession
+    ) {
+
+        const leaveStartDate =
+            getLeaveSessionStartDate(
+                employee,
+                attendanceRecord,
+                scanTime
+            );
+
+
+        sessions.push({
+
+            sessionNumber:
+                sessions.length + 1,
+
+            leaveType:
+                leaveType,
+
+            startTime:
+                leaveStartDate
+                    .toLocaleTimeString(
+                        "en-ZA"
+                    ),
+
+            startTimestamp:
+                leaveStartDate,
+
+            endTime:
+                "",
+
+            endTimestamp:
+                null,
+
+            durationMinutes:
+                0,
+
+            source:
+                "Attendance Management"
+
+        });
+
+
+        openLeaveSession =
+            getOpenLeaveSession({
+                leaveSessions:
+                    sessions
+            });
+
+    }
+
+
+    if (
+        !openLeaveSession
+    ) {
+
+        return null;
+
+    }
+
+
+    const sessionIndex =
+        openLeaveSession.index;
+
+
+    const currentSession =
+        sessions[
+            sessionIndex
+        ];
+
+
+    let leaveStartDate =
+        null;
+
+
+    if (
+        currentSession.startTimestamp
+    ) {
+
+        if (
+            currentSession.startTimestamp instanceof
+            Date
+        ) {
+
+            leaveStartDate =
+                new Date(
+                    currentSession.startTimestamp
+                );
+
+        } else if (
+            typeof currentSession.startTimestamp.toDate ===
+            "function"
+        ) {
+
+            leaveStartDate =
+                currentSession.startTimestamp.toDate();
+
+        }
+
+    }
+
+
+    if (
+        !leaveStartDate
+    ) {
+
+        leaveStartDate =
+            getLeaveSessionStartDate(
+                employee,
+                attendanceRecord,
+                scanTime
+            );
+
+    }
+
+
+    const leaveEndDate =
+        new Date(
+            scanTime
+        );
+
+
+    const durationMilliseconds =
+        Math.max(
+            0,
+            leaveEndDate.getTime()
+            -
+            leaveStartDate.getTime()
+        );
+
+
+    const durationMinutes =
+        Math.floor(
+            durationMilliseconds /
+            60000
+        );
+
+
+    sessions[
+        sessionIndex
+    ] = {
+
+        ...currentSession,
+
+        endTime:
+            leaveEndDate
+                .toLocaleTimeString(
+                    "en-ZA"
+                ),
+
+        endTimestamp:
+            leaveEndDate,
+
+        durationMinutes:
+            durationMinutes,
+
+        closedBy:
+            "Employee QR Check-In"
+
+    };
+
+
+    const totalLeaveMinutes =
+        sessions.reduce(
+            (
+                total,
+                session
+            ) => {
+
+                const minutes =
+                    Number(
+                        session.durationMinutes ??
+                        0
+                    );
+
+
+                return (
+                    total
+                    +
+                    (
+                        Number.isFinite(
+                            minutes
+                        )
+                            ?
+                            Math.max(
+                                0,
+                                minutes
+                            )
+                            :
+                            0
+                    )
+                );
+
+            },
+            0
+        );
+
+
+    // =================================================
+    // IMPORTANT
+    // =================================================
+    //
+    // Do NOT update Firestore here.
+    //
+    // The leave will only be committed once the actual
+    // attendance check-in transaction succeeds.
+    //
+    // This prevents failed check-in attempts from
+    // creating duplicate leave sessions.
+    //
+    // =================================================
+
+    return {
+
+        leaveType:
+            leaveType,
+
+        durationMinutes:
+            durationMinutes,
+
+        totalLeaveMinutes:
+            totalLeaveMinutes,
+
+        leaveSessions:
+            sessions,
+
+        leaveStartTime:
+            sessions[
+                sessionIndex
+            ].startTime,
+
+        leaveEndTime:
+            sessions[
+                sessionIndex
+            ].endTime
+
+    };
+
+}
+
+    // =====================================================
 // Registered Employee Device
 // =====================================================
 
@@ -1543,6 +2057,238 @@ function formatMinutesAsHoursAndMinutes(
         +
         "m"
     );
+
+}
+
+// =====================================================
+// Start Normal Work Session
+// =====================================================
+
+async function startNormalWorkSession(
+    employee,
+    attendanceRecord,
+    workLocation = "Office"
+) {
+
+    if (
+        !employee
+        ||
+        !attendanceRecord?.reference
+    ) {
+
+        throw new Error(
+            "NORMAL_WORK_ATTENDANCE_MISSING"
+        );
+
+    }
+
+
+    const checkInTime =
+        new Date(
+            originalScanTime.getTime()
+        );
+
+
+    const checkInTimeText =
+        checkInTime.toLocaleTimeString(
+            "en-ZA"
+        );
+
+
+    const attendanceReference =
+        attendanceRecord.reference;
+
+
+    await runTransaction(
+        db,
+        async function (
+            transaction
+        ) {
+
+            const attendanceSnapshot =
+                await transaction.get(
+                    attendanceReference
+                );
+
+
+            if (
+                !attendanceSnapshot.exists()
+            ) {
+
+                throw new Error(
+                    "ATTENDANCE_RECORD_NOT_FOUND"
+                );
+
+            }
+
+
+            const currentAttendance =
+                attendanceSnapshot.data();
+
+
+            const sessions =
+                Array.isArray(
+                    currentAttendance.workSessions
+                )
+                    ?
+                    currentAttendance.workSessions.map(
+                        function (
+                            session
+                        ) {
+
+                            return {
+                                ...session
+                            };
+
+                        }
+                    )
+                    :
+                    [];
+
+
+            const openSession =
+                sessions.find(
+                    function (
+                        session
+                    ) {
+
+                        return (
+                            !String(
+                                session.checkOutTime ??
+                                ""
+                            ).trim()
+                            &&
+                            !session.checkOutTimestamp
+                        );
+
+                    }
+                );
+
+
+            if (
+                openSession
+            ) {
+
+                throw new Error(
+                    "NORMAL_WORK_SESSION_ALREADY_OPEN"
+                );
+
+            }
+
+
+            sessions.push({
+
+                sessionNumber:
+                    sessions.length + 1,
+
+                checkInTime:
+                    checkInTimeText,
+
+                checkInTimestamp:
+                    checkInTime,
+
+                checkOutTime:
+                    "",
+
+                checkOutTimestamp:
+                    null,
+
+                workedMinutes:
+                    0,
+
+                workLocation:
+                    workLocation,
+
+                source:
+                    "QR Code"
+
+            });
+
+
+            transaction.set(
+                attendanceReference,
+                {
+
+                    workSessions:
+                        sessions,
+
+                    // Employee is actively working again,
+                    // so clear the previous top-level checkout.
+                    checkOutTime:
+                        "",
+
+                    checkOutTimestamp:
+                        null,
+
+                    checkOutMethod:
+                        "",
+
+                    earlyExit:
+                        false,
+
+                    earlyExitReason:
+                        "",
+
+                    earlyExitNote:
+                        "",
+
+                        authorisedDeparture:
+    false,
+
+authorisedDepartureReason:
+    "",
+
+authorisedDepartureNote:
+    "",
+
+                    lateCheckout:
+                        false,
+
+                    lateCheckoutReason:
+                        "",
+
+                    lateCheckoutMinutes:
+                        0,
+
+                    updatedAt:
+                        serverTimestamp()
+
+                },
+                {
+                    merge:
+                        true
+                }
+            );
+
+        }
+    );
+
+
+    message.style.color =
+        "green";
+
+
+    message.innerHTML =
+        "✅ Welcome back, "
+        +
+        escapeHtml(
+            employee.name
+        )
+        +
+        "!<br><br>"
+        +
+        "Normal work session started."
+        +
+        "<br>Check-In Time: "
+        +
+        escapeHtml(
+            checkInTimeText
+        );
+
+
+    resetCheckInForm();
+
+    updateRegisteredDeviceDisplay();
 
 }
 
@@ -4531,6 +5277,42 @@ if (
                 )
             );
 
+            // =================================================
+// Check For Open Normal Work Session
+// =================================================
+
+const openNormalWorkSession =
+    existingAttendance
+        &&
+        Array.isArray(
+            existingAttendance.workSessions
+        )
+            ?
+            existingAttendance.workSessions.find(
+                function (
+                    session
+                ) {
+
+                    return (
+                        !String(
+                            session.checkOutTime ??
+                            ""
+                        ).trim()
+                        &&
+                        !session.checkOutTimestamp
+                    );
+
+                }
+            )
+            :
+            null;
+
+
+const hasOpenNormalWorkSession =
+    Boolean(
+        openNormalWorkSession
+    );
+
 
         // =================================================
         // INVALID / ORPHAN CHECK-OUT
@@ -4628,21 +5410,24 @@ if (
         // =================================================
 
         if (
-            existingAttendance
-            &&
-            hasExistingCheckIn
-            &&
-            !hasExistingCheckOut
-        ) {
+    existingAttendance
+    &&
+    hasExistingCheckIn
+    &&
+    (
+        !hasExistingCheckOut
+        ||
+        hasOpenNormalWorkSession
+    )
+) {
 
-            await beginCheckOut(
-                employee,
-                existingAttendance
-            );
+    await beginCheckOut(
+        employee,
+        existingAttendance
+    );
 
-            return;
-
-        }
+    return;
+}
 
 
         // =================================================
@@ -4667,7 +5452,148 @@ if (
     hasExistingCheckOut
 ) {
 
+    
+
+
     // =============================================
+    // Check Existing After-Hours State
+    // =============================================
+
+    const openAfterHoursSession =
+        getOpenAfterHoursSession(
+            existingAttendance
+        );
+
+
+    // =============================================
+    // Open Session → After-Hours Check-Out
+    // =============================================
+
+    if (
+        openAfterHoursSession
+    ) {
+
+        await endAfterHoursSession(
+            employee,
+            existingAttendance
+        );
+
+
+        return;
+
+    }
+
+
+    // =============================================
+// No Open Session
+// =============================================
+//
+// After-hours may ONLY start once the employee's
+// scheduled normal work end time has been reached.
+//
+// If the employee checked out early and returns
+// before scheduled end, do NOT start after-hours.
+// That return belongs to normal working time.
+//
+// =============================================
+
+const employeeScheduledEndTime =
+    String(
+        employee.endTime ??
+        existingAttendance.scheduledEndTime ??
+        ""
+    ).trim();
+
+
+const currentScanTime =
+    new Date(
+        originalScanTime.getTime()
+    );
+
+
+let scheduledEndDateTime =
+    null;
+
+
+if (
+    employeeScheduledEndTime
+) {
+
+    const [
+        endHour,
+        endMinute
+    ] =
+        employeeScheduledEndTime
+            .split(":")
+            .map(Number);
+
+
+    if (
+        Number.isFinite(
+            endHour
+        )
+        &&
+        Number.isFinite(
+            endMinute
+        )
+    ) {
+
+        scheduledEndDateTime =
+            new Date(
+                currentScanTime
+            );
+
+
+        scheduledEndDateTime.setHours(
+            endHour,
+            endMinute,
+            0,
+            0
+        );
+
+    }
+
+}
+
+
+// =============================================
+// Return Before Scheduled End
+// =============================================
+//
+// Employee previously checked out early,
+// but has returned before normal working
+// hours have ended.
+//
+// Start another NORMAL work session.
+// Do NOT start after-hours.
+//
+// =============================================
+
+if (
+    scheduledEndDateTime
+    &&
+    currentScanTime <
+    scheduledEndDateTime
+) {
+
+    const normalWorkLocation =
+        getEmployeeWorkArrangement(
+            employee
+        );
+
+
+    await startNormalWorkSession(
+        employee,
+        existingAttendance,
+        normalWorkLocation
+    );
+
+
+    return;
+
+}
+
+// =============================================
     // After-Hours Not Enabled
     // =============================================
 
@@ -4706,128 +5632,70 @@ if (
 
     }
 
+// =============================================
+// Scheduled End Reached → After-Hours Allowed
+// =============================================
 
-    // =============================================
-    // Check Existing After-Hours State
-    // =============================================
-
-    const openAfterHoursSession =
-        getOpenAfterHoursSession(
-            existingAttendance
-        );
-
-
-    // =============================================
-    // Open Session → After-Hours Check-Out
-    // =============================================
-
-    if (
-        openAfterHoursSession
-    ) {
-
-        await endAfterHoursSession(
-            employee,
-            existingAttendance
-        );
-
-
-        return;
-
-    }
-
-
-    // =============================================
-    // No Open Session → After-Hours Check-In
-    // =============================================
-
-    const afterHoursWorkLocation =
-        getEmployeeWorkArrangement(
-            employee
-        );
-
-
-    await startAfterHoursSession(
-        employee,
-        existingAttendance,
-        afterHoursWorkLocation
+const afterHoursWorkLocation =
+    getEmployeeWorkArrangement(
+        employee
     );
 
 
-    return;
+await startAfterHoursSession(
+    employee,
+    existingAttendance,
+    afterHoursWorkLocation
+);
+
+
+return;
 
 }
 
 
         // =================================================
-        // NON-WORKING RECORD
-        // =================================================
-        //
-        // Full-day leave / absent records can legitimately
-        // exist without a check-in.
-        //
-        // They must not accidentally become a checkout.
-        //
-        // =================================================
+// EXISTING LEAVE RECORD
+// =================================================
 
-        if (
-            existingAttendance
-            &&
-            !hasExistingCheckIn
-        ) {
-
-            const existingStatus =
-                String(
-                    existingAttendance.status ??
-                    ""
-                ).trim();
+let endedLeaveSession =
+    null;
 
 
-            const nonWorkingStatuses = [
+if (
+    existingAttendance
+    &&
+    !hasExistingCheckIn
+    &&
+    isLeaveStatus(
+        existingAttendance.status
+    )
+) {
 
-                "Absent",
-
-                "Annual Leave",
-
-                "Sick Leave",
-
-                "Family Responsibility Leave",
-
-                "Maternity Leave",
-
-                "Unpaid Leave"
-
-            ];
-
-
-            if (
-                nonWorkingStatuses.includes(
-                    existingStatus
-                )
-            ) {
-
-                message.style.color =
-                    "orange";
+    endedLeaveSession =
+        await closeActiveLeaveForCheckIn(
+            employee,
+            existingAttendance,
+            scanTime
+        );
 
 
-                message.innerHTML =
-                    "⚠️ Attendance cannot be recorded today."
-                    +
-                    "<br>Status: "
-                    +
-                    escapeHtml(
-                        existingStatus
-                    );
+    if (
+        endedLeaveSession
+    ) {
 
+        existingAttendance.leaveSessions =
+            endedLeaveSession.leaveSessions;
 
-                checkInButton.disabled =
-                    false;
+        existingAttendance.activeLeave =
+            false;
 
+        existingAttendance.activeLeaveType =
+            "";
 
-                return;
+    }
 
-            }
-
-        }
+}
 
 
         // =================================================
@@ -4854,24 +5722,38 @@ if (
                 hybridWorkLocation.value;
 
             if (
-                selectedWorkLocation ===
-                ""
-            ) {
+    selectedWorkLocation ===
+    ""
+) {
 
-                message.style.color =
-                    "#0b5ed7";
+    message.style.color =
+        "#0b5ed7";
 
-                message.innerHTML =
-                    "Please select where you are working today.";
+    message.innerHTML =
+        "Please select where you are working today.";
 
-                checkInButton.disabled =
-                    false;
 
-                hybridWorkLocation.focus();
+    // =============================================
+    // Hybrid Requires Manual Continue
+    // =============================================
 
-                return;
+    checkInButton.style.setProperty(
+        "display",
+        "block",
+        "important"
+    );
 
-            }
+    checkInButton.disabled =
+        false;
+
+    checkInButton.textContent =
+        "Continue";
+
+
+    hybridWorkLocation.focus();
+
+    return;
+}
 
         } else {
 
@@ -5188,9 +6070,11 @@ if (
         // =================================================
 
         if (
-            attendanceStatus ===
-            "Late"
-        ) {
+    attendanceStatus ===
+    "Late"
+    &&
+    !endedLeaveSession
+) {
 
             pendingLateCheckIn = {
 
@@ -5257,15 +6141,19 @@ if (
         // =================================================
 
         await saveAttendanceToFirebase(
-            employee,
-            attendanceStatus,
-            location,
-            distanceMetres,
-            locationStatus,
-            scanTime,
-            "",
-            selectedWorkLocation
-        );
+    employee,
+    attendanceStatus,
+    location,
+    distanceMetres,
+    locationStatus,
+    scanTime,
+    "",
+    selectedWorkLocation,
+Boolean(
+    endedLeaveSession
+),
+endedLeaveSession
+);
 
         saveAttendance(
             employee,
@@ -6342,11 +7230,8 @@ if (
 
     const attendanceUpdate = {
 
-        status:
-            authorisedStatus,
-
-        earlyExit:
-            false,
+    earlyExit:
+        false,
 
         earlyExitReason:
             "",
@@ -6954,62 +7839,312 @@ async function saveCheckOut(
     }
 
     const checkOutTimeText =
-        checkOutTime.toLocaleTimeString(
-            "en-ZA"
-        );
+    checkOutTime.toLocaleTimeString(
+        "en-ZA"
+    );
 
-    await updateDoc(
-        attendanceReference,
-        {
 
-            checkOutTime:
-                checkOutTimeText,
+// =====================================================
+// Preserve Normal Work Sessions
+// =====================================================
 
-            checkOutTimestamp:
-                checkOutTime,
-
-            earlyExit:
-                earlyExit,
-
-            earlyExitReason:
-                earlyExit
-                    ?
-                    earlyExitReasonValue
-                    :
-                    "",
-
-            earlyExitNote:
-                earlyExit
-                    ?
-                    earlyExitNoteValue
-                    :
-                    "",
-
-                    lateCheckout:
-    lateCheckout,
-
-lateCheckoutReason:
-    lateCheckout
+const existingWorkSessions =
+    Array.isArray(
+        attendanceRecord.workSessions
+    )
         ?
-        lateCheckoutReasonValue
+        attendanceRecord.workSessions.map(
+            function (
+                session
+            ) {
+
+                return {
+                    ...session
+                };
+
+            }
+        )
         :
-        "",
+        [];
 
-lateCheckoutMinutes:
-    lateCheckout
-        ?
-        lateCheckoutMinutes
-        :
-        0,
 
-            checkOutMethod:
-                "QR Code",
+let workSessions =
+    existingWorkSessions;
 
-            updatedAt:
-                serverTimestamp()
+
+// =====================================================
+// Find Open Normal Work Session
+// =====================================================
+
+let openWorkSessionIndex =
+    workSessions.findIndex(
+        function (
+            session
+        ) {
+
+            return (
+                !String(
+                    session.checkOutTime ??
+                    ""
+                ).trim()
+                &&
+                !session.checkOutTimestamp
+            );
 
         }
     );
+
+
+// =====================================================
+// Legacy / First Normal Work Session
+// =====================================================
+//
+// Existing attendance records may not yet have
+// workSessions.
+//
+// Build the first session from the normal QR check-in.
+//
+// =====================================================
+
+if (
+    openWorkSessionIndex ===
+    -1
+    &&
+    workSessions.length ===
+    0
+) {
+
+    const originalCheckInTime =
+        String(
+            attendanceRecord.time ??
+            attendanceRecord.checkInTime ??
+            ""
+        ).trim();
+
+
+    const originalCheckInTimestamp =
+        attendanceRecord.scanTimestamp ??
+        attendanceRecord.checkInTimestamp ??
+        null;
+
+
+    workSessions.push({
+
+        sessionNumber:
+            1,
+
+        checkInTime:
+            originalCheckInTime,
+
+        checkInTimestamp:
+            originalCheckInTimestamp,
+
+        checkOutTime:
+            "",
+
+        checkOutTimestamp:
+            null,
+
+        workedMinutes:
+            0,
+
+        workLocation:
+            String(
+                attendanceRecord.workLocation ??
+                "Office"
+            ).trim(),
+
+        source:
+            attendanceRecord.checkInMethod ??
+            "QR Code"
+
+    });
+
+
+    openWorkSessionIndex =
+        0;
+
+}
+
+
+// =====================================================
+// Close Current Normal Work Session
+// =====================================================
+
+if (
+    openWorkSessionIndex >=
+    0
+) {
+
+    const currentSession =
+        workSessions[
+            openWorkSessionIndex
+        ];
+
+
+    let sessionCheckInDate =
+        null;
+
+
+    if (
+        currentSession.checkInTimestamp
+    ) {
+
+        if (
+            currentSession.checkInTimestamp instanceof
+            Date
+        ) {
+
+            sessionCheckInDate =
+                new Date(
+                    currentSession.checkInTimestamp
+                );
+
+        } else if (
+            typeof currentSession.checkInTimestamp.toDate ===
+            "function"
+        ) {
+
+            sessionCheckInDate =
+                currentSession.checkInTimestamp.toDate();
+
+        }
+
+    }
+
+
+    let workedMinutes =
+        0;
+
+
+    if (
+        sessionCheckInDate
+    ) {
+
+        workedMinutes =
+            Math.max(
+                0,
+                Math.floor(
+                    (
+                        checkOutTime.getTime()
+                        -
+                        sessionCheckInDate.getTime()
+                    )
+                    /
+                    60000
+                )
+            );
+
+    }
+
+
+    workSessions[
+        openWorkSessionIndex
+    ] = {
+
+        ...currentSession,
+
+        checkOutTime:
+            checkOutTimeText,
+
+        checkOutTimestamp:
+            checkOutTime,
+
+        workedMinutes:
+            workedMinutes,
+
+        earlyExit:
+            earlyExit,
+
+        earlyExitReason:
+            earlyExit
+                ?
+                earlyExitReasonValue
+                :
+                "",
+
+        earlyExitNote:
+            earlyExit
+                ?
+                earlyExitNoteValue
+                :
+                ""
+
+    };
+
+}
+
+
+// =====================================================
+// Save Check-Out
+// =====================================================
+
+await updateDoc(
+    attendanceReference,
+    {
+
+        workSessions:
+            workSessions,
+
+        checkOutTime:
+            checkOutTimeText,
+
+        checkOutTimestamp:
+            checkOutTime,
+
+        earlyExit:
+            earlyExit,
+
+        earlyExitReason:
+            earlyExit
+                ?
+                earlyExitReasonValue
+                :
+                "",
+
+        earlyExitNote:
+            earlyExit
+                ?
+                earlyExitNoteValue
+                :
+                "",
+
+        lateCheckout:
+            lateCheckout,
+
+        lateCheckoutReason:
+            lateCheckout
+                ?
+                lateCheckoutReasonValue
+                :
+                "",
+
+        lateCheckoutMinutes:
+            lateCheckout
+                ?
+                lateCheckoutMinutes
+                :
+                0,
+
+        checkOutMethod:
+            "QR Code",
+
+        updatedAt:
+            serverTimestamp()
+
+    }
+);
+
+
+// Keep the local record synchronized.
+attendanceRecord.workSessions =
+    workSessions;
+
+attendanceRecord.checkOutTime =
+    checkOutTimeText;
+
+attendanceRecord.checkOutTimestamp =
+    checkOutTime;
 
     earlyExitSection.hidden =
         true;
@@ -7108,7 +8243,9 @@ async function saveAttendanceToFirebase(
     locationStatus,
     scanTime,
     lateReason = "",
-    selectedWorkLocation = "Office"
+    selectedWorkLocation = "Office",
+    returningFromLeave = false,
+    preparedLeaveSession = null
 ) {
 
     const submittedTime =
@@ -7118,6 +8255,20 @@ async function saveAttendanceToFirebase(
         getLocalDateKey(
             scanTime
         );
+
+        console.log(
+    "SAVE ATTENDANCE DEBUG:",
+    {
+        employeeNumber:
+            employee.employeeNumber,
+
+        attendanceStatus:
+            attendanceStatus,
+
+        returningFromLeave:
+            returningFromLeave
+    }
+);
 
     const deviceId =
         getDeviceId();
@@ -7217,37 +8368,128 @@ async function saveAttendanceToFirebase(
 
             if (!TEST_MODE) {
 
-                if (
-                    employeeLock.exists()
-                ) {
+    // =============================================
+    // Employee Daily Lock
+    // =============================================
 
-                    throw new Error(
-                        "EMPLOYEE_ALREADY_CHECKED_IN"
-                    );
+    if (
+        employeeLock.exists()
+        &&
+        !returningFromLeave
+    ) {
 
-                }
+        throw new Error(
+            "EMPLOYEE_ALREADY_CHECKED_IN"
+        );
 
-                if (
-                    deviceLock.exists()
-                ) {
+    }
 
-                    throw new Error(
-                        "DEVICE_ALREADY_USED"
-                    );
 
-                }
+    // =============================================
+    // Device Daily Lock
+    // =============================================
 
-                if (
-                    fingerprintLock.exists()
-                ) {
+    if (
+        deviceLock.exists()
+    ) {
 
-                    throw new Error(
-                        "FINGERPRINT_ALREADY_USED"
-                    );
+        const lockedEmployeeNumber =
+            String(
+                deviceLock.data().employeeNumber ??
+                ""
+            ).trim();
 
-                }
 
-            }
+        const currentEmployeeNumber =
+            String(
+                employee.employeeNumber ??
+                ""
+            ).trim();
+
+            console.log(
+    "DEVICE LOCK DEBUG:",
+    {
+        returningFromLeave:
+            returningFromLeave,
+
+        lockedEmployeeNumber:
+            lockedEmployeeNumber,
+
+        currentEmployeeNumber:
+            currentEmployeeNumber,
+
+        sameEmployee:
+            lockedEmployeeNumber ===
+            currentEmployeeNumber,
+
+        lockData:
+            deviceLock.data()
+    }
+);
+
+
+        const sameEmployee =
+            lockedEmployeeNumber ===
+            currentEmployeeNumber;
+
+
+        if (
+            !returningFromLeave
+            ||
+            !sameEmployee
+        ) {
+
+            throw new Error(
+                "DEVICE_ALREADY_USED"
+            );
+
+        }
+
+    }
+
+
+    // =============================================
+    // Fingerprint Daily Lock
+    // =============================================
+
+    if (
+        fingerprintLock.exists()
+    ) {
+
+        const lockedEmployeeNumber =
+            String(
+                fingerprintLock.data().employeeNumber ??
+                ""
+            ).trim();
+
+
+        const currentEmployeeNumber =
+            String(
+                employee.employeeNumber ??
+                ""
+            ).trim();
+
+
+        const sameEmployee =
+            lockedEmployeeNumber ===
+            currentEmployeeNumber;
+
+
+        if (
+            !returningFromLeave
+            ||
+            !sameEmployee
+        ) {
+
+            throw new Error(
+                "FINGERPRINT_ALREADY_USED"
+            );
+
+        }
+
+    }
+
+}
 
 
             // =================================================
@@ -7368,11 +8610,54 @@ locationStatus:
                     submittedTimestamp:
                         submittedTime,
 
-                    createdAt:
-                        serverTimestamp()
+                            createdAt:
+            serverTimestamp(),
 
-                }
-            );
+        // =========================================
+        // Clear Active Leave State
+        // =========================================
+
+        leaveDuration:
+    "",
+
+leaveTime:
+    "",
+
+activeLeave:
+    false,
+
+activeLeaveType:
+    "",
+
+
+// =========================================
+// Commit Leave Return Only With Check-In
+// =========================================
+
+...(
+    returningFromLeave
+    &&
+    preparedLeaveSession
+        ?
+        {
+
+            leaveSessions:
+                preparedLeaveSession.leaveSessions,
+
+            totalLeaveMinutes:
+                preparedLeaveSession.totalLeaveMinutes
+
+        }
+        :
+        {}
+)
+
+    },
+    {
+        merge:
+            true
+    }
+);
 
 
             // =================================================
@@ -7579,9 +8864,9 @@ function showSuccessfulAttendance(
 
 
     if (
-        attendanceStatus ===
-        "Late"
-    ) {
+    attendanceStatus ===
+    "Late"
+) {
 
         resultMessage +=
             "<br>"

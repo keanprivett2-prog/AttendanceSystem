@@ -6,17 +6,5 @@
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#0b5ed7",
-  "description": "R-E-D Attendance employee check-in and check-out portal.",
-  "icons": [
-    {
-      "src": "./icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "./icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
-  ]
+  "description": "R-E-D Attendance employee check-in and check-out portal."
 }
