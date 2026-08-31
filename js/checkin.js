@@ -5,7 +5,7 @@
 
 import {
     db,
-    auth
+    firebaseConfig
 } from "../firebase/firebase.js";
 
 import {
@@ -40,7 +40,20 @@ import {
 // Employee Attendance Authentication
 // =====================================================
 
-const attendanceAuth = auth;
+// =====================================================
+// Separate Employee Attendance Firebase Auth
+// =====================================================
+
+const attendanceAuthApp =
+    initializeApp(
+        firebaseConfig,
+        "attendance-auth"
+    );
+
+const attendanceAuth =
+    getAuth(
+        attendanceAuthApp
+    );
 
 // =====================================================
 // Office Boundary
