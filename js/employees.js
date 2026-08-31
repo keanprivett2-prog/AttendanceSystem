@@ -124,6 +124,45 @@ const employeeTableBody =
 const employeeSearch =
     document.getElementById("employeeSearch");
 
+    // =====================================
+// Bulk Employee Import
+// =====================================
+
+const bulkImportEmployeesButton =
+    document.getElementById(
+        "bulkImportEmployeesButton"
+    );
+
+const bulkImportModal =
+    document.getElementById(
+        "bulkImportModal"
+    );
+
+const closeBulkImportModalButton =
+    document.getElementById(
+        "closeBulkImportModal"
+    );
+
+const cancelBulkImportButton =
+    document.getElementById(
+        "cancelBulkImportButton"
+    );
+
+const bulkEmployeeFile =
+    document.getElementById(
+        "bulkEmployeeFile"
+    );
+
+const bulkImportPreview =
+    document.getElementById(
+        "bulkImportPreview"
+    );
+
+const confirmBulkImportButton =
+    document.getElementById(
+        "confirmBulkImportButton"
+    );
+
 
 const employeeNumberInput =
     document.getElementById("employeeNumber");
@@ -320,6 +359,8 @@ let organisationDepartments = [];
 
 let organisationEmployeeRoles = [];
 
+let bulkImportRows = [];
+
 let editingEmployeeId = null;
 
 let employeeToDelete = null;
@@ -371,6 +412,39 @@ applySidebarPermissions();
 
     }
 
+    if (
+    bulkImportEmployeesButton
+) {
+
+    bulkImportEmployeesButton.addEventListener(
+        "click",
+        openBulkImportModal
+    );
+
+}
+
+if (
+    bulkEmployeeFile
+) {
+
+    bulkEmployeeFile.addEventListener(
+        "change",
+        handleBulkEmployeeFile
+    );
+
+}
+
+if (
+    confirmBulkImportButton
+) {
+
+    confirmBulkImportButton.addEventListener(
+        "click",
+        importBulkEmployees
+    );
+
+}
+
     if (closeEmployeeModalButton) {
 
         closeEmployeeModalButton.addEventListener(
@@ -388,6 +462,54 @@ applySidebarPermissions();
         );
 
     }
+
+    if (
+    closeBulkImportModalButton
+) {
+
+    closeBulkImportModalButton.addEventListener(
+        "click",
+        closeBulkImportModal
+    );
+
+}
+
+
+if (
+    cancelBulkImportButton
+) {
+
+    cancelBulkImportButton.addEventListener(
+        "click",
+        closeBulkImportModal
+    );
+
+}
+
+
+if (
+    bulkImportModal
+) {
+
+    bulkImportModal.addEventListener(
+        "click",
+        function (
+            event
+        ) {
+
+            if (
+                event.target ===
+                bulkImportModal
+            ) {
+
+                closeBulkImportModal();
+
+            }
+
+        }
+    );
+
+}
 
     if (modal) {
 
@@ -912,6 +1034,1544 @@ async function writeAuditLog(
             "Audit log error:",
             error
         );
+
+    }
+
+}
+
+// =====================================
+// Handle Bulk Employee CSV File
+// =====================================
+
+function handleBulkEmployeeFile(
+    event
+) {
+
+    const file =
+        event.target.files?.[0];
+
+    if (
+        !file
+    ) {
+
+        bulkImportRows =
+            [];
+
+        if (
+            bulkImportPreview
+        ) {
+
+            bulkImportPreview.innerHTML = `
+                <p class="empty-state">
+                    Select a CSV file to preview employees.
+                </p>
+            `;
+
+        }
+
+        if (
+            confirmBulkImportButton
+        ) {
+
+            confirmBulkImportButton.disabled =
+                true;
+
+        }
+
+        return;
+
+    }
+
+
+    const reader =
+        new FileReader();
+
+
+    reader.onload =
+        function (
+            loadEvent
+        ) {
+
+            try {
+
+                const csvText =
+                    String(
+                        loadEvent.target?.result ??
+                        ""
+                    );
+
+
+                bulkImportRows =
+                    parseEmployeeCsv(
+                        csvText
+                    );
+
+
+                displayBulkImportPreview();
+
+            } catch (
+                error
+            ) {
+
+                console.error(
+                    "Bulk employee CSV error:",
+                    error
+                );
+
+
+                bulkImportRows =
+                    [];
+
+
+                if (
+                    bulkImportPreview
+                ) {
+
+                    bulkImportPreview.innerHTML = `
+                        <p class="empty-state">
+                            Unable to read this CSV file.
+                        </p>
+                    `;
+
+                }
+
+
+                if (
+                    confirmBulkImportButton
+                ) {
+
+                    confirmBulkImportButton.disabled =
+                        true;
+
+                }
+
+            }
+
+        };
+
+
+    reader.readAsText(
+        file
+    );
+
+}
+
+
+// =====================================
+// Parse Employee CSV
+// =====================================
+
+function parseEmployeeCsv(
+    csvText
+) {
+
+    const lines =
+        String(
+            csvText ??
+            ""
+        )
+            .replace(
+                /\r/g,
+                ""
+            )
+            .split("\n")
+            .filter(
+                function (
+                    line
+                ) {
+
+                    return (
+                        line.trim() !==
+                        ""
+                    );
+
+                }
+            );
+
+
+    if (
+        lines.length <
+        2
+    ) {
+
+        throw new Error(
+            "CSV contains no employee rows."
+        );
+
+    }
+
+
+    const headers =
+        parseCsvLine(
+            lines[0]
+        )
+            .map(
+                function (
+                    header
+                ) {
+
+                    return String(
+                        header
+                    )
+                        .trim()
+                        .toLowerCase();
+
+                }
+            );
+
+
+    const requiredHeaders = [
+        "employee number",
+        "name",
+        "role",
+        "department",
+        "start time",
+        "end time",
+        "work arrangement",
+        "pin"
+    ];
+
+
+    const missingHeaders =
+        requiredHeaders.filter(
+            function (
+                requiredHeader
+            ) {
+
+                return (
+                    !headers.includes(
+                        requiredHeader
+                    )
+                );
+
+            }
+        );
+
+
+    if (
+        missingHeaders.length >
+        0
+    ) {
+
+        throw new Error(
+            "Missing CSV columns: "
+            +
+            missingHeaders.join(
+                ", "
+            )
+        );
+
+    }
+
+
+    return lines
+    .slice(
+        1
+    )
+    .map(
+        function (
+            line,
+            index
+        ) {
+
+            const values =
+                parseCsvLine(
+                    line
+                );
+
+            const getValue =
+                function (
+                    headerName
+                ) {
+
+                    const headerIndex =
+                        headers.indexOf(
+                            headerName
+                        );
+
+                    return String(
+                        values[
+                            headerIndex
+                        ] ??
+                        ""
+                    ).trim();
+
+                };
+
+
+            return {
+
+                rowNumber:
+                    index + 2,
+
+                employeeNumber:
+                    getValue(
+                        "employee number"
+                    ),
+
+                name:
+                    getValue(
+                        "name"
+                    ),
+
+                role:
+                    getValue(
+                        "role"
+                    ),
+
+                department:
+                    getValue(
+                        "department"
+                    ),
+
+                startTime:
+                    getValue(
+                        "start time"
+                    ),
+
+                endTime:
+                    getValue(
+                        "end time"
+                    ),
+
+                workArrangement:
+                    getValue(
+                        "work arrangement"
+                    ),
+
+                pin:
+                    getValue(
+                        "pin"
+                    )
+                    ||
+                    generateEmployeePin()
+
+            };
+
+        }
+    )
+    .filter(
+        function (
+            employee
+        ) {
+
+            return (
+                employee.employeeNumber !==
+                    ""
+                ||
+                employee.name !==
+                    ""
+                ||
+                employee.role !==
+                    ""
+                ||
+                employee.department !==
+                    ""
+                ||
+                employee.startTime !==
+                    ""
+                ||
+                employee.endTime !==
+                    ""
+                ||
+                employee.workArrangement !==
+                    ""
+            );
+
+        }
+    );
+
+}
+
+
+// =====================================
+// Parse One CSV Line
+// Supports comma or semicolon CSV files
+// =====================================
+
+function parseCsvLine(
+    line
+) {
+
+    const values =
+        [];
+
+    let currentValue =
+        "";
+
+    let insideQuotes =
+        false;
+
+
+    // =====================================
+    // Automatically Detect Delimiter
+    // =====================================
+
+    const commaCount =
+        (
+            line.match(
+                /,/g
+            )
+            ||
+            []
+        ).length;
+
+
+    const semicolonCount =
+        (
+            line.match(
+                /;/g
+            )
+            ||
+            []
+        ).length;
+
+
+    const delimiter =
+        semicolonCount >
+        commaCount
+            ?
+            ";"
+            :
+            ",";
+
+
+    // =====================================
+    // Parse Values
+    // =====================================
+
+    for (
+        let index = 0;
+        index < line.length;
+        index++
+    ) {
+
+        const character =
+            line[
+                index
+            ];
+
+
+        if (
+            character ===
+            '"'
+        ) {
+
+            if (
+                insideQuotes
+                &&
+                line[
+                    index + 1
+                ] ===
+                '"'
+            ) {
+
+                currentValue +=
+                    '"';
+
+                index++;
+
+            } else {
+
+                insideQuotes =
+                    !insideQuotes;
+
+            }
+
+            continue;
+
+        }
+
+
+        if (
+            character ===
+                delimiter
+            &&
+            !insideQuotes
+        ) {
+
+            values.push(
+                currentValue
+            );
+
+            currentValue =
+                "";
+
+            continue;
+
+        }
+
+
+        currentValue +=
+            character;
+
+    }
+
+
+    values.push(
+        currentValue
+    );
+
+
+    return values;
+
+}
+
+// =====================================
+// Generate Employee PIN
+// =====================================
+
+function generateEmployeePin() {
+
+    const minimum =
+        100000;
+
+    const maximum =
+        999999;
+
+    return String(
+        Math.floor(
+            Math.random() *
+            (
+                maximum -
+                minimum +
+                1
+            )
+        )
+        +
+        minimum
+    );
+
+}
+
+// =====================================
+// Validate Bulk Employee Row
+// =====================================
+
+function validateBulkEmployeeRow(
+    employee
+) {
+
+    const errors =
+        [];
+
+
+    if (
+        !employee.employeeNumber
+    ) {
+
+        errors.push(
+            "Employee Number missing"
+        );
+
+    }
+
+
+    if (
+        !employee.name
+    ) {
+
+        errors.push(
+            "Name missing"
+        );
+
+    }
+
+
+    if (
+        !employee.role
+    ) {
+
+        errors.push(
+            "Role missing"
+        );
+
+    } else if (
+        !organisationEmployeeRoles.includes(
+            employee.role
+        )
+    ) {
+
+        errors.push(
+            "Invalid Role"
+        );
+
+    }
+
+
+    if (
+        !employee.department
+    ) {
+
+        errors.push(
+            "Department missing"
+        );
+
+    } else if (
+        !organisationDepartments.includes(
+            employee.department
+        )
+    ) {
+
+        errors.push(
+            "Invalid Department"
+        );
+
+    }
+
+
+    if (
+        !/^\d{2}:\d{2}$/.test(
+            employee.startTime
+        )
+    ) {
+
+        errors.push(
+            "Invalid Start Time"
+        );
+
+    }
+
+
+    if (
+        !/^\d{2}:\d{2}$/.test(
+            employee.endTime
+        )
+    ) {
+
+        errors.push(
+            "Invalid End Time"
+        );
+
+    }
+
+
+    if (
+        employee.startTime
+        &&
+        employee.endTime
+        &&
+        employee.endTime <=
+            employee.startTime
+    ) {
+
+        errors.push(
+            "End Time must be later than Start Time"
+        );
+
+    }
+
+
+    const validArrangements = [
+        "Office",
+        "Remote",
+        "Hybrid"
+    ];
+
+
+    if (
+        !validArrangements.includes(
+            employee.workArrangement
+        )
+    ) {
+
+        errors.push(
+            "Invalid Work Arrangement"
+        );
+
+    }
+
+
+    if (
+        !/^\d{6}$/.test(
+            employee.pin
+        )
+    ) {
+
+        errors.push(
+            "PIN must be 6 digits"
+        );
+
+    }
+
+
+    const existingEmployee =
+        employees.some(
+            function (
+                existing
+            ) {
+
+                return (
+                    String(
+                        existing.employeeNumber ??
+                        ""
+                    ).trim() ===
+                    employee.employeeNumber
+                );
+
+            }
+        );
+
+
+    if (
+        existingEmployee
+    ) {
+
+        errors.push(
+            "Employee Number already exists"
+        );
+
+    }
+
+
+    const duplicateCount =
+        bulkImportRows.filter(
+            function (
+                row
+            ) {
+
+                return (
+                    row.employeeNumber ===
+                    employee.employeeNumber
+                );
+
+            }
+        ).length;
+
+
+    if (
+        employee.employeeNumber
+        &&
+        duplicateCount >
+        1
+    ) {
+
+        errors.push(
+            "Duplicate Employee Number in CSV"
+        );
+
+    }
+
+
+    return errors;
+
+}
+
+
+// =====================================
+// Display Bulk Import Preview
+// =====================================
+
+function displayBulkImportPreview() {
+
+    if (
+        !bulkImportPreview
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        bulkImportRows.length ===
+        0
+    ) {
+
+        bulkImportPreview.innerHTML = `
+            <p class="empty-state">
+                No employees found in this CSV file.
+            </p>
+        `;
+
+
+        if (
+            confirmBulkImportButton
+        ) {
+
+            confirmBulkImportButton.disabled =
+                true;
+
+        }
+
+
+        return;
+
+    }
+
+
+    let tableRows =
+        "";
+
+        let hasErrors =
+    false;
+
+
+    bulkImportRows.forEach(
+        function (
+            employee
+        ) {
+
+            const validationErrors =
+    validateBulkEmployeeRow(
+        employee
+    );
+
+
+if (
+    validationErrors.length >
+    0
+) {
+
+    hasErrors =
+        true;
+
+}
+
+            tableRows += `
+
+                <tr>
+
+                    <td>
+                        ${escapeHtml(
+                            employee.employeeNumber
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(
+                            employee.name
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(
+                            employee.role
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(
+                            employee.department
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(
+                            employee.startTime
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(
+                            employee.endTime
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(
+                            employee.workArrangement
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(
+                            employee.pin
+                        )}
+                    </td>
+
+                    <td>
+
+    ${
+        validationErrors.length ===
+        0
+            ?
+            "✅ Ready"
+            :
+            `❌ ${escapeHtml(
+                validationErrors.join(
+                    ", "
+                )
+            )}`
+    }
+
+</td>
+
+                </tr>
+
+            `;
+
+        }
+    );
+
+
+    bulkImportPreview.innerHTML = `
+
+        <table class="attendance-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>Employee No.</th>
+                    <th>Name</th>
+                    <th>Role</th>
+                    <th>Department</th>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th>Arrangement</th>
+                    <th>PIN</th>
+                    <th>Validation</th>
+
+                
+                </tr>
+
+            </thead>
+
+            <tbody>
+                ${tableRows}
+            </tbody>
+
+        </table>
+
+    `;
+
+
+    if (
+    confirmBulkImportButton
+) {
+
+    confirmBulkImportButton.disabled =
+        hasErrors;
+
+}
+
+}
+
+// =====================================
+// Import Bulk Employees
+// =====================================
+
+async function importBulkEmployees() {
+
+    if (
+        bulkImportRows.length ===
+        0
+    ) {
+
+        showNotification(
+            "⚠️ No employees are ready to import.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+    
+
+
+    // =====================================
+    // Revalidate Before Firebase Import
+    // =====================================
+
+    const invalidRows =
+        bulkImportRows.filter(
+            function (
+                employee
+            ) {
+
+                return (
+                    validateBulkEmployeeRow(
+                        employee
+                    ).length >
+                    0
+                );
+
+            }
+        );
+
+
+    if (
+        invalidRows.length >
+        0
+    ) {
+
+        displayBulkImportPreview();
+
+        showNotification(
+            "⚠️ Fix all CSV validation errors before importing.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+
+    const credentials =
+        [];
+
+    const failures =
+        [];
+
+
+    try {
+
+        confirmBulkImportButton.disabled =
+            true;
+
+        bulkEmployeeFile.disabled =
+            true;
+
+
+        for (
+            let index = 0;
+            index < bulkImportRows.length;
+            index++
+        ) {
+
+            const employee =
+                bulkImportRows[
+                    index
+                ];
+
+
+            confirmBulkImportButton.textContent =
+                `Importing ${index + 1} of ${bulkImportRows.length}...`;
+
+
+            try {
+
+                await createNewEmployee(
+                    employee.employeeNumber,
+                    employee.name,
+                    employee.role,
+                    employee.department,
+                    employee.startTime,
+                    employee.endTime,
+                    employee.workArrangement,
+
+                    // After-hours defaults to disabled
+                    false,
+
+                    employee.pin
+                );
+
+
+                credentials.push(
+                    {
+                        employeeNumber:
+                            employee.employeeNumber,
+
+                        name:
+                            employee.name,
+
+                        pin:
+                            employee.pin
+                    }
+                );
+
+
+            } catch (
+                error
+            ) {
+
+                console.error(
+                    "Bulk employee import failed:",
+                    employee.employeeNumber,
+                    error
+                );
+
+
+                failures.push(
+                    {
+                        employeeNumber:
+                            employee.employeeNumber,
+
+                        name:
+                            employee.name,
+
+                        reason:
+                            error.message ??
+                            "Unknown error"
+                    }
+                );
+
+            }
+
+
+            // Make sure the secondary employee
+            // authentication session is clean
+            // before creating the next employee.
+
+            await clearEmployeeAuthSession();
+
+        }
+
+
+        // =====================================
+        // Refresh Employee Directory
+        // =====================================
+
+        await loadEmployees();
+
+
+        // =====================================
+        // Download Credentials
+        // =====================================
+
+        if (
+            credentials.length >
+            0
+        ) {
+
+            downloadEmployeeCredentialsCsv(
+                credentials
+            );
+
+        }
+
+
+        // =====================================
+        // Result
+        // =====================================
+
+        if (
+            failures.length ===
+            0
+        ) {
+
+            const importedCount =
+                credentials.length;
+
+
+            closeBulkImportModal();
+
+
+            showNotification(
+                `✅ ${importedCount} employees imported successfully. Credentials CSV downloaded.`
+            );
+
+        } else {
+
+            displayBulkImportFailures(
+                credentials.length,
+                failures
+            );
+
+
+            showNotification(
+                `⚠️ ${credentials.length} employees imported. ${failures.length} failed.`,
+                "warning"
+            );
+
+        }
+
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Bulk employee import error:",
+            error
+        );
+
+
+        showNotification(
+            "❌ Bulk employee import could not be completed.",
+            "error"
+        );
+
+
+    } finally {
+
+        if (
+            confirmBulkImportButton
+        ) {
+
+            confirmBulkImportButton.disabled =
+                false;
+
+            confirmBulkImportButton.textContent =
+                "Import Employees";
+
+        }
+
+
+        if (
+            bulkEmployeeFile
+        ) {
+
+            bulkEmployeeFile.disabled =
+                false;
+
+        }
+
+    }
+
+}
+
+// =====================================
+// Download Employee Credentials CSV
+// =====================================
+
+function downloadEmployeeCredentialsCsv(
+    credentials
+) {
+
+    if (
+        !Array.isArray(
+            credentials
+        )
+        ||
+        credentials.length ===
+        0
+    ) {
+
+        return;
+
+    }
+
+
+    const rows =
+        [
+            [
+                "Employee Number",
+                "Employee Name",
+                "Initial PIN"
+            ]
+        ];
+
+
+    credentials.forEach(
+        function (
+            employee
+        ) {
+
+            rows.push(
+                [
+                    employee.employeeNumber,
+                    employee.name,
+                    employee.pin
+                ]
+            );
+
+        }
+    );
+
+
+    const csvContent =
+        rows
+            .map(
+                function (
+                    row
+                ) {
+
+                    return row
+                        .map(
+                            function (
+                                value
+                            ) {
+
+                                const text =
+                                    String(
+                                        value ??
+                                        ""
+                                    );
+
+
+                                return (
+                                    `"${text.replace(
+                                        /"/g,
+                                        '""'
+                                    )}"`
+                                );
+
+                            }
+                        )
+                        .join(",");
+
+                }
+            )
+            .join("\n");
+
+
+    const blob =
+        new Blob(
+            [
+                "\uFEFF",
+                csvContent
+            ],
+            {
+                type:
+                    "text/csv;charset=utf-8;"
+            }
+        );
+
+
+    const downloadUrl =
+        URL.createObjectURL(
+            blob
+        );
+
+
+    const downloadLink =
+        document.createElement(
+            "a"
+        );
+
+
+    const today =
+        new Date();
+
+
+    const dateStamp =
+        [
+            today.getFullYear(),
+            String(
+                today.getMonth() + 1
+            ).padStart(
+                2,
+                "0"
+            ),
+            String(
+                today.getDate()
+            ).padStart(
+                2,
+                "0"
+            )
+        ].join("-");
+
+
+    downloadLink.href =
+        downloadUrl;
+
+    downloadLink.download =
+        `R-E-D_Employee_Credentials_${dateStamp}.csv`;
+
+
+    document.body.appendChild(
+        downloadLink
+    );
+
+
+    downloadLink.click();
+
+
+    downloadLink.remove();
+
+
+    URL.revokeObjectURL(
+        downloadUrl
+    );
+
+}
+
+// =====================================
+// Display Bulk Import Failures
+// =====================================
+
+function displayBulkImportFailures(
+    successCount,
+    failures
+) {
+
+    if (
+        !bulkImportPreview
+    ) {
+
+        return;
+
+    }
+
+
+    let failureRows =
+        "";
+
+
+    failures.forEach(
+        function (
+            failure
+        ) {
+
+            failureRows += `
+
+                <tr>
+
+                    <td>
+                        ${escapeHtml(
+                            failure.employeeNumber
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(
+                            failure.name
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(
+                            failure.reason
+                        )}
+                    </td>
+
+                </tr>
+
+            `;
+
+        }
+    );
+
+
+    bulkImportPreview.innerHTML = `
+
+        <p>
+            <strong>
+                ${successCount}
+            </strong>
+            employee(s) imported successfully.
+        </p>
+
+        <p>
+            <strong>
+                ${failures.length}
+            </strong>
+            employee(s) could not be imported.
+        </p>
+
+        <table class="attendance-table">
+
+            <thead>
+
+                <tr>
+                    <th>Employee No.</th>
+                    <th>Name</th>
+                    <th>Reason</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+                ${failureRows}
+            </tbody>
+
+        </table>
+
+    `;
+
+}
+
+// =====================================
+// Open Bulk Import Modal
+// =====================================
+
+function openBulkImportModal() {
+
+    bulkImportRows = [];
+
+    if (
+        !bulkImportModal
+    ) {
+
+        return;
+
+    }
+
+
+    bulkImportModal.classList.add(
+        "active"
+    );
+
+
+    if (
+        bulkEmployeeFile
+    ) {
+
+        bulkEmployeeFile.value =
+            "";
+
+    }
+
+
+    if (
+        bulkImportPreview
+    ) {
+
+        bulkImportPreview.innerHTML = `
+            <p class="empty-state">
+                Select a CSV file to preview employees.
+            </p>
+        `;
+
+    }
+
+
+    if (
+        confirmBulkImportButton
+    ) {
+
+        confirmBulkImportButton.disabled =
+            true;
+
+    }
+
+}
+
+
+// =====================================
+// Close Bulk Import Modal
+// =====================================
+
+function closeBulkImportModal() {
+
+    bulkImportRows = [];
+
+    if (
+        !bulkImportModal
+    ) {
+
+        return;
+
+    }
+
+
+    bulkImportModal.classList.remove(
+        "active"
+    );
+
+
+    if (
+        bulkEmployeeFile
+    ) {
+
+        bulkEmployeeFile.value =
+            "";
+
+    }
+
+
+    if (
+        bulkImportPreview
+    ) {
+
+        bulkImportPreview.innerHTML = `
+            <p class="empty-state">
+                Select a CSV file to preview employees.
+            </p>
+        `;
+
+    }
+
+
+    if (
+        confirmBulkImportButton
+    ) {
+
+        confirmBulkImportButton.disabled =
+            true;
 
     }
 

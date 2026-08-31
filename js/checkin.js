@@ -91,6 +91,8 @@ const TEST_MODE =
 const DEVICE_REGISTRATION_KEY =
     "attendanceDeviceRegistration";
 
+    
+
     // =====================================================
 // Generate Device Registration Token
 // =====================================================

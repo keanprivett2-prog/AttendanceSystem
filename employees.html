@@ -233,13 +233,25 @@
 
                 </div>
 
-                <button
-                    type="button"
-                    class="add-employee-btn"
-                    id="addEmployeeButton"
-                >
-                    + Add Employee
-                </button>
+                <div class="employee-action-buttons">
+
+    <button
+        type="button"
+        class="add-employee-btn"
+        id="bulkImportEmployeesButton"
+    >
+        Import Employees
+    </button>
+
+    <button
+        type="button"
+        class="add-employee-btn"
+        id="addEmployeeButton"
+    >
+        + Add Employee
+    </button>
+
+</div>
 
             </section>
 
@@ -624,6 +636,99 @@
             </div>
 
         </form>
+
+    </div>
+
+</div>
+
+<!-- =====================================
+     Bulk Employee Import Modal
+====================================== -->
+
+<div
+    class="modal-overlay"
+    id="bulkImportModal"
+>
+
+    <div class="employee-modal">
+
+        <div class="modal-header">
+
+            <div>
+
+                <h2>
+                    Import Employees
+                </h2>
+
+                <p>
+                    Upload a CSV file containing employee details.
+                </p>
+
+            </div>
+
+            <button
+                type="button"
+                class="modal-close"
+                id="closeBulkImportModal"
+                aria-label="Close bulk import"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label for="bulkEmployeeFile">
+                Employee CSV File
+            </label>
+
+            <input
+                type="file"
+                id="bulkEmployeeFile"
+                accept=".csv,text/csv"
+            >
+
+            <small>
+                CSV columns: Employee Number, Name, Role, Department, Start Time, End Time, Work Arrangement, PIN
+            </small>
+
+        </div>
+
+
+        <div
+            id="bulkImportPreview"
+            class="employee-table-container"
+        >
+
+            <p class="empty-state">
+                Select a CSV file to preview employees.
+            </p>
+
+        </div>
+
+
+        <div class="modal-actions">
+
+            <button
+                type="button"
+                class="cancel-btn"
+                id="cancelBulkImportButton"
+            >
+                Cancel
+            </button>
+
+            <button
+                type="button"
+                class="save-employee-btn"
+                id="confirmBulkImportButton"
+                disabled
+            >
+                Import Employees
+            </button>
+
+        </div>
 
     </div>
 
