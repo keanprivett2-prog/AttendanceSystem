@@ -1,4 +1,5 @@
 import "./admin-session.js";
+import "./admin-branding.js";
 
 // =====================================
 // R-E-D Attendance
@@ -66,6 +67,8 @@ const dashboardCompanyName =
     document.getElementById(
         "dashboardCompanyName"
     );
+
+    
 
 const dashboardCompanyLogo =
     document.getElementById(
@@ -219,11 +222,18 @@ const totalHoursTodayElement =
         "totalHoursToday"
     );
 
+    const adminWelcome =
+    document.getElementById(
+        "adminWelcome"
+    );
+
 
 const logoutButton =
     document.getElementById(
         "logoutButton"
     );
+
+    
 
     // =====================================
 // Current Dashboard Attendance
@@ -281,9 +291,34 @@ function initializeDashboard() {
 
     applySidebarPermissions();
 
+
+    // =====================================
+    // Administrator Welcome Message
+    // =====================================
+
+    const administratorName =
+        sessionStorage.getItem(
+            "adminName"
+        );
+
+
     if (
-    logoutButton
-) {
+        adminWelcome
+    ) {
+
+        adminWelcome.textContent =
+            administratorName
+                ?
+                `Welcome, ${administratorName}`
+                :
+                "Welcome";
+
+    }
+
+
+    if (
+        logoutButton
+    ) {
 
     logoutButton.addEventListener(
         "click",
@@ -488,19 +523,59 @@ if (
 
 
             const leaveRecords =
-                currentDashboardAttendanceRecords.filter(
+    currentDashboardAttendanceRecords.filter(
+        function (
+            record
+        ) {
+
+            // =====================================
+            // Current Main Leave Status
+            // =====================================
+
+            const hasMainLeaveStatus =
+                leaveStatuses.includes(
+                    normalizeStatus(
+                        record.status
+                    )
+                );
+
+
+            // =====================================
+            // Historical Leave Sessions
+            // =====================================
+
+            const hasLeaveSession =
+                Array.isArray(
+                    record.leaveSessions
+                )
+                &&
+                record.leaveSessions.some(
                     function (
-                        record
+                        session
                     ) {
 
-                        return leaveStatuses.includes(
+                        const sessionLeaveType =
                             normalizeStatus(
-                                record.status
-                            )
+                                session?.leaveType
+                            );
+
+
+                        return leaveStatuses.includes(
+                            sessionLeaveType
                         );
 
                     }
                 );
+
+
+            return (
+                hasMainLeaveStatus
+                ||
+                hasLeaveSession
+            );
+
+        }
+    );
 
 
             openLeaveTodayModal(
@@ -961,19 +1036,65 @@ if (
                     }
                 )
                 .filter(
-                    function (
-                        record
-                    ) {
+    function (
+        record
+    ) {
 
-                        return (
-                            normalizeStatus(
-                                record.status
-                            ) ===
-                            "unpaid leave"
-                        );
+        // =====================================
+        // Legacy / Current Main Status
+        // =====================================
 
-                    }
-                );
+        const hasMainUnpaidLeaveStatus =
+            normalizeStatus(
+                record.status
+            ) ===
+            "unpaid leave";
+
+
+        // =====================================
+        // Historical Unpaid Leave Sessions
+        // =====================================
+        //
+        // An employee may have started the day
+        // on unpaid leave and later checked in.
+        //
+        // Their main status may now be:
+        // On Time / Late
+        //
+        // but the unpaid leave must remain part
+        // of the monthly payroll history.
+        //
+        // =====================================
+
+        const hasUnpaidLeaveSession =
+            Array.isArray(
+                record.leaveSessions
+            )
+            &&
+            record.leaveSessions.some(
+                function (
+                    session
+                ) {
+
+                    return (
+                        normalizeStatus(
+                            session?.leaveType
+                        ) ===
+                        "unpaid leave"
+                    );
+
+                }
+            );
+
+
+        return (
+            hasMainUnpaidLeaveStatus
+            ||
+            hasUnpaidLeaveSession
+        );
+
+    }
+);
 
 
         // =====================================
@@ -1135,25 +1256,28 @@ async function loadCurrentMonthAttentionRecords() {
                             "Unassigned",
 
                         totalRecords:
-                            0,
+    0,
 
-                        presentCredit:
-                            0,
+actualNormalMinutes:
+    0,
 
-                        lateCount:
-                            0,
+paidLeaveMinutes:
+    0,
 
-                        absentCount:
-                            0,
+lateCount:
+    0,
 
-                        earlyExitCount:
-                            0,
+absentCount:
+    0,
 
-                        excludedDays:
-                            0,
+earlyExitCount:
+    0,
 
-                        reasons:
-                            []
+excludedDays:
+    0,
+
+reasons:
+    []
 
                     };
 
@@ -1188,18 +1312,7 @@ async function loadCurrentMonthAttentionRecords() {
                 }
 
 
-                if (
-                    status ===
-                    "on time"
-                    ||
-                    status ===
-                    "late"
-                ) {
-
-                    employee.presentCredit +=
-                        1;
-
-                }
+                
 
 
                 if (
@@ -1231,68 +1344,262 @@ async function loadCurrentMonthAttentionRecords() {
 
                 }
 
+                // =====================================
+// Actual Normal Worked Minutes
+// =====================================
+//
+// Prefer the new workSessions structure.
+// This prevents multiple check-in/check-out
+// sessions from being treated as one shift.
+//
+// =====================================
 
-                // Partial leave attendance credit
-                const leaveDuration =
-                    String(
-                        record.leaveDuration ??
-                        ""
-                    )
-                        .trim()
-                        .toLowerCase();
-
-
-                const partialLeaveStatuses = [
-                    "annual leave",
-                    "sick leave",
-                    "family responsibility leave",
-                    "unpaid leave",
-                    "half day"
-                ];
+let actualNormalMinutes =
+    0;
 
 
-                const isPartialLeave =
-                    partialLeaveStatuses.includes(
-                        status
-                    )
-                    &&
-                    (
-                        leaveDuration ===
-                            "half-day"
-                        ||
-                        leaveDuration ===
-                            "custom"
-                        ||
-                        status ===
-                            "half day"
+if (
+    Array.isArray(
+        record.workSessions
+    )
+    &&
+    record.workSessions.length >
+    0
+) {
+
+    actualNormalMinutes =
+        record.workSessions.reduce(
+            function (
+                total,
+                session
+            ) {
+
+                const sessionMinutes =
+                    Number(
+                        session?.workedMinutes ??
+                        0
                     );
 
 
                 if (
-                    isPartialLeave
+                    !Number.isFinite(
+                        sessionMinutes
+                    )
+                    ||
+                    sessionMinutes <
+                    0
                 ) {
 
-                    const workedMinutes =
-                        calculateWorkedMinutes(
-                            record
-                        );
-
-
-                    if (
-                        workedMinutes >
-                        0
-                    ) {
-
-                        employee.presentCredit +=
-                            Math.min(
-                                1,
-                                workedMinutes /
-                                480
-                            );
-
-                    }
+                    return total;
 
                 }
+
+
+                return (
+                    total +
+                    Math.floor(
+                        sessionMinutes
+                    )
+                );
+
+            },
+            0
+        );
+
+} else {
+
+    // =====================================
+    // Older Attendance Record Fallback
+    // =====================================
+
+    actualNormalMinutes =
+        calculateWorkedMinutes(
+            record
+        );
+
+}
+
+
+employee.actualNormalMinutes +=
+    Math.max(
+        0,
+        actualNormalMinutes
+    );
+
+    // =====================================
+// Paid Leave Minutes
+// =====================================
+//
+// Paid leave counts toward the employee's
+// attendance credit.
+//
+// Unpaid Leave must NEVER contribute
+// paid leave minutes.
+//
+// =====================================
+
+let paidLeaveMinutes =
+    0;
+
+
+const paidLeaveStatuses = [
+
+    "annual leave",
+
+    "sick leave",
+
+    "family responsibility leave",
+
+    "maternity leave"
+
+];
+
+
+// =====================================
+// Leave Sessions
+// =====================================
+
+if (
+    Array.isArray(
+        record.leaveSessions
+    )
+) {
+
+    record.leaveSessions.forEach(
+        function (
+            session
+        ) {
+
+            const leaveType =
+                normalizeStatus(
+                    session?.leaveType
+                );
+
+
+            if (
+                !paidLeaveStatuses.includes(
+                    leaveType
+                )
+            ) {
+
+                return;
+
+            }
+
+
+            const sessionMinutes =
+                Number(
+                    session?.durationMinutes ??
+                    0
+                );
+
+
+            if (
+                Number.isFinite(
+                    sessionMinutes
+                )
+                &&
+                sessionMinutes >
+                0
+            ) {
+
+                paidLeaveMinutes +=
+                    Math.floor(
+                        sessionMinutes
+                    );
+
+            }
+
+        }
+    );
+
+}
+
+
+// =====================================
+// Main Attendance Status Fallback
+// =====================================
+//
+// Handles older records where leave was
+// stored directly on the attendance record
+// rather than inside leaveSessions.
+//
+// =====================================
+
+if (
+    paidLeaveMinutes ===
+        0
+    &&
+    paidLeaveStatuses.includes(
+        status
+    )
+) {
+
+    const leaveDuration =
+        String(
+            record.leaveDuration ??
+            "full-day"
+        )
+            .trim()
+            .toLowerCase();
+
+
+    if (
+        leaveDuration ===
+        "full-day"
+    ) {
+
+        paidLeaveMinutes =
+            480;
+
+    } else if (
+        leaveDuration ===
+        "half-day"
+    ) {
+
+        paidLeaveMinutes =
+            240;
+
+    }
+
+}
+
+
+// =====================================
+// Cap Paid Leave To Remaining Normal Day
+// =====================================
+//
+// Normal worked time + paid leave may not
+// exceed the standard 480-minute paid day.
+//
+// Example:
+// Worked 300 minutes
+// Paid leave may contribute max 180 minutes.
+//
+// =====================================
+
+const maximumPaidLeaveMinutes =
+    Math.max(
+        0,
+        480 -
+        actualNormalMinutes
+    );
+
+
+paidLeaveMinutes =
+    Math.min(
+        paidLeaveMinutes,
+        maximumPaidLeaveMinutes
+    );
+
+
+employee.paidLeaveMinutes +=
+    Math.max(
+        0,
+        paidLeaveMinutes
+    );
+
+               
 
             }
         );
@@ -1315,20 +1622,45 @@ async function loadCurrentMonthAttentionRecords() {
                             );
 
 
-                        const attendanceRate =
-                            eligibleDays ===
-                                0
-                                ?
-                                100
-                                :
-                                Math.round(
-                                    (
-                                        employee.presentCredit /
-                                        eligibleDays
-                                    )
-                                    *
-                                    100
-                                );
+                        const expectedNormalMinutes =
+    eligibleDays *
+    480;
+
+
+const accountedNormalMinutes =
+    Math.max(
+        0,
+        employee.actualNormalMinutes ??
+        0
+    )
+    +
+    Math.max(
+        0,
+        employee.paidLeaveMinutes ??
+        0
+    );
+
+
+const attendanceRate =
+    expectedNormalMinutes ===
+        0
+        ?
+        100
+        :
+        Math.min(
+            100,
+            Math.max(
+                0,
+                Math.round(
+                    (
+                        accountedNormalMinutes /
+                        expectedNormalMinutes
+                    )
+                    *
+                    100
+                )
+            )
+        );
 
 
                         const reasons =
@@ -2808,20 +3140,45 @@ function openLeaveTodayModal(
                 "dashboard-stat-employee-item";
 
 
-            const leaveType =
-                String(
-                    record.status ??
-                    "Leave"
-                ).trim();
+            const leaveSession =
+    Array.isArray(
+        record.leaveSessions
+    )
+        ?
+        record.leaveSessions.find(
+            function (
+                session
+            ) {
+
+                return Boolean(
+                    String(
+                        session?.leaveType ??
+                        ""
+                    ).trim()
+                );
+
+            }
+        )
+        :
+        null;
+
+
+const leaveType =
+    String(
+        leaveSession?.leaveType ??
+        record.status ??
+        "Leave"
+    ).trim();
 
 
             const leaveDuration =
-                String(
-                    record.leaveDuration ??
-                    "full-day"
-                )
-                    .trim()
-                    .toLowerCase();
+    String(
+        leaveSession?.leaveDuration ??
+        record.leaveDuration ??
+        "full-day"
+    )
+        .trim()
+        .toLowerCase();
 
 
             let durationDisplay =
@@ -2847,35 +3204,86 @@ function openLeaveTodayModal(
             }
 
 
-            const leaveTime =
-                String(
-                    record.leaveTime ??
-                    record.checkOutTime ??
-                    ""
-                ).trim();
+            const leaveStartTime =
+    String(
+        leaveSession?.startTime ??
+        record.leaveStartTime ??
+        ""
+    ).trim();
+
+
+const leaveEndTime =
+    String(
+        leaveSession?.endTime ??
+        record.leaveTime ??
+        record.checkOutTime ??
+        ""
+    ).trim();
+
+
+let leaveTime =
+    "";
+
+
+if (
+    leaveStartTime
+    &&
+    leaveEndTime
+) {
+
+    leaveTime =
+        `${leaveStartTime} → ${leaveEndTime}`;
+
+} else if (
+    leaveStartTime
+) {
+
+    leaveTime =
+        `${leaveStartTime} → Active`;
+
+} else {
+
+    leaveTime =
+        String(
+            record.leaveTime ??
+            record.checkOutTime ??
+            ""
+        ).trim();
+
+}
 
 
             let durationWithTime =
-                durationDisplay;
+    durationDisplay;
 
 
-            if (
-                (
-                    leaveDuration ===
-                        "half-day"
-                    ||
-                    leaveDuration ===
-                        "custom"
-                )
-                &&
-                leaveTime !==
-                    ""
-            ) {
+if (
+    leaveSession
+    &&
+    leaveTime !==
+        ""
+) {
 
-                durationWithTime =
-                    `${durationDisplay} - From ${leaveTime}`;
+    durationWithTime =
+        leaveTime;
 
-            }
+} else if (
+    (
+        leaveDuration ===
+            "half-day"
+        ||
+        leaveDuration ===
+            "custom"
+    )
+    &&
+    leaveTime !==
+        ""
+) {
+
+    durationWithTime =
+        `${durationDisplay} - From ${leaveTime}`;
+
+}
 
 
             item.innerHTML = `
@@ -2907,20 +3315,11 @@ function openLeaveTodayModal(
 
     <span>
         Duration:
-        ${escapeHtml(
-            durationDisplay
-        )}
+${escapeHtml(
+    durationWithTime
+)}
 
-        ${
-            leaveTime !==
-                ""
-                ?
-                ` - From ${escapeHtml(
-                    leaveTime
-                )}`
-                :
-                ""
-        }
+    
     </span>
 
 </div>
@@ -3741,6 +4140,32 @@ function openUnpaidLeaveModal(
             // Format Leave Duration
             // =====================================
 
+            // =====================================
+// Unpaid Leave Session
+// =====================================
+
+const unpaidLeaveSession =
+    Array.isArray(
+        record.leaveSessions
+    )
+        ?
+        record.leaveSessions.find(
+            function (
+                session
+            ) {
+
+                return (
+                    normalizeStatus(
+                        session?.leaveType
+                    ) ===
+                    "unpaid leave"
+                );
+
+            }
+        )
+        :
+        null;
+
             const leaveDuration =
                 String(
                     record.leaveDuration ??
@@ -3777,46 +4202,106 @@ if (
 // Partial Leave Time
 // =====================================
 
-const leaveTime =
+const leaveStartTime =
     String(
+        unpaidLeaveSession?.startTime ??
+        record.leaveStartTime ??
+        ""
+    ).trim();
+
+
+const leaveEndTime =
+    String(
+        unpaidLeaveSession?.endTime ??
         record.leaveTime ??
         record.checkOutTime ??
         ""
     ).trim();
 
+    // =====================================
+// Unpaid Leave Duration Minutes
+// =====================================
 
-let leaveTimeDisplay =
-    "";
+let unpaidLeaveMinutes =
+    Number(
+        unpaidLeaveSession?.durationMinutes ??
+        0
+    );
 
 
 if (
-    (
-        leaveDuration ===
-            "half-day"
-        ||
-        leaveDuration ===
-            "custom"
+    !Number.isFinite(
+        unpaidLeaveMinutes
     )
-    &&
-    leaveTime !==
-        ""
+    ||
+    unpaidLeaveMinutes <
+    0
 ) {
 
-    leaveTimeDisplay =
-        leaveTime;
+    unpaidLeaveMinutes =
+        0;
 
 }
 
+
+
 const deductionMinutes =
-    calculateUnpaidLeaveDeductionMinutes(
-        record
-    );
+    unpaidLeaveSession
+        ?
+        unpaidLeaveMinutes
+        :
+        calculateUnpaidLeaveDeductionMinutes(
+            record
+        );
 
 
 const deductionDisplay =
     formatWorkedMinutes(
         deductionMinutes
     );
+
+    // =====================================
+// Unpaid Leave Display
+// =====================================
+
+let unpaidLeaveDurationDisplay =
+    durationDisplay;
+
+
+if (
+    unpaidLeaveSession
+) {
+
+    const formattedDuration =
+        formatWorkedMinutes(
+            unpaidLeaveMinutes
+        );
+
+
+    if (
+        leaveStartTime
+        &&
+        leaveEndTime
+    ) {
+
+        unpaidLeaveDurationDisplay =
+            `${leaveStartTime} → ${leaveEndTime}`;
+
+    } else if (
+        leaveStartTime
+    ) {
+
+        unpaidLeaveDurationDisplay =
+            `${leaveStartTime} → Active`;
+
+    } else {
+
+        unpaidLeaveDurationDisplay =
+            formattedDuration;
+
+    }
+
+}
 
 
             item.innerHTML = `
@@ -3846,20 +4331,11 @@ const deductionDisplay =
 
     <span>
         Duration:
-        ${escapeHtml(
-            durationDisplay
-        )}
-
-        ${
-            leaveTimeDisplay !==
-                ""
-                ?
-                ` - ${escapeHtml(
-                    leaveTimeDisplay
-                )}`
-                :
-                ""
-        }
+        <strong>
+            ${escapeHtml(
+                unpaidLeaveDurationDisplay
+            )}
+        </strong>
     </span>
 
     <span>
@@ -4090,10 +4566,38 @@ const leaveTodayTotal =
             record
         ) {
 
-            return leaveStatuses.includes(
-                normalizeStatus(
-                    record.status
+            const hasMainLeaveStatus =
+                leaveStatuses.includes(
+                    normalizeStatus(
+                        record.status
+                    )
+                );
+
+
+            const hasLeaveSession =
+                Array.isArray(
+                    record.leaveSessions
                 )
+                &&
+                record.leaveSessions.some(
+                    function (
+                        session
+                    ) {
+
+                        return leaveStatuses.includes(
+                            normalizeStatus(
+                                session?.leaveType
+                            )
+                        );
+
+                    }
+                );
+
+
+            return (
+                hasMainLeaveStatus
+                ||
+                hasLeaveSession
             );
 
         }
@@ -4101,16 +4605,158 @@ const leaveTodayTotal =
 
         const totalWorkedMinutes =
     attendanceRecords.reduce(
-        (
+        function (
             total,
             record
-        ) => {
+        ) {
+
+            let recordWorkedMinutes =
+                0;
+
+
+            // =====================================
+            // New Work Sessions
+            // =====================================
+
+            if (
+                Array.isArray(
+                    record.workSessions
+                )
+                &&
+                record.workSessions.length >
+                0
+            ) {
+
+                recordWorkedMinutes =
+                    record.workSessions.reduce(
+                        function (
+                            sessionTotal,
+                            session
+                        ) {
+
+                            let sessionMinutes =
+    Number(
+        session?.workedMinutes ??
+        0
+    );
+
+
+const sessionCheckOutTime =
+    String(
+        session?.checkOutTime ??
+        ""
+    ).trim();
+
+
+if (
+    !sessionCheckOutTime
+) {
+
+    let sessionStartDate =
+        null;
+
+
+    if (
+        session?.checkInTimestamp
+    ) {
+
+        if (
+            session.checkInTimestamp instanceof
+            Date
+        ) {
+
+            sessionStartDate =
+                new Date(
+                    session.checkInTimestamp
+                );
+
+        } else if (
+            typeof session.checkInTimestamp.toDate ===
+            "function"
+        ) {
+
+            sessionStartDate =
+                session.checkInTimestamp.toDate();
+
+        }
+
+    }
+
+
+    if (
+        sessionStartDate
+    ) {
+
+        const now =
+            new Date();
+
+
+        sessionMinutes =
+            Math.max(
+                0,
+                Math.floor(
+                    (
+                        now.getTime()
+                        -
+                        sessionStartDate.getTime()
+                    )
+                    /
+                    60000
+                )
+            );
+
+    }
+
+}
+
+
+if (
+    !Number.isFinite(
+        sessionMinutes
+    )
+    ||
+    sessionMinutes <
+    0
+) {
+
+    return sessionTotal;
+
+}
+
+
+return (
+    sessionTotal +
+    Math.floor(
+        sessionMinutes
+    )
+);
+
+
+                            
+
+                        },
+                        0
+                    );
+
+            } else {
+
+                // =====================================
+                // Older Record Fallback
+                // =====================================
+
+                recordWorkedMinutes =
+                    calculateWorkedMinutes(
+                        record
+                    );
+
+            }
+
 
             return (
-                total
-                +
-                calculateWorkedMinutes(
-                    record
+                total +
+                Math.max(
+                    0,
+                    recordWorkedMinutes
                 )
             );
 

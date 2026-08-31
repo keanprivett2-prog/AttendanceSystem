@@ -1,4 +1,5 @@
 import "./admin-session.js";
+import "./admin-branding.js";
 
 // =====================================
 // R-E-D Attendance
@@ -3858,23 +3859,54 @@ function updateEmployeePerformanceSummary(
 
 
             // =====================================
-            // Attendance Percentage
-            // =====================================
+// Attendance Percentage
+// =====================================
+//
+// Attendance is based on NORMAL ACCOUNTED TIME,
+// not merely whether an attendance record exists.
+//
+// Normal Accounted Time:
+//   Actual normal worked minutes
+//   + approved paid leave minutes
+//
+// After-hours does NOT increase attendance rate.
+//
+// Standard day:
+//   08:00 → 16:30
+//   less 30-minute unpaid break
+//   = 480 expected normal minutes
+//
+// =====================================
 
-            const attendancePercentage =
-                attendanceEligibleDays ===
-                    0
-                    ?
+const expectedNormalMinutesPerDay =
+    480;
+
+
+const expectedNormalMinutes =
+    attendanceEligibleDays *
+    expectedNormalMinutesPerDay;
+
+
+const attendancePercentage =
+    expectedNormalMinutes ===
+        0
+        ?
+        100
+        :
+        Math.min(
+            100,
+            Math.max(
+                0,
+                Math.round(
+                    (
+                        normalAccountedMinutes /
+                        expectedNormalMinutes
+                    )
+                    *
                     100
-                    :
-                    Math.round(
-                        (
-                            employee.attendanceCredit /
-                            attendanceEligibleDays
-                        )
-                        *
-                        100
-                    );
+                )
+            )
+        );
 
 
             // =====================================

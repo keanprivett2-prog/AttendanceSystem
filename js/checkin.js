@@ -2232,6 +2232,17 @@ async function startNormalWorkSession(
                     earlyExitNote:
                         "",
 
+                        status:
+    String(
+        currentAttendance.status ??
+        ""
+    ).trim() ===
+    "Late"
+        ?
+        "Late"
+        :
+        "On Time",
+
                         authorisedDeparture:
     false,
 

@@ -1,10 +1,10 @@
+import "./admin-session.js";
+import "./admin-branding.js";
+
 // =====================================
 // R-E-D Attendance
 // Disciplinary Management
 // =====================================
-
-import "./admin-session.js";
-
 
 // =====================================
 // Firebase
