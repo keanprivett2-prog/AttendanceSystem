@@ -2621,6 +2621,49 @@ const employeeQuery =
 
         };
 
+        // =============================================
+// Verify Authenticated Employee Matches
+// Registered Device Employee
+// =============================================
+
+const authenticatedEmployeeNumber =
+    String(
+        employee.employeeNumber ??
+        ""
+    ).trim();
+
+
+if (
+    authenticatedEmployeeNumber !==
+    employeeNumber
+) {
+
+    console.error(
+        "REGISTERED DEVICE EMPLOYEE MISMATCH",
+        {
+            registeredEmployeeNumber:
+                employeeNumber,
+
+            authenticatedEmployeeNumber:
+                authenticatedEmployeeNumber
+        }
+    );
+
+
+    localStorage.removeItem(
+        DEVICE_REGISTRATION_KEY
+    );
+
+
+    await signOut(
+        attendanceAuth
+    );
+
+
+    return null;
+
+}
+
         if (
             employee.active ===
             false
