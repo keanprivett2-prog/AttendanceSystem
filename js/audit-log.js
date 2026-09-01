@@ -196,11 +196,18 @@ async function loadAuditLog() {
                     </td>
 
                     <td>
-                        ${escapeHtml(
-                            record.employee ??
-                            "-"
-                        )}
-                    </td>
+    ${escapeHtml(
+        record.employee
+        ||
+        record.targetName
+        ||
+        record.metadata?.employeeName
+        ||
+        record.metadata?.name
+        ||
+        "-"
+    )}
+</td>
 
                     <td class="audit-details">
                         ${formatAuditDetails(

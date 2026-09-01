@@ -6280,89 +6280,7 @@ if (
             message
         );
 
-        await writeAuditLog({
-    category:
-        "Security",
-
-    action:
-        "Check-Out Location Denied",
-
-    description:
-        locationStatus ===
-        "Location Uncertain"
-            ?
-            `${employee.name ?? employee.employeeNumber} was denied check-out because the GPS location accuracy was insufficient.`
-            :
-            `${employee.name ?? employee.employeeNumber} was denied check-out because the device was outside the office boundary.`,
-
-    actorType:
-        "Employee",
-
-    actorName:
-        employee.name ??
-        employee.employeeNumber ??
-        "Unknown Employee",
-
-    actorId:
-        employee.employeeNumber ??
-        "",
-
-    targetType:
-        "Employee",
-
-    targetName:
-        employee.name ??
-        employee.employeeNumber ??
-        "Unknown Employee",
-
-    targetId:
-        employee.employeeNumber ??
-        "",
-
-    source:
-        "Employee Attendance",
-
-    metadata: {
-        employeeNumber:
-            employee.employeeNumber ??
-            "",
-
-        department:
-            employee.department ??
-            "",
-
-        reason:
-            locationStatus ===
-            "Location Uncertain"
-                ?
-                "GPS location was not accurate enough"
-                :
-                "Outside office boundary",
-
-        locationStatus:
-            locationStatus,
-
-        distanceFromOfficeMetres:
-            Math.round(
-                distanceMetres
-            ),
-
-        locationAccuracyMetres:
-            location
-                ?
-                Math.round(
-                    location.accuracy
-                )
-                :
-                null,
-
-        deviceId:
-            getDeviceId(),
-
-        fingerprint:
-            getFingerprint()
-    }
-});
+        
 
         checkInButton.disabled =
             false;
@@ -7676,7 +7594,11 @@ async function submitLateReason() {
         // Save Late Attendance
         // =================================================
 
-        await saveAttendanceToFirebase(
+        // =================================================
+// Save Late Attendance
+// =================================================
+
+await saveAttendanceToFirebase(
     employee,
     attendanceStatus,
     location,
@@ -7687,12 +7609,15 @@ async function submitLateReason() {
     selectedWorkLocation
 );
 
-        saveAttendance(
-            employee,
-            attendanceStatus,
-            scanTime,
-            reason
-        );
+
+
+
+saveAttendance(
+    employee,
+    attendanceStatus,
+    scanTime,
+    reason
+);
 
         lateReasonSection.hidden =
             true;
