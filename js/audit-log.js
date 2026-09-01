@@ -210,10 +210,14 @@ async function loadAuditLog() {
 </td>
 
                     <td class="audit-details">
-                        ${formatAuditDetails(
-                            record.details
-                        )}
-                    </td>
+    ${formatAuditDetails(
+        record.details
+        ||
+        record.description
+        ||
+        "-"
+    )}
+</td>
                 `;
 
                 auditTableBody.appendChild(

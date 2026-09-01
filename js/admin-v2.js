@@ -202,6 +202,16 @@ const upcomingLeaveCount =
         "upcomingLeaveCount"
     );
 
+    const monthlyHoursCard =
+    document.getElementById(
+        "monthlyHoursCard"
+    );
+
+const monthlyHoursTotal =
+    document.getElementById(
+        "monthlyHoursTotal"
+    );
+
     const unpaidLeaveCard =
     document.getElementById(
         "unpaidLeaveCard"
@@ -267,6 +277,9 @@ const DASHBOARD_ATTENDANCE_PAGE_SIZE =
 
 let currentDashboardAttendancePage =
     1;
+
+    let monthlyHoursViewDate =
+    new Date();
 
     
     // =====================================
@@ -397,6 +410,21 @@ function initializeDashboard() {
                 "Currently at Work",
                 currentlyAtWorkRecords
             );
+
+        }
+    );
+
+}
+
+if (
+    monthlyHoursCard
+) {
+
+    monthlyHoursCard.addEventListener(
+        "click",
+        function () {
+
+            openMonthlyHoursModal();
 
         }
     );
@@ -702,6 +730,8 @@ if (
 
 loadAttendance();
 
+loadCurrentMonthWorkedHours();
+
 loadCurrentMonthUnpaidLeave();
 
 loadCurrentMonthAttentionRecords();
@@ -930,6 +960,252 @@ async function loadAttendance() {
         );
 
         showDashboardErrorState();
+
+    }
+
+}
+
+// =====================================
+// Load Current Month Worked Hours
+// =====================================
+
+async function loadCurrentMonthWorkedHours() {
+
+    if (
+        !monthlyHoursTotal
+    ) {
+
+        return;
+
+    }
+
+    try {
+
+        const today =
+            new Date();
+
+        const monthStart =
+            new Date(
+                today.getFullYear(),
+                today.getMonth(),
+                1
+            );
+
+        const monthEnd =
+            new Date(
+                today.getFullYear(),
+                today.getMonth() + 1,
+                0
+            );
+
+        const startDateKey =
+            formatLocalDateKey(
+                monthStart
+            );
+
+        const endDateKey =
+            formatLocalDateKey(
+                monthEnd
+            );
+
+        const monthlyAttendanceQuery =
+            query(
+                collection(
+                    db,
+                    "attendance"
+                ),
+                where(
+                    "dateKey",
+                    ">=",
+                    startDateKey
+                ),
+                where(
+                    "dateKey",
+                    "<=",
+                    endDateKey
+                )
+            );
+
+        const snapshot =
+            await getDocs(
+                monthlyAttendanceQuery
+            );
+
+        let totalWorkedMinutes =
+            0;
+
+        snapshot.docs.forEach(
+            function (
+                attendanceDocument
+            ) {
+
+                const record =
+                    attendanceDocument.data();
+
+                let recordWorkedMinutes =
+                    0;
+
+
+                // =====================================
+                // New Work Sessions Structure
+                // =====================================
+
+                if (
+                    Array.isArray(
+                        record.workSessions
+                    )
+                    &&
+                    record.workSessions.length >
+                    0
+                ) {
+
+                    recordWorkedMinutes =
+                        record.workSessions.reduce(
+                            function (
+                                sessionTotal,
+                                session
+                            ) {
+
+                                let sessionMinutes =
+    Number(
+        session?.workedMinutes ??
+        0
+    );
+
+
+const sessionCheckOutTime =
+    String(
+        session?.checkOutTime ??
+        ""
+    ).trim();
+
+
+if (
+    !sessionCheckOutTime
+) {
+
+    let sessionStartDate =
+        null;
+
+
+    if (
+        session?.checkInTimestamp
+    ) {
+
+        if (
+            session.checkInTimestamp instanceof
+            Date
+        ) {
+
+            sessionStartDate =
+                new Date(
+                    session.checkInTimestamp
+                );
+
+        } else if (
+            typeof session.checkInTimestamp.toDate ===
+            "function"
+        ) {
+
+            sessionStartDate =
+                session.checkInTimestamp.toDate();
+
+        }
+
+    }
+
+
+    if (
+        sessionStartDate
+    ) {
+
+        const now =
+            new Date();
+
+
+        sessionMinutes =
+            Math.max(
+                0,
+                Math.floor(
+                    (
+                        now.getTime() -
+                        sessionStartDate.getTime()
+                    )
+                    /
+                    60000
+                )
+            );
+
+    }
+
+}
+
+
+if (
+    !Number.isFinite(
+        sessionMinutes
+    )
+    ||
+    sessionMinutes <
+    0
+) {
+
+    return sessionTotal;
+
+}
+
+
+return (
+    sessionTotal +
+    Math.floor(
+        sessionMinutes
+    )
+);
+
+                            },
+                            0
+                        );
+
+                } else {
+
+                    // =====================================
+                    // Older Attendance Record Fallback
+                    // =====================================
+
+                    recordWorkedMinutes =
+                        calculateWorkedMinutes(
+                            record
+                        );
+
+                }
+
+
+                totalWorkedMinutes +=
+                    Math.max(
+                        0,
+                        recordWorkedMinutes
+                    );
+
+            }
+        );
+
+
+        monthlyHoursTotal.textContent =
+            formatWorkedMinutes(
+                totalWorkedMinutes
+            );
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Unable to load monthly worked hours:",
+            error
+        );
+
+        monthlyHoursTotal.textContent =
+            "0h 00m";
 
     }
 
@@ -2072,12 +2348,18 @@ function displayRecentActivity(
     attendanceRecords
 ) {
 
-    if (!recentActivity) {
+    if (
+        !recentActivity
+    ) {
+
         return;
+
     }
+
 
     recentActivity.innerHTML =
         "";
+
 
     if (
         attendanceRecords.length ===
@@ -2094,18 +2376,27 @@ function displayRecentActivity(
 
     }
 
+
     const activityRecords =
         [];
 
+
     attendanceRecords.forEach(
-        (record) => {
+        function (
+            record
+        ) {
+
+            // =====================================
+            // Check In
+            // =====================================
 
             if (
                 record.time
             ) {
 
-                let checkInDescription =
+                let description =
                     "Checked in";
+
 
                 if (
                     normalizeStatus(
@@ -2114,65 +2405,264 @@ function displayRecentActivity(
                     "late"
                 ) {
 
-                    checkInDescription =
+                    description =
                         "Checked in late";
 
                 }
 
-                activityRecords.push({
 
-                    time:
-                        record.time,
+               activityRecords.push({
 
-                    name:
-                        record.name ??
-                        "Unknown Employee",
+    time:
+        record.time,
 
-                    description:
-                        checkInDescription
+    name:
+        record.name ??
+        "Unknown Employee",
 
-                });
+    description:
+        description,
+
+    type:
+        normalizeStatus(
+            record.status
+        ) ===
+        "late"
+            ?
+            "late"
+            :
+            "check-in"
+
+});
 
             }
+
+
+            // =====================================
+            // Check Out
+            // =====================================
 
             if (
                 record.checkOutTime
             ) {
 
-                let checkOutDescription =
+                let description =
                     "Checked out";
+
 
                 if (
                     record.earlyExit ===
                     true
                 ) {
 
-                    checkOutDescription =
+                    description =
                         "Checked out early";
 
                 }
 
+
                 activityRecords.push({
 
-                    time:
-                        record.checkOutTime,
+    time:
+        record.checkOutTime,
 
-                    name:
-                        record.name ??
-                        "Unknown Employee",
+    name:
+        record.name ??
+        "Unknown Employee",
 
-                    description:
-                        checkOutDescription
+    description:
+        description,
 
-                });
+    type:
+        record.earlyExit ===
+        true
+            ?
+            "early-exit"
+            :
+            "check-out"
+
+});
+
+            }
+
+
+            // =====================================
+            // Leave Sessions
+            // =====================================
+
+            if (
+                Array.isArray(
+                    record.leaveSessions
+                )
+            ) {
+
+                record.leaveSessions.forEach(
+                    function (
+                        session
+                    ) {
+
+                        const leaveType =
+                            String(
+                                session?.leaveType ??
+                                "Leave"
+                            ).trim();
+
+
+                        const startTime =
+                            String(
+                                session?.startTime ??
+                                ""
+                            ).trim();
+
+
+                        const endTime =
+                            String(
+                                session?.endTime ??
+                                ""
+                            ).trim();
+
+
+                        activityRecords.push({
+
+    time:
+        startTime,
+
+    name:
+        record.name ??
+        "Unknown Employee",
+
+    description:
+        `Started ${leaveType}`,
+
+    type:
+        "leave"
+
+});
+
+
+                        if (
+                            endTime
+                        ) {
+
+                            activityRecords.push({
+
+    time:
+        endTime,
+
+    name:
+        record.name ??
+        "Unknown Employee",
+
+    description:
+        `Returned from ${leaveType}`,
+
+    type:
+        "leave"
+
+});
+
+                        }
+
+                    }
+                );
+
+            }
+
+
+            // =====================================
+            // After-Hours Sessions
+            // =====================================
+
+            if (
+                Array.isArray(
+                    record.afterHoursSessions
+                )
+            ) {
+
+                record.afterHoursSessions.forEach(
+                    function (
+                        session
+                    ) {
+
+                        const checkInTime =
+                            String(
+                                session?.checkInTime ??
+                                ""
+                            ).trim();
+
+
+                        const checkOutTime =
+                            String(
+                                session?.checkOutTime ??
+                                ""
+                            ).trim();
+
+
+                        if (
+                            checkInTime
+                        ) {
+
+                           activityRecords.push({
+
+    time:
+        checkInTime,
+
+    name:
+        record.name ??
+        "Unknown Employee",
+
+    description:
+        "Started After-Hours Work",
+
+    type:
+        "after-hours"
+
+});
+
+                        }
+
+
+                        if (
+                            checkOutTime
+                        ) {
+
+                            activityRecords.push({
+
+    time:
+        checkOutTime,
+
+    name:
+        record.name ??
+        "Unknown Employee",
+
+    description:
+        "Ended After-Hours Work",
+
+    type:
+        "after-hours"
+
+});
+
+                        }
+
+                    }
+                );
 
             }
 
         }
     );
 
+
+    // =====================================
+    // Newest First
+    // =====================================
+
     activityRecords.sort(
-        (firstActivity, secondActivity) => {
+        function (
+            firstActivity,
+            secondActivity
+        ) {
 
             return String(
                 secondActivity.time ??
@@ -2187,45 +2677,74 @@ function displayRecentActivity(
         }
     );
 
+
+    // =====================================
+    // Display Latest 10
+    // =====================================
+
     activityRecords
         .slice(
             0,
             10
         )
         .forEach(
-            (activity) => {
+            function (
+                activity
+            ) {
 
                 const activityItem =
                     document.createElement(
                         "div"
                     );
 
+
                 activityItem.className =
                     "activity-item";
 
+
                 activityItem.innerHTML = `
 
-                    <strong>
-                        ${escapeHtml(
-                            activity.time
-                        )}
-                    </strong>
+    <div class="activity-main">
 
-                    <br>
+        <div class="activity-name-row">
 
-                    ${escapeHtml(
-                        activity.name
-                    )}
+            <strong class="activity-name">
+                ${escapeHtml(
+                    activity.name
+                )}
+            </strong>
 
-                    <br>
+            <span
+                class="activity-badge activity-${escapeHtml(
+                    activity.type ??
+                    "default"
+                )}"
+            >
+                ${escapeHtml(
+                    getActivityBadgeLabel(
+                        activity.type
+                    )
+                )}
+            </span>
 
-                    <span>
-                        ${escapeHtml(
-                            activity.description
-                        )}
-                    </span>
+        </div>
 
-                `;
+        <span class="activity-description">
+            ${escapeHtml(
+                activity.description
+            )}
+        </span>
+
+    </div>
+
+    <span class="activity-time">
+        ${escapeHtml(
+            activity.time
+        )}
+    </span>
+
+`;
+
 
                 recentActivity.appendChild(
                     activityItem
@@ -2233,6 +2752,47 @@ function displayRecentActivity(
 
             }
         );
+
+}
+
+// =====================================
+// Activity Badge Label
+// =====================================
+
+function getActivityBadgeLabel(
+    type
+) {
+
+    const labels = {
+
+        "check-in":
+            "Check In",
+
+        "late":
+            "Late",
+
+        "check-out":
+            "Check Out",
+
+        "early-exit":
+            "Early Exit",
+
+        "leave":
+            "Leave",
+
+        "after-hours":
+            "After-Hours"
+
+    };
+
+
+    return (
+        labels[
+            type
+        ]
+        ??
+        "Activity"
+    );
 
 }
 
@@ -3076,6 +3636,875 @@ function formatWorkedMinutes(
         +
         "m"
     );
+
+}
+
+// =====================================
+// Open Monthly Hours Modal
+// =====================================
+
+async function openMonthlyHoursModal() {
+
+    if (
+        !dashboardStatModal ||
+        !dashboardStatModalTitle ||
+        !dashboardStatModalContent
+    ) {
+
+        return;
+
+    }
+
+    const selectedMonth =
+    new Date(
+        monthlyHoursViewDate.getFullYear(),
+        monthlyHoursViewDate.getMonth(),
+        1
+    );
+
+
+const monthName =
+    selectedMonth.toLocaleDateString(
+        "en-ZA",
+        {
+            month:
+                "long",
+
+            year:
+                "numeric"
+        }
+    );
+
+
+    dashboardStatModalTitle.textContent =
+        `Hours Worked - ${monthName}`;
+
+
+    const currentMonth =
+    new Date(
+        new Date().getFullYear(),
+        new Date().getMonth(),
+        1
+    );
+
+const viewingCurrentMonth =
+    (
+        selectedMonth.getFullYear() ===
+            currentMonth.getFullYear()
+        &&
+        selectedMonth.getMonth() ===
+            currentMonth.getMonth()
+    );
+
+
+dashboardStatModalContent.innerHTML = `
+
+    <div class="monthly-hours-navigation">
+
+        <button
+            type="button"
+            id="previousMonthlyHoursButton"
+            class="monthly-hours-nav-button"
+        >
+            ← Previous Month
+        </button>
+
+        <strong class="monthly-hours-current-month">
+            ${escapeHtml(
+                monthName
+            )}
+        </strong>
+
+        <button
+            type="button"
+            id="nextMonthlyHoursButton"
+            class="monthly-hours-nav-button"
+            ${
+                viewingCurrentMonth
+                    ?
+                    "disabled"
+                    :
+                    ""
+            }
+        >
+            Next Month →
+        </button>
+
+    </div>
+
+    <p
+    class="empty-row"
+    id="monthlyHoursLoadingMessage"
+>
+    Loading monthly hours...
+</p>
+
+`;
+
+
+    dashboardStatModal.hidden =
+        false;
+
+        const previousMonthlyHoursButton =
+    document.getElementById(
+        "previousMonthlyHoursButton"
+    );
+
+const nextMonthlyHoursButton =
+    document.getElementById(
+        "nextMonthlyHoursButton"
+    );
+
+
+previousMonthlyHoursButton?.addEventListener(
+    "click",
+    function () {
+
+        monthlyHoursViewDate =
+            new Date(
+                selectedMonth.getFullYear(),
+                selectedMonth.getMonth() - 1,
+                1
+            );
+
+        openMonthlyHoursModal();
+
+    }
+);
+
+
+nextMonthlyHoursButton?.addEventListener(
+    "click",
+    function () {
+
+        if (
+            viewingCurrentMonth
+        ) {
+
+            return;
+        }
+
+        monthlyHoursViewDate =
+            new Date(
+                selectedMonth.getFullYear(),
+                selectedMonth.getMonth() + 1,
+                1
+            );
+
+        openMonthlyHoursModal();
+
+    }
+);
+
+
+    try {
+
+        const monthStart =
+    new Date(
+        selectedMonth.getFullYear(),
+        selectedMonth.getMonth(),
+        1
+    );
+
+const monthEnd =
+    new Date(
+        selectedMonth.getFullYear(),
+        selectedMonth.getMonth() + 1,
+        0
+    );
+
+
+        const startDateKey =
+            formatLocalDateKey(
+                monthStart
+            );
+
+        const endDateKey =
+            formatLocalDateKey(
+                monthEnd
+            );
+
+
+        const monthlyAttendanceQuery =
+            query(
+                collection(
+                    db,
+                    "attendance"
+                ),
+                where(
+                    "dateKey",
+                    ">=",
+                    startDateKey
+                ),
+                where(
+                    "dateKey",
+                    "<=",
+                    endDateKey
+                )
+            );
+
+
+        const snapshot =
+            await getDocs(
+                monthlyAttendanceQuery
+            );
+
+
+        const employeeHours =
+            {};
+
+
+        snapshot.docs.forEach(
+            function (
+                attendanceDocument
+            ) {
+
+                const record =
+                    attendanceDocument.data();
+
+
+                const employeeNumber =
+                    String(
+                        record.employeeNumber ??
+                        "Unknown"
+                    );
+
+
+                if (
+                    !employeeHours[
+                        employeeNumber
+                    ]
+                ) {
+
+                    employeeHours[
+                        employeeNumber
+                    ] = {
+
+                        name:
+                            record.name ??
+                            "Unknown Employee",
+
+                        employeeNumber:
+                            employeeNumber,
+
+                        department:
+                            record.department ??
+                            "Unassigned",
+
+                        minutes:
+                            0
+
+                    };
+
+                }
+
+
+                let recordWorkedMinutes =
+                    0;
+
+
+                if (
+                    Array.isArray(
+                        record.workSessions
+                    )
+                    &&
+                    record.workSessions.length >
+                    0
+                ) {
+
+                    recordWorkedMinutes =
+                        record.workSessions.reduce(
+                            function (
+                                total,
+                                session
+                            ) {
+
+                                let sessionMinutes =
+                                    Number(
+                                        session?.workedMinutes ??
+                                        0
+                                    );
+
+
+                                const checkOutTime =
+                                    String(
+                                        session?.checkOutTime ??
+                                        ""
+                                    ).trim();
+
+
+                                if (
+                                    !checkOutTime
+                                ) {
+
+                                    let checkInDate =
+                                        null;
+
+
+                                    if (
+                                        session?.checkInTimestamp
+                                    ) {
+
+                                        if (
+                                            session.checkInTimestamp instanceof
+                                            Date
+                                        ) {
+
+                                            checkInDate =
+                                                new Date(
+                                                    session.checkInTimestamp
+                                                );
+
+                                        } else if (
+                                            typeof session.checkInTimestamp.toDate ===
+                                            "function"
+                                        ) {
+
+                                            checkInDate =
+                                                session.checkInTimestamp.toDate();
+
+                                        }
+
+                                    }
+
+
+                                    if (
+                                        checkInDate
+                                    ) {
+
+                                        sessionMinutes =
+                                            Math.max(
+                                                0,
+                                                Math.floor(
+                                                    (
+                                                        Date.now() -
+                                                        checkInDate.getTime()
+                                                    )
+                                                    /
+                                                    60000
+                                                )
+                                            );
+
+                                    }
+
+                                }
+
+
+                                if (
+                                    !Number.isFinite(
+                                        sessionMinutes
+                                    )
+                                    ||
+                                    sessionMinutes <
+                                    0
+                                ) {
+
+                                    return total;
+
+                                }
+
+
+                                return (
+                                    total +
+                                    Math.floor(
+                                        sessionMinutes
+                                    )
+                                );
+
+                            },
+                            0
+                        );
+
+                } else {
+
+                    recordWorkedMinutes =
+                        calculateWorkedMinutes(
+                            record
+                        );
+
+                }
+
+
+                employeeHours[
+                    employeeNumber
+                ].minutes +=
+                    Math.max(
+                        0,
+                        recordWorkedMinutes
+                    );
+
+            }
+        );
+
+        const monthlyHoursLoadingMessage =
+    document.getElementById(
+        "monthlyHoursLoadingMessage"
+    );
+
+if (
+    monthlyHoursLoadingMessage
+) {
+
+    monthlyHoursLoadingMessage.remove();
+
+}
+
+        const employees =
+    Object.values(
+        employeeHours
+    )
+        .sort(
+            function (
+                firstEmployee,
+                secondEmployee
+            ) {
+
+                return (
+                    secondEmployee.minutes -
+                    firstEmployee.minutes
+                );
+
+            }
+        );
+
+        const MONTHLY_HOURS_PAGE_SIZE =
+    10;
+
+let monthlyHoursPage =
+    1;
+
+
+        const totalMonthlyMinutes =
+    employees.reduce(
+        function (
+            total,
+            employee
+        ) {
+
+            return (
+                total +
+                Math.max(
+                    0,
+                    Number(
+                        employee.minutes ??
+                        0
+                    )
+                )
+            );
+
+        },
+        0
+    );
+
+
+const monthlyHoursList =
+    document.createElement(
+        "div"
+    );
+
+monthlyHoursList.className =
+    "monthly-hours-list";
+
+    const searchContainer =
+    document.createElement(
+        "div"
+    );
+
+searchContainer.className =
+    "monthly-hours-search";
+
+
+searchContainer.innerHTML = `
+
+    <input
+        type="text"
+        id="monthlyHoursSearchInput"
+        placeholder="Search employee, number or department..."
+        autocomplete="off"
+    >
+
+`;
+
+
+monthlyHoursList.appendChild(
+    searchContainer
+);
+
+
+const monthlySummary =
+    document.createElement(
+        "div"
+    );
+
+monthlySummary.className =
+    "monthly-hours-summary";
+
+monthlySummary.innerHTML = `
+    <span>
+        Total Hours Worked
+    </span>
+
+    <strong>
+        ${escapeHtml(
+            formatWorkedMinutes(
+                totalMonthlyMinutes
+            )
+        )}
+    </strong>
+`;
+
+monthlyHoursList.appendChild(
+    monthlySummary
+);
+
+
+if (
+    employees.length ===
+    0
+) {
+
+    monthlyHoursList.innerHTML += `
+        <p class="empty-row">
+            No worked hours recorded this month.
+        </p>
+    `;
+
+    dashboardStatModalContent.appendChild(
+        monthlyHoursList
+    );
+
+    return;
+
+}
+
+
+const table =
+    document.createElement(
+        "table"
+    );
+
+table.className =
+    "monthly-hours-table";
+
+
+table.innerHTML = `
+
+    <thead>
+
+        <tr>
+
+            <th>
+                Employee
+            </th>
+
+            <th>
+                Employee No.
+            </th>
+
+            <th>
+                Department
+            </th>
+
+            <th>
+                Hours Worked
+            </th>
+
+        </tr>
+
+    </thead>
+
+    <tbody>
+    </tbody>
+
+`;
+
+
+const tableBody =
+    table.querySelector(
+        "tbody"
+    );
+
+    const monthlyHoursSearchInput =
+    searchContainer.querySelector(
+        "#monthlyHoursSearchInput"
+    );
+
+let filteredEmployees =
+    [...employees];
+
+
+function renderMonthlyHoursPage() {
+
+    tableBody.innerHTML =
+        "";
+
+    const totalPages =
+        Math.max(
+            1,
+            Math.ceil(
+                filteredEmployees.length /
+                MONTHLY_HOURS_PAGE_SIZE
+            )
+        );
+
+    if (
+        monthlyHoursPage >
+        totalPages
+    ) {
+
+        monthlyHoursPage =
+            totalPages;
+
+    }
+
+    const startIndex =
+        (
+            monthlyHoursPage -
+            1
+        )
+        *
+        MONTHLY_HOURS_PAGE_SIZE;
+
+    const endIndex =
+        startIndex +
+        MONTHLY_HOURS_PAGE_SIZE;
+
+    const pageEmployees =
+    filteredEmployees.slice(
+        startIndex,
+        endIndex
+    );
+
+
+    pageEmployees.forEach(
+        function (
+            employee
+        ) {
+
+            const row =
+                document.createElement(
+                    "tr"
+                );
+
+            row.innerHTML = `
+
+                <td>
+                    ${escapeHtml(
+                        employee.name
+                    )}
+                </td>
+
+                <td>
+                    ${escapeHtml(
+                        employee.employeeNumber
+                    )}
+                </td>
+
+                <td>
+                    ${escapeHtml(
+                        employee.department
+                    )}
+                </td>
+
+                <td>
+                    <strong>
+                        ${escapeHtml(
+                            formatWorkedMinutes(
+                                employee.minutes
+                            )
+                        )}
+                    </strong>
+                </td>
+
+            `;
+
+            tableBody.appendChild(
+                row
+            );
+
+        }
+    );
+
+
+    pagination.innerHTML = `
+
+        <button
+            type="button"
+            id="previousMonthlyHoursPage"
+            ${
+                monthlyHoursPage <= 1
+                    ?
+                    "disabled"
+                    :
+                    ""
+            }
+        >
+            Previous
+        </button>
+
+        <span>
+            Page
+            ${monthlyHoursPage}
+            of
+            ${totalPages}
+        </span>
+
+        <button
+            type="button"
+            id="nextMonthlyHoursPage"
+            ${
+                monthlyHoursPage >= totalPages
+                    ?
+                    "disabled"
+                    :
+                    ""
+            }
+        >
+            Next
+        </button>
+
+    `;
+
+
+    document
+        .getElementById(
+            "previousMonthlyHoursPage"
+        )
+        ?.addEventListener(
+            "click",
+            function () {
+
+                monthlyHoursPage--;
+
+                renderMonthlyHoursPage();
+
+            }
+        );
+
+
+    document
+        .getElementById(
+            "nextMonthlyHoursPage"
+        )
+        ?.addEventListener(
+            "click",
+            function () {
+
+                monthlyHoursPage++;
+
+                renderMonthlyHoursPage();
+
+            }
+        );
+
+}
+
+monthlyHoursSearchInput?.addEventListener(
+    "input",
+    function () {
+
+        const searchValue =
+            String(
+                monthlyHoursSearchInput.value ??
+                ""
+            )
+                .trim()
+                .toLowerCase();
+
+
+        filteredEmployees =
+            employees.filter(
+                function (
+                    employee
+                ) {
+
+                    const employeeName =
+                        String(
+                            employee.name ??
+                            ""
+                        ).toLowerCase();
+
+                    const employeeNumber =
+                        String(
+                            employee.employeeNumber ??
+                            ""
+                        ).toLowerCase();
+
+                    const department =
+                        String(
+                            employee.department ??
+                            ""
+                        ).toLowerCase();
+
+
+                    return (
+                        employeeName.includes(
+                            searchValue
+                        )
+                        ||
+                        employeeNumber.includes(
+                            searchValue
+                        )
+                        ||
+                        department.includes(
+                            searchValue
+                        )
+                    );
+
+                }
+            );
+
+
+        monthlyHoursPage =
+            1;
+
+
+        renderMonthlyHoursPage();
+
+    }
+);
+
+
+monthlyHoursList.appendChild(
+    table
+);
+
+const pagination =
+    document.createElement(
+        "div"
+    );
+
+pagination.className =
+    "monthly-hours-pagination";
+
+monthlyHoursList.appendChild(
+    pagination
+);
+
+renderMonthlyHoursPage();
+
+
+dashboardStatModalContent.appendChild(
+    monthlyHoursList
+);
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Unable to load monthly hours modal:",
+            error
+        );
+
+
+        dashboardStatModalContent.innerHTML = `
+            <p class="empty-row">
+                Monthly hours could not be loaded.
+            </p>
+        `;
+
+    }
 
 }
 

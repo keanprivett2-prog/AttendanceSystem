@@ -8683,12 +8683,12 @@ activeLeaveType:
                 "Employee Check-In",
 
         description:
-            attendanceStatus ===
-            "Late"
-                ?
-                `${employee.name ?? employee.employeeNumber} checked in late at ${scanTime.toLocaleTimeString("en-ZA")}.`
-                :
-                `${employee.name ?? employee.employeeNumber} checked in at ${scanTime.toLocaleTimeString("en-ZA")}.`,
+    attendanceStatus ===
+    "Late"
+        ?
+        `${employee.name ?? employee.employeeNumber} checked in late at ${scanTime.toLocaleTimeString("en-ZA")}. Reason: ${lateReason || "No reason provided"}.`
+        :
+        `${employee.name ?? employee.employeeNumber} checked in at ${scanTime.toLocaleTimeString("en-ZA")}.`,
 
         actorType:
             "Employee",

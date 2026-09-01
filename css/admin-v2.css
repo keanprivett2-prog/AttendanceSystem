@@ -6459,3 +6459,395 @@ strong {
     }
 
 }
+
+/* =====================================
+   Monthly Hours Modal
+===================================== */
+
+.monthly-hours-navigation {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+
+    margin-bottom: 20px;
+    padding-bottom: 18px;
+
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.monthly-hours-nav-button {
+    padding: 9px 14px;
+
+    border: 1px solid #d6dce5;
+    border-radius: 8px;
+
+    background: #ffffff;
+
+    color: #0b2f50;
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.monthly-hours-nav-button:hover:not(:disabled) {
+    background: #f3f6fa;
+    border-color: #b8c2cf;
+}
+
+.monthly-hours-nav-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.monthly-hours-current-month {
+    flex: 1;
+
+    text-align: center;
+
+    font-size: 18px;
+    font-weight: 700;
+    color: #142033;
+}
+
+
+/* =====================================
+   Monthly Total
+===================================== */
+
+.monthly-hours-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin: 8px 0 20px;
+    padding: 18px 20px;
+
+    background: #f6f8fb;
+
+    border: 1px solid #e2e7ee;
+    border-radius: 12px;
+}
+
+.monthly-hours-summary span {
+    font-size: 15px;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.monthly-hours-summary strong {
+    font-size: 24px;
+    font-weight: 700;
+    color: #142033;
+}
+
+
+/* =====================================
+   Monthly Hours Table
+===================================== */
+
+.monthly-hours-list {
+    width: 100%;
+}
+
+.monthly-hours-table {
+    width: 100%;
+
+    border-collapse: separate;
+    border-spacing: 0;
+
+    overflow: hidden;
+
+    border: 1px solid #e2e7ee;
+    border-radius: 10px;
+}
+
+.monthly-hours-table th {
+    padding: 13px 16px;
+
+    background: #f3f6fa;
+
+    color: #475569;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    text-align: left;
+
+    border-bottom: 1px solid #dde3eb;
+}
+
+.monthly-hours-table td {
+    padding: 14px 16px;
+
+    color: #1e293b;
+
+    font-size: 14px;
+
+    border-bottom: 1px solid #edf0f4;
+}
+
+.monthly-hours-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.monthly-hours-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+.monthly-hours-table th:last-child,
+.monthly-hours-table td:last-child {
+    text-align: right;
+}
+
+.monthly-hours-table td:last-child {
+    font-weight: 700;
+    color: #0b2f50;
+}
+
+.monthly-hours-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+
+    margin-top: 18px;
+}
+
+.monthly-hours-pagination button {
+    padding: 8px 14px;
+
+    border: 1px solid #d6dce5;
+    border-radius: 8px;
+
+    background: #ffffff;
+
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+.monthly-hours-pagination button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.monthly-hours-pagination span {
+    font-size: 14px;
+    font-weight: 600;
+    color: #475569;
+}
+
+/* =====================================
+   Monthly Hours Search
+===================================== */
+
+.monthly-hours-search {
+    margin: 0 0 18px;
+}
+
+.monthly-hours-search input {
+    width: 100%;
+    box-sizing: border-box;
+
+    padding: 11px 14px;
+
+    border: 1px solid #d6dce5;
+    border-radius: 9px;
+
+    background: #ffffff;
+
+    color: #1e293b;
+    font-size: 14px;
+
+    outline: none;
+}
+
+.monthly-hours-search input:focus {
+    border-color: #8aa4c2;
+    box-shadow: 0 0 0 3px rgba(138, 164, 194, 0.15);
+}
+
+.monthly-hours-search input::placeholder {
+    color: #94a3b8;
+}
+
+/* =====================================
+   Recent Activity
+===================================== */
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+
+    padding: 13px 4px;
+
+    border-bottom: 1px solid #edf0f4;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-main {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+
+    min-width: 0;
+}
+
+.activity-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.activity-description {
+    font-size: 13px;
+    color: #64748b;
+}
+
+.activity-time {
+    flex-shrink: 0;
+
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+}
+
+/* =====================================
+   Recent Activity - Clean Layout
+===================================== */
+
+#recentActivity .activity-item {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    padding: 16px 18px;
+
+    margin-bottom: 10px;
+
+    background: #f7f9fc;
+
+    border: 1px solid #edf0f4;
+    border-radius: 10px;
+}
+
+#recentActivity .activity-item::before {
+    display: none !important;
+    content: none !important;
+}
+
+#recentActivity .activity-item:last-child {
+    margin-bottom: 0;
+}
+
+#recentActivity .activity-main {
+    display: flex;
+    flex-direction: column;
+
+    gap: 4px;
+
+    min-width: 0;
+}
+
+#recentActivity .activity-name {
+    display: block;
+
+    color: #142033 !important;
+
+    font-size: 14px;
+    font-weight: 700;
+
+    text-decoration: none;
+}
+
+#recentActivity .activity-description {
+    display: block;
+
+    color: #64748b;
+
+    font-size: 13px;
+    font-weight: 400;
+}
+
+#recentActivity .activity-time {
+    flex-shrink: 0;
+
+    color: #475569;
+
+    font-size: 13px;
+    font-weight: 700;
+}
+
+/* =====================================
+   Recent Activity Badges
+===================================== */
+
+.activity-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.activity-badge {
+    display: inline-flex;
+    align-items: center;
+
+    padding: 3px 8px;
+
+    border-radius: 999px;
+
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.activity-check-in {
+    background: #ecfdf3;
+    color: #027a48;
+}
+
+.activity-late {
+    background: #fff4e5;
+    color: #b54708;
+}
+
+.activity-check-out {
+    background: #f2f4f7;
+    color: #475467;
+}
+
+.activity-early-exit {
+    background: #fef3f2;
+    color: #b42318;
+}
+
+.activity-leave {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.activity-after-hours {
+    background: #f5f3ff;
+    color: #6d28d9;
+}
+
+.activity-default {
+    background: #f2f4f7;
+    color: #475467;
+}
